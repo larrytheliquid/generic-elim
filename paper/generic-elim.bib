@@ -1,0 +1,281 @@
+@article{Chapman:2010:GAL:1932681.1863547,
+ author = {Chapman, James and Dagand, Pierre-\'{E}variste and McBride, Conor and Morris, Peter},
+ title = {The gentle art of levitation},
+ journal = {SIGPLAN Not.},
+ issue_date = {September 2010},
+ volume = {45},
+ number = {9},
+ month = sep,
+ year = {2010},
+ issn = {0362-1340},
+ pages = {3--14},
+ numpages = {12},
+ url = {http://doi.acm.org/10.1145/1932681.1863547},
+ doi = {10.1145/1932681.1863547},
+ acmid = {1863547},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {data structure, metaprogramming, monads, proof assistants, type systems},
+ annote = "The authors present a universe that encodes all indexed family of types. The codes of this universe are definitions of strictly positive types, and their meaning is the actual type interpreted by a least fixed point operator. Although any dependent type can be represented in this universe, the encoding only supports generic functions over all non-dependent types in this universe."
+}
+
+@article{mcbride2010ornamental,
+  title={Ornamental algebras, algebraic ornaments},
+  author={McBRIDE, C.},
+  journal={Journal of Functional Programming},
+  year={2010},
+  annote = "The author presents a principled method for constructing new types from old types using a datatype called an ornament. A new type may be related to an old type by subsuming its structure (e.g. the structure of a list subsumes the structure of a natural number), or by refining its index (e.g. a vector's natural number index refines a list's unit index). This construction comes with a generic forgetful function (called an ornamental algebra) that converts a value of an ornamented type to a value of the underlying type that was ornamented. The definition of ornaments in this paper is defined in terms of the universe of indexed families of types presented in \cite{Chapman:2010:GAL:1932681.1863547}."
+}
+
+@article{Dagand:2012:TFA:2398856.2364544,
+ author = {Dagand, Pierre-Evariste and McBride, Conor},
+ title = {Transporting functions across ornaments},
+ journal = {SIGPLAN Not.},
+ issue_date = {September 2012},
+ volume = {47},
+ number = {9},
+ month = sep,
+ year = {2012},
+ issn = {0362-1340},
+ pages = {103--114},
+ numpages = {12},
+ url = {http://doi.acm.org/10.1145/2398856.2364544},
+ doi = {10.1145/2398856.2364544},
+ acmid = {2364544},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {datatype, dependent types, ornament},
+ annote = "The authors extend the framework for ornamenting types~\cite{mcbride2010ornamental} to also support ornamenting functions. The input to this framework is a function over unornamented types (e.g. {\tt lte : Nat -> Nat -> Bool}, taking two natural numbers and returning a boolean which is true if the first argument is less than or equal to the second), and ornaments for types in the signature of the unormanted function. For example, an ornament for {\tt lte} is {\tt lookup : Nat -> List A -> Maybe A}. The output of this framework is a specification (in the form of a coherence property) for the ornamented function (i.e. {\tt lookup}) that requires it to respect the forgetful functions of the ornamented types in certain ways."
+} 
+
+@inproceedings{McBride:2010:OBM:1863495.1863497,
+ author = {McBride, Conor},
+ title = {Outrageous but meaningful coincidences: dependent type-safe syntax and evaluation},
+ booktitle = {Proceedings of the 6th ACM SIGPLAN workshop on Generic programming},
+ series = {WGP '10},
+ year = {2010},
+ isbn = {978-1-4503-0251-7},
+ location = {Baltimore, Maryland, USA},
+ pages = {1--12},
+ numpages = {12},
+ url = {http://doi.acm.org/10.1145/1863495.1863497},
+ doi = {10.1145/1863495.1863497},
+ acmid = {1863497},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {dependent types, generic programming},
+ annote = "The authors present a mechanization of typing rules for a small dependent type theory. The typing rules are given as a strongly-typed syntax for terms. A total evaluation function is mutually defined with the typing rules using Normalization by Evaluation (NbE). It is necessary for strongly-typed terms to be first-order when performing type inference on untyped pre-terms, thus this paper is a major stepping stone towards mechanizing dependent type theory in itself."
+} 
+
+@INPROCEEDINGS{Palmgren98onuniverses,
+  author = {Erik Palmgren},
+  title = {On universes in type theory},
+  booktitle = {191 – 204},
+  year = {1998},
+  publisher = {Oxford University Press},
+  annote = "In this theoretical paper the author compares and contrasts a number of different formalizations of hierarchies of universes in type theory. Of particular importance is the notion of a super universe which represents a predicative hierarchy of universes. A standard universe is made up of codes and a meaning function. A super universe adds a code for codes in the previous universe, and a code for the meaning function of codes in the previous universe. The super universe is stratified at the lowest level, where the set of codes for the previous universe is the empty set, and the meaning function is {\it ex falso quodlibet}."
+}
+
+@inproceedings{Altenkirch:2007:OE:1292597.1292608,
+ author = {Altenkirch, Thorsten and McBride, Conor and Swierstra, Wouter},
+ title = {Observational equality, now!},
+ booktitle = {Proceedings of the 2007 workshop on Programming languages meets program verification},
+ series = {PLPV '07},
+ year = {2007},
+ isbn = {978-1-59593-677-6},
+ location = {Freiburg, Germany},
+ pages = {57--68},
+ numpages = {12},
+ url = {http://doi.acm.org/10.1145/1292597.1292608},
+ doi = {10.1145/1292597.1292608},
+ acmid = {1292608},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {equality, type theory},
+ annote = "The authors present a new notion of equality for intentional type theories. Extentional type theories support the useful notion of functional extentionality for definitonal equality, but come with the cost of undecidable type checking. Standard intentional type theories have a definitional equality which does not support functional extentionality, but type checking is decidable. Observational Type Theory (OTT) is intentional, but adds a new propositional equality that supports functional extentionality. Values can be explicitly coerced between observationally equivalent types by supplying a proof of an isomorphism between the types."
+} 
+
+@article{martinintuitionistic,
+  title={Intuitionistic type theory.},
+  author={Martin-L{\"o}f, P.},
+  journal={Notes by Giovanni Sambin},
+  year = {1984},
+  location = {Bibliopolis, Naples},
+  annote= "In this seminal work the author presents notes from a lecture series on Intuitionistic Type Theory given by Martin-L{\"o}f. The notes present each type as a package containing its formation rule, the introduction rules for its values, the elimination rules for its values, and the equality rules for its values. In particular dependent functions (\textPi), dependent pairs (\textSigma), and wellorderings / inductive types (W) are covered. Additionally, the important concept of a type theoretical universe is explained, which consists of a set of codes representing types, and a meaning function translating codes into concrete types. This notion of a universe is the primary method by which generic programming is performed in dependently typed languages."
+}
+
+@article{mcbride+04,
+author="C. McBride and J. McKinna",
+title={{The View from the Left}},
+journal="Journal of Functional Programming",
+year=2004,
+volume=14,
+number=1,
+annote = "In standard developments of dependent type theory a value of a type is used via one particular eliminator, namely its induction principle. The authors of this paper present a number of different eliminators that can be used for dependent types, and a {\tt by} construct that provides a uniform syntax for programming with different eliminators. One common alternative eliminator is course of values induction. More interestingly, the authors show how to create eliminators for views of datatypes (e.g. viewing a list as two sublists that produce the original list when appended together)."
+}
+
+@inproceedings{Altenkirch:2006:GPD:1782894.1782898,
+ author = {Altenkirch, Thorsten and McBride, Conor and Morris, Peter},
+ title = {Generic programming with dependent types},
+ booktitle = {Proceedings of the 2006 international conference on Datatype-generic programming},
+ series = {SSDGP'06},
+ year = {2007},
+ isbn = {3-540-76785-1, 978-3-540-76785-5},
+ location = {Nottingham, UK},
+ pages = {209--257},
+ numpages = {49},
+ url = {http://dl.acm.org/citation.cfm?id=1782894.1782898},
+ acmid = {1782898},
+ publisher = {Springer-Verlag},
+ address = {Berlin, Heidelberg},
+ annote = "The authors give examples of a number of different universes over which generic functions can be written in a dependently typed language. The universes get progressively large, culminating in generic functions over container types, which are an alternative formalization of types given as polynomial functors. This work led to the discovery of the generic universe presented in~\cite{Chapman:2010:GAL:1932681.1863547}, where higher-order containers are replaced with a first-order encoding of types."
+} 
+
+@inproceedings{Weirich:2010:ADP:1707790.1707799,
+ author = {Weirich, Stephanie and Casinghino, Chris},
+ title = {Arity-generic datatype-generic programming},
+ booktitle = {Proceedings of the 4th ACM SIGPLAN workshop on Programming languages meets program verification},
+ series = {PLPV '10},
+ year = {2010},
+ isbn = {978-1-60558-890-2},
+ location = {Madrid, Spain},
+ pages = {15--26},
+ numpages = {12},
+ url = {http://doi.acm.org/10.1145/1707790.1707799},
+ doi = {10.1145/1707790.1707799},
+ acmid = {1707799},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {agda, arity-generic programming, dependent types, generic haskell},
+ annote = "The authors give provide a framework for doubly-generic programming, combining two standard forms of generic programming. The first kind of generic programming involves functions that operate generically over a universe of types (e.g. any universe in \cite{Altenkirch:2006:GPD:1782894.1782898}). The second kind of generic programming involves functions that operate generically over the arity of a single type (e.g. a {\tt zipWith} that can map over any number of list arguments). Both of these forms of genericity have been explored independently, but the authors show how to write functions that are simultaneously generic over a universe and the arity of a particular type in that universe."
+} 
+
+@INPROCEEDINGS{Dybjer99afinite,
+    author = {Peter Dybjer and Anton Setzer},
+    title = {A finite axiomatization of inductive-recursive definitions},
+    booktitle = {Typed Lambda Calculi and Applications, volume 1581 of Lecture Notes in Computer Science},
+    year = {1999},
+    pages = {129--146},
+    publisher = {Springer}
+}
+
+@INPROCEEDINGS{Goguen06eliminatingdependent,
+    author = {Healfdene Goguen and Conor McBride and James McKinna},
+    title = {Eliminating dependent pattern matching},
+    booktitle = {of Lecture Notes in Computer Science},
+    year = {2006},
+    pages = {521--540},
+    publisher = {Springer}
+}
+
+@book{nordstrom1990programming,
+  title={Programming in Martin-L{\"o}f’s type theory},
+  author={Nordstr{\"o}m, Bengt and Petersson, Kent and Smith, Jan M},
+  volume={85},
+  year={1990},
+  publisher={Oxford University Press}
+}
+
+@article{mcbride+04,
+author="C. McBride and J. McKinna",
+title={{The View from the Left}},
+journal="Journal of Functional Programming",
+year=2004,
+volume=14,
+number=1}
+
+@inproceedings{McBride:2000:EM:646540.759262,
+ author = {McBride, Conor},
+ title = {Elimination with a Motive},
+ booktitle = {Selected papers from the International Workshop on Types for Proofs and Programs},
+ series = {TYPES '00},
+ year = {2002},
+ isbn = {3-540-43287-6},
+ pages = {197--216},
+ numpages = {20},
+ url = {http://dl.acm.org/citation.cfm?id=646540.759262},
+ acmid = {759262},
+ publisher = {Springer-Verlag},
+ address = {London, UK, UK},
+} 
+
+@phdthesis{girard1972interpretation,
+  title={Interpr{\'e}tation fonctionelle et {\'e}limination des coupures de l’arithm{\'e}tique d’ordre sup{\'e}rieur},
+  author={Girard, Jean-Yves},
+  year={1972},
+  school={PhD thesis, Universit e Paris VII}
+}
+
+@article{hurkens1995simplification,
+  title={A simplification of Girard's paradox},
+  author={Hurkens, Antonius},
+  journal={Typed Lambda Calculi and Applications},
+  pages={266--278},
+  year={1995},
+  publisher={Springer}
+}
+
+@misc{mcbridehier,
+  title={https://personal.cis.strath.ac.uk/conor.mcbride/pub/Hmm/Hier.agda},
+  adsurl = {https://personal.cis.strath.ac.uk/conor.mcbride/pub/Hmm/Hier.agda},
+  year = {2011},
+  author={McBride, Conor}
+}
+
+@misc{ldiehltweet,
+  title={https://gist.github.com/larrytheliquid/3909860},
+  adsurl = {https://gist.github.com/larrytheliquid/3909860},
+  year = {2012},
+  author={Diehl, Larry}
+}
+
+@inproceedings{Altenkirch:2007:OE:1292597.1292608,
+ author = {Altenkirch, Thorsten and McBride, Conor and Swierstra, Wouter},
+ title = {Observational equality, now!},
+ booktitle = {Proceedings of the 2007 workshop on Programming languages meets program verification},
+ series = {PLPV '07},
+ year = {2007},
+ isbn = {978-1-59593-677-6},
+ location = {Freiburg, Germany},
+ pages = {57--68},
+ numpages = {12},
+ url = {http://doi.acm.org/10.1145/1292597.1292608},
+ doi = {10.1145/1292597.1292608},
+ acmid = {1292608},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {equality, type theory},
+} 
+
+@article{church1940formulation,
+  title={A formulation of the simple theory of types},
+  author={Church, Alonzo},
+  journal={J. Symb. Log.},
+  volume={5},
+  number={2},
+  pages={56--68},
+  year={1940}
+}
+
+@article{pfenning2008church,
+  title={Church and Curry: Combining intrinsic and extrinsic typing},
+  author={Pfenning, Frank},
+  year={2008},
+  publisher={College Publications}
+}
+
+@article{howard1980formulae,
+  title={The formulae-as-types notion of construction},
+  author={Howard, William A},
+  journal={To HB Curry: essays on combinatory logic, lambda calculus and formalism},
+  volume={44},
+  pages={479--490},
+  year={1980}
+}
+
+@book{norell2007towards,
+  title={Towards a practical programming language based on dependent type theory},
+  author={Norell, Ulf},
+  year={2007},
+  publisher={Chalmers University of Technology}
+}

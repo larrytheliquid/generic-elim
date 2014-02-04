@@ -1,0 +1,75 @@
+\documentclass[preprint,authoryear]{sigplanconf}
+
+\usepackage{todonotes}
+\usepackage{amsmath}
+\usepackage{url}
+
+\begin{document}
+
+\special{papersize=8.5in,11in}
+\setlength{\pdfpageheight}{\paperheight}
+\setlength{\pdfpagewidth}{\paperwidth}
+
+\titlebanner{DRAFT}        % These are ignored unless
+%% \preprintfooter{short description of paper}   % 'preprint' option specified.
+
+\title{Generic Eliminators via Descriptions}
+%% \subtitle{Curry Strikes Back}
+
+\authorinfo{Larry Diehl\and Tim Sheard}
+           {Portland State University}
+
+\maketitle
+
+\begin{abstract}
+Sed pellentesque massa purus, ac aliquam ipsum auctor in. Mauris et
+libero risus. In scelerisque neque vel odio tempus, commodo gravida
+purus faucibus. Aliquam pharetra mauris consequat, gravida justo sed,
+facilisis elit. Nullam enim ipsum, varius ut condimentum eget, tempor
+id eros. Aenean id eros vestibulum, hendrerit dui eget, tincidunt
+elit. Ut nec dignissim lectus, a bibendum turpis. Vivamus tincidunt
+consequat ante. Suspendisse congue convallis ipsum vitae egestas. Ut
+interdum elit id nunc aliquam lobortis.
+\end{abstract}
+
+\category{D.3}{Software}{Programming Languages}.
+
+\keywords
+Generic programming; dependent types; descriptions; eliminators.
+
+\section{Introduction}
+\label{sec:intro}
+
+Descriptions make datatype definitions first class values in a
+dependent type theory. This has several desirable consequences, such as the
+ability to perform generic programming~[levitation, dagand thesis, ornaments]
+over described types, as well as decreasing the number of constructs in the
+metatheory via levitation. Any type represented as a description can
+be eliminated with {\tt ind}, which resembles a fold (or catamorphism) but
+over indexed type families. Definitions written with {\tt ind} are
+verbose but follow a recognizable pattern (Section ~\ref{TODO}). 
+On the other hand, definitions written with {\it eliminators} (or
+induction principles) are shorter and more familiar to type theorists.
+
+For example, the following eliminator of vectors has familiar
+components. It consists of the motive argument and branches for each
+vector constructor.
+
+Additionally, many existing algorithms already translate to
+eliminators. For example, to prove termination of Coq's fix or
+dependent pattern matching. Rather than adapting such algorithms to
+translate to {\tt ind}, we instead provide a generic eliminator {\tt elim} for
+any datatype encoded by a description. Furthermore, {\tt elim} can be
+defined in terms of {\tt ind}, making it another instance of generic
+programming internal to the existing type theory.
+Furthermore, a user writing a definition with {\tt ind} must be familiar
+with the particular way we have chosen to encode a `Desc`ription as a
+type. In contrast, users already familiar with eliminators need not
+understand how descriptions work to be able to program with types
+encoded with them [could contrast desc with Sum and desc with Σ Fin
+here]. 
+
+\bibliographystyle{abbrvnat}
+\bibliography{generic-elim}
+
+\end{document}
