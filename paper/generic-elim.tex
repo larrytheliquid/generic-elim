@@ -82,13 +82,16 @@ theorists.
 Now let's look at the type of {\tt ind}. Think of it almost like a standard
 eliminator that has been parameterized over any description {\tt D} of a type. The
 motive {\tt P} is indexed over the type family {\tt μ I D i}, which is
-the datatype that description {\tt D} represents. The key difference
+the datatype that description {\tt D} represents.
+Here {\tt I} is the type of the index of the type family being
+encoded, and {\tt i} is the value of the index whose type is {\tt I}.
+The key difference
 between {\tt ind} and a standard eliminator is that all branches for
 each constructor of the encoded type are packaged into a single branch
 {\tt pcon}. In order to prove that {\tt P} holds for any
 {\tt μ I D i}, you get all constructors and all of their
 arguments in {\tt xs}, along with all inductive
-hypotheses {\tt ihs} occurring as an argument to any constructor.
+hypotheses {\tt ihs} for any recursive constructor arguments.
 
 \newpage
 
