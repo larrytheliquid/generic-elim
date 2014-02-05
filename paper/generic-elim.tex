@@ -69,7 +69,7 @@ Generic programming; dependent types; descriptions; eliminators.
 
 Descriptions make datatype definitions first class values in a
 dependent type theory. This has several desirable consequences, such as the
-ability to perform generic programming~[levitation, dagand thesis, ornaments]
+ability to perform generic programming~[TODO cite levitation, dagand thesis, ornaments]
 over described types, as well as decreasing the number of constructs in the
 metatheory via levitation. Any type represented as a description can
 be eliminated with {\tt ind}, which resembles a fold (or catamorphism) but
@@ -155,6 +155,29 @@ For example, \citep{TODO} translates
 and \citep{TODO} translates dependent pattern matching into
 eliminators. Rather than reinventing these algorithms to translate to
 {\tt ind}, we can instead directly reuse them thanks to {\tt elim}.
+
+\section{Background}
+\label{sec:background}
+
+We will begin with a review of the framework used to encode datatypes
+via descriptions. In the introduction we mentioned that there are
+several ways to define the datatype of descriptions {\tt Desc}, and
+several ways to encode datatypes using descriptions. For simplicity,
+in this paper we use the encoding by McBride~\citep{TODO}. The related
+work in Section \ref{sec:related-work} includes some alternative
+encodings.
+
+\section{Related Work}
+\label{sec:related-work}
+
+One alternative {\tt Desc} definition is Dagand's~\citep{TODO}, which
+allows datatypes to be defined as computations over their indices.
+In this paper a sum of datatypes, representing multiple construtors,
+is encoded as a dependent pair whose first index is a list of choices
+of constructor names. An alternative way to encode datatypes is to
+support sum types directly in descriptions and use those rather than
+their isomorphic dependent pair equivalents. Foveran~\citep{TODO} is
+an example of a language that encoded sum types directly.
 
 \bibliographystyle{abbrvnat}
 \bibliography{generic-elim}
