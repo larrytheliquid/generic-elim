@@ -2,7 +2,34 @@
 
 \usepackage{todonotes}
 \usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{comment}
 \usepackage{url}
+\usepackage{bbm}
+\usepackage[greek,english]{babel}
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc}
+\usepackage{autofe}
+\usepackage{stmaryrd}
+\usepackage{enumitem}
+
+\DeclareUnicodeCharacter{8988}{\ensuremath{\ulcorner}}
+\DeclareUnicodeCharacter{8989}{\ensuremath{\urcorner}}
+\DeclareUnicodeCharacter{8803}{\ensuremath{\overline{\equiv}}}
+\DeclareUnicodeCharacter{8759}{\ensuremath{\colon\colon}}
+\DeclareUnicodeCharacter{12314}{\ensuremath{\llbracket}}
+\DeclareUnicodeCharacter{12315}{\ensuremath{\rrbracket}}
+\DeclareUnicodeCharacter{10214}{\ensuremath{\llbracket}}
+\DeclareUnicodeCharacter{10215}{\ensuremath{\rrbracket}}
+\DeclareUnicodeCharacter{8614}{\ensuremath{\mapsto}}
+\DeclareUnicodeCharacter{8799}{\ensuremath{\stackrel{?}{=}}}
+
+\DeclareUnicodeCharacter{7496}{\ensuremath{^{d}}}
+
+\usepackage{fancyvrb}
+
+\usepackage[labelfont=bf]{caption}
 
 \begin{document}
 
@@ -47,27 +74,84 @@ over described types, as well as decreasing the number of constructs in the
 metatheory via levitation. Any type represented as a description can
 be eliminated with {\tt ind}, which resembles a fold (or catamorphism) but
 over indexed type families. Definitions written with {\tt ind} are
-verbose but follow a recognizable pattern (Section ~\ref{TODO}). 
+verbose but follow a recognizable pattern (Section \ref{TODO}). 
 On the other hand, definitions written with {\it eliminators} (or
-induction principles) are shorter and more familiar to type theorists.
+induction principles) are shorter and more common amongst type
+theorists.
 
-For example, the following eliminator of vectors has familiar
-components. It consists of the motive argument and branches for each
-vector constructor.
+Now let's look at the type of {\tt ind}. Think of it almost like a standard
+eliminator that has been parameterized over any description {\tt D} of a type. The
+motive {\tt P} is indexed over the type family {\tt μ I D i}, which is
+the datatype that description {\tt D} represents. The key difference
+between {\tt ind} and a standard eliminator is that all branches for
+each constructor of the encoded type are packaged into a single branch
+{\tt pcon}. In order to prove that {\tt P} holds for any
+{\tt μ I D i}, you get all constructors and all of their
+arguments in {\tt xs}, along with all inductive
+hypotheses {\tt ihs} occurring as an argument to any constructor.
 
-Additionally, many existing algorithms already translate to
-eliminators. For example, to prove termination of Coq's fix or
-dependent pattern matching. Rather than adapting such algorithms to
-translate to {\tt ind}, we instead provide a generic eliminator {\tt elim} for
-any datatype encoded by a description. Furthermore, {\tt elim} can be
-defined in terms of {\tt ind}, making it another instance of generic
-programming internal to the existing type theory.
-Furthermore, a user writing a definition with {\tt ind} must be familiar
-with the particular way we have chosen to encode a `Desc`ription as a
-type. In contrast, users already familiar with eliminators need not
-understand how descriptions work to be able to program with types
-encoded with them [could contrast desc with Sum and desc with Σ Fin
-here]. 
+\newpage
+
+\begin{verbatim}
+ind :
+  (I : Set)
+  (D : Desc I)
+  (P : (i : I) → μ I D i → Set)
+  (pcon : (i : I) (xs : El I D X i)
+    (ihs : Hyps I D X P i xs) → P i (con xs))
+  (i : I) (x : μ I D i) → P i x
+\end{verbatim}
+
+Function definitions written with {\tt ind} are verbose
+because they need to unpack all of the data supplied by {\tt pcon}.
+Worse still, there are several ways to define the datatype of
+descriptions {\tt Desc}, and several ways to encode datatypes once a
+particular definition of {\tt Desc} has been chosen. This means that a
+user wishing to program with datatypes encoded by descriptions must be
+aware of how the encodings get interpreted so that they may
+appropriately unpack data when writing functions with {\tt ind}.
+
+For example, if we partially apply {\tt ind} to a description of a
+vector of booleans {\tt ind ℕ (VecD Bool)} then the type of the
+resulting expression depends both on how we defined {\tt Desc} and how
+we encoded vectors as a description {\tt VecD}.
+
+Rather than making the user learn our data format and suffer the
+consequences of unpacking encoded data, our {\bf primary contribution} is
+the definition of a {\it generic} eliminator {\tt elim}!
+It assumes a particular way of encoding
+datatypes via descriptions, and partial application of such a
+description to {\tt elim} results in the expected type of eliminator.
+For example, partial application of our previous example to
+{\tt elim} results in the following type.
+
+\begin{verbatim}
+elim ℕ (VecD Bool) :
+  (P : (n : ℕ) → Vec Bool n → Set)
+  (pnil : P zero nil)
+  (pcons : (n : ℕ) (x : Bool) (xs : Vec Bool n)
+    → P n xs → P (suc n) (cons n x xs))
+  (n : ℕ)
+  (xs : Vec Bool n)
+  → P n bs
+\end{verbatim}
+
+Our {\tt elim} function can be defined in terms of
+{\tt ind}, making it another example of generic programming made
+possible by descriptions.
+Note that we are not generating specialized eliminators like
+{\tt elimVec} à la {\sc Coq}, but instead have a single generic
+{\tt elim} function that can be applied to any description of a
+datatype.
+Because this definition is internal to the
+existing type theory, no additional metatheory needs to be proven.
+Furthermore, there are several existing algorithms already defined in
+terms of eliminators that can now be reused.
+For example, \citep{TODO} translates
+{\sc Coq}~\citep{TODO} {\tt Fix}-based definitions into eliminators,
+and \citep{TODO} translates dependent pattern matching into
+eliminators. Rather than reinventing these algorithms to translate to
+{\tt ind}, we can instead directly reuse them thanks to {\tt elim}.
 
 \bibliographystyle{abbrvnat}
 \bibliography{generic-elim}

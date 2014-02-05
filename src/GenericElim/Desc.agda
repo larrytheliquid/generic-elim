@@ -127,7 +127,7 @@ UncurriedHyps : (I : Set) (D : Desc I) (X : ISet I)
   (cn : UncurriedEl I D X)
   → Set
 UncurriedHyps I D X P cn =
-  (i : I) (xs : El I D X i) → Hyps I D X P i xs → P i (cn xs)
+  (i : I) (xs : El I D X i) (ihs : Hyps I D X P i xs) → P i (cn xs)
 
 CurriedHyps : (I : Set) (D : Desc I) (X : ISet I)
   (P : (i : I) → X i → Set)
