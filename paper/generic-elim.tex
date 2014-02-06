@@ -74,12 +74,11 @@ ability to perform generic programming~\citep{Chapman:2010:GAL:1932681.1863547,m
 over described types, as well as decreasing the number of constructs in the
 metatheory via levitation~\citep{Chapman:2010:GAL:1932681.1863547,dagand:phd}. 
 Any type represented as a description can
-be eliminated with {\tt ind}, which resembles a fold (or catamorphism) but
-over indexed type families. Definitions written with {\tt ind} are
+be eliminated with its elimination rule -- called {\tt ind} -- which resembles a fold (or catamorphism) but
+over indexed type families. Functions written with {\tt ind} are
 verbose but follow a recognizable pattern (Section \ref{TODO}). 
-On the other hand, definitions written with {\it eliminators} (or
-induction principles) are shorter and more common amongst type
-theorists.
+On the other hand, functions written with standard {\it eliminators} (or
+induction principles) are shorter and more widely understood.
 
 Now let's look at the type of {\tt ind}. Think of it almost like a standard
 eliminator that has been parameterized over any description {\tt D} of a type. The
@@ -156,7 +155,7 @@ and \citet{Goguen06eliminatingdependent} and
 \citet{McBride:2000:EM:646540.759262}
 translate dependent pattern matching into
 eliminators. Rather than reinventing these algorithms to translate to
-{\tt ind}, we can instead directly reuse them thanks to {\tt elim}.
+{\tt ind}, we can instead directly reuse them with our derived {\tt elim}.
 
 \section{Background}
 \label{sec:background}
