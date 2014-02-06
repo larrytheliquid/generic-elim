@@ -136,9 +136,7 @@ elim ℕ (VecD Bool) :
   (pnil : P zero nil)
   (pcons : (n : ℕ) (x : Bool) (xs : Vec Bool n)
     → P n xs → P (suc n) (cons n x xs))
-  (n : ℕ)
-  (xs : Vec Bool n)
-  → P n bs
+  (n : ℕ) (xs : Vec Bool n) → P n xs
 \end{verbatim}
 
 Our {\tt elim} function can be defined in terms of
@@ -170,6 +168,10 @@ several ways to encode datatypes using descriptions. For simplicity,
 in this paper we use the encoding by \citet{mcbride2010ornamental}. The related
 work in Section \ref{sec:related-work} includes some alternative
 encodings.
+
+\subsection{Descriptions}
+
+
 
 \section{Related Work}
 \label{sec:related-work}
