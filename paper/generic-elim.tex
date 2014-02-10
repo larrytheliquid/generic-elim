@@ -170,7 +170,17 @@ encodings.
 
 \subsection{Descriptions}
 
+The datatype {\tt Desc} of descriptions is used to represent
+user-defined datatype definitions. The datatypes that are captured by
+descriptions are strictly-positive indexed families of inductively
+defined types.
 
+\begin{verbatim}
+data Desc (I : Set) : Set₁ where
+  End : (i : I) → Desc I
+  Rec : (i : I) (D : Desc I) → Desc I
+  Arg : (A : Set) (B : A → Desc I) → Desc I
+\end{verbatim}
 
 \section{Related Work}
 \label{sec:related-work}
