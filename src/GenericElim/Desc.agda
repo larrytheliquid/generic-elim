@@ -29,9 +29,9 @@ Cases : (E : Enum) (P : Tag E → Set) → Set
 Cases [] P = ⊤
 Cases (l ∷ E) P = P here × Cases E λ t → P (there t)
 
-case : (E : Enum) (P : Tag E → Set) (cs : Cases E P) (t : Tag E) → P t
-case (l ∷ E) P (c , cs) here = c
-case (l ∷ E) P (c , cs) (there t) = case E (λ t → P (there t)) cs t
+case : {E : Enum} (P : Tag E → Set) (cs : Cases E P) (t : Tag E) → P t
+case P (c , cs) here = c
+case P (c , cs) (there t) = case (λ t → P (there t)) cs t
 
 UncurriedCases : (E : Enum) (P : Tag E → Set) (X : Set)
   → Set
@@ -81,7 +81,7 @@ TagDesc : (I : Set) → Set
 TagDesc I = Σ Enum (λ E → Cases E (λ _ → Desc I))
 
 toCase : {I : Set} (E,cs : TagDesc I) → Tag (proj₁ E,cs) → Desc I
-toCase {I} (E , cs) = case E (λ _ → Desc I) cs
+toCase {I} (E , cs) = case (λ _ → Desc I) cs
 
 toDesc : {I : Set} → TagDesc I → Desc I
 toDesc (E , cs) = Arg (Tag E) (toCase (E , cs))
@@ -229,7 +229,7 @@ module NoLevitation where
       E = proj₁ TD
       Cs = toCase TD
       Q = λ t → CurriedHyps (Cs t) (μ D) P (λ xs → con (t , xs))
-      p = case E Q cs
+      p = case Q cs
     in ind2 D P p i x
   
   elim2 :
@@ -396,7 +396,7 @@ module NoLevitation where
   
       add : ℕ tt → ℕ tt → ℕ tt
       add = ind ℕD (λ _ _ → ℕ tt → ℕ tt)
-        (λ u t,c → case ℕT
+        (λ u t,c → case
           (λ t → (c : El (ℕCs t) ℕ u)
                  (ih : Hyps ℕD ℕ (λ u n → ℕ u → ℕ u) u (t , c))
                  → ℕ u → ℕ u
@@ -412,7 +412,7 @@ module NoLevitation where
       
       mult : ℕ tt → ℕ tt → ℕ tt
       mult = ind ℕD (λ _ _ → ℕ tt → ℕ tt)
-        (λ u t,c → case ℕT
+        (λ u t,c → case
           (λ t → (c : El (ℕCs t) ℕ u)
                  (ih : Hyps ℕD ℕ (λ u n → ℕ u → ℕ u) u (t , c))
                  → ℕ u → ℕ u
@@ -428,7 +428,7 @@ module NoLevitation where
       
       append : (A : Set) (m : ℕ tt) (xs : Vec A m) (n : ℕ tt) (ys : Vec A n) → Vec A (add m n) 
       append A = ind (VecD A) (λ m xs → (n : ℕ tt) (ys : Vec A n) → Vec A (add m n))
-        (λ m t,c → case VecT
+        (λ m t,c → case
           (λ t → (c : El (VecCs A t) (Vec A) m)
                  (ih : Hyps (VecD A) (Vec A) (λ m xs → (n : ℕ tt) (ys : Vec A n) → Vec A (add m n)) m (t , c))
                  (n : ℕ tt) (ys : Vec A n) → Vec A (add m n)
@@ -450,7 +450,7 @@ module NoLevitation where
       
       concat : (A : Set) (m n : ℕ tt) (xss : Vec (Vec A m) n) → Vec A (mult n m)
       concat A m = ind (VecD (Vec A m)) (λ n xss → Vec A (mult n m))
-        (λ n t,c → case VecT
+        (λ n t,c → case
           (λ t → (c : El (VecCs (Vec A m) t) (Vec (Vec A m)) n)
                  (ih : Hyps (VecD (Vec A m)) (Vec (Vec A m)) (λ n xss → Vec A (mult n m)) n (t , c))
                  → Vec A (mult n m)
@@ -480,7 +480,7 @@ module NoLevitation where
         (n : ℕ tt)
         → P n
       elimℕ P pzero psuc = ind ℕD (λ u n → P n)
-        (λ u t,c → case ℕT
+        (λ u t,c → case
           (λ t → (c : El (ℕCs t) ℕ u)
                  (ih : Hyps ℕD ℕ (λ u n → P n) u (t , c))
                  → P (con (t , c))
@@ -509,7 +509,7 @@ module NoLevitation where
         (xs : Vec A n)
         → P n xs
       elimVec A P pnil pcons = ind (VecD A) (λ n xs → P n xs)
-        (λ n t,c → case VecT
+        (λ n t,c → case
           (λ t → (c : El (VecCs A t) (Vec A) n)
                  (ih : Hyps (VecD A) (Vec A) (λ n xs → P n xs) n (t , c))
                  → P n (con (t , c))
@@ -591,14 +591,14 @@ module Levitation where
 CasesD : (I : Set) (E : Enum) → Set
 CasesD I E = Cases E (λ _ → Desc I)
 
-Args : {I : Set} {E : Enum} (cs : CasesD I E) (t : Tag E) → Desc I
-Args = case _ (λ _ → Desc _)
+caseD : {I : Set} {E : Enum} (cs : CasesD I E) (t : Tag E) → Desc I
+caseD = case (λ _ → Desc _)
 
 data μ {I : Set} (E : Enum) (cs : CasesD I E) : I → Set where
-  con : (t : Tag E) → UncurriedEl (Args cs t) (μ E cs)
+  con : (t : Tag E) → UncurriedEl (caseD cs t) (μ E cs)
 
--- con2 : {I : Set (E : Enum) (cs : CasesD I E) (t : Tag E)
---   → CurriedEl I (Args I E t cs) (μ I E cs)
--- con2 I E cs t = curryEl I (Args I E t cs) (μ I E cs) (con t)
+con2 : {I : Set} {E : Enum} (cs : CasesD I E) (t : Tag E)
+  → CurriedEl (caseD cs t) (μ E cs)
+con2 cs t = curryEl (caseD cs t) (μ _ cs) (con t)
 
 ----------------------------------------------------------------------
