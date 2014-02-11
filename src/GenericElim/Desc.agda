@@ -25,14 +25,13 @@ data Tag : Enum → Set where
   here : ∀{l E} → Tag (l ∷ E)
   there : ∀{l E} → Tag E → Tag (l ∷ E)
 
-infixr 5 _∷_
-data Cases : (E : Enum) (P : Tag E → Set) → Set where
-  [] : ∀{P} → Cases [] P
-  _∷_ : ∀{l E P} → P here → Cases E (λ t → P (there t)) → Cases (l ∷ E) P
+Cases : (E : Enum) (P : Tag E → Set) → Set
+Cases [] P = ⊤
+Cases (l ∷ E) P = P here × Cases E (λ t → P (there t))
 
 case : {E : Enum} (P : Tag E → Set) (cs : Cases E P) (t : Tag E) → P t
-case P (c ∷ cs) here = c
-case P (c ∷ cs) (there t) = case (λ t → P (there t)) cs t
+case P (c , cs) here = c
+case P (c , cs) (there t) = case (λ t → P (there t)) cs t
 
 UncurriedCases : (E : Enum) (P : Tag E → Set) (X : Set)
   → Set
@@ -45,13 +44,13 @@ CurriedCases (l ∷ E) P X = P here → CurriedCases E (λ t → P (there t)) X
 
 curryCases : {E : Enum} {P : Tag E → Set} {X : Set}
   (f : UncurriedCases E P X) → CurriedCases E P X
-curryCases {[]} f = f []
-curryCases {l ∷ E} f = λ c → curryCases (λ cs → f (c ∷ cs))
+curryCases {[]} f = f tt
+curryCases {l ∷ E} f = λ c → curryCases (λ cs → f (c , cs))
 
 uncurryCases : {E : Enum} {P : Tag E → Set} {X : Set}
   (f : CurriedCases E P X) → UncurriedCases E P X
-uncurryCases {[]} x [] = x
-uncurryCases {l ∷ E} f (c ∷ cs) = uncurryCases (f c) cs
+uncurryCases {[]} x tt = x
+uncurryCases {l ∷ E} f (c , cs) = uncurryCases (f c) cs
 
 ----------------------------------------------------------------------
 
@@ -250,11 +249,11 @@ module NoLevitation where
   
   module Sugared where
   
-    data ℕT : Set where `zero `suc : ℕT
-    data VecT : Set where `nil `cons : VecT
+    data ℕE : Set where `zero `suc : ℕE
+    data VecE : Set where `nil `cons : VecE
   
     ℕD : Desc ⊤
-    ℕD = Arg ℕT λ
+    ℕD = Arg ℕE λ
       { `zero → End tt
       ; `suc → Rec tt (End tt)
       }
@@ -269,7 +268,7 @@ module NoLevitation where
     suc n = con (`suc , n , refl)
   
     VecD : (A : Set) → Desc (ℕ tt)
-    VecD A = Arg VecT λ
+    VecD A = Arg VecE λ
       { `nil  → End zero
       ; `cons → Arg (ℕ tt) λ n → Arg A λ _ → Rec n (End (suc n))
       }
@@ -323,23 +322,23 @@ module NoLevitation where
   
   module Desugared where
   
-    ℕT : Enum
-    ℕT = "zero" ∷ "suc" ∷ []
+    ℕE : Enum
+    ℕE = "zero" ∷ "suc" ∷ []
     
-    VecT : Enum
-    VecT = "nil" ∷ "cons" ∷ []
+    VecE : Enum
+    VecE = "nil" ∷ "cons" ∷ []
   
-    ℕTD : TagDesc ⊤
-    ℕTD = ℕT ,
-        End tt
-      ∷ Rec tt (End tt)
-      ∷ []
+    ℕED : TagDesc ⊤
+    ℕED = ℕE
+      , End tt
+      , Rec tt (End tt)
+      , tt
     
-    ℕCs : Tag ℕT → Desc ⊤
-    ℕCs = toCase ℕTD
+    ℕCs : Tag ℕE → Desc ⊤
+    ℕCs = toCase ℕED
     
     ℕD : Desc ⊤
-    ℕD = toDesc ℕTD
+    ℕD = toDesc ℕED
     
     ℕ : ⊤ → Set
     ℕ = μ ℕD
@@ -356,17 +355,17 @@ module NoLevitation where
     suc2 : ℕ tt → ℕ tt
     suc2 = con2 ℕD (there here)
   
-    VecTD : (A : Set) → TagDesc (ℕ tt)
-    VecTD A = VecT ,
-        End zero
-      ∷ Arg (ℕ tt) (λ n → Arg A λ _ → Rec n (End (suc n)))
-      ∷ []
+    VecED : (A : Set) → TagDesc (ℕ tt)
+    VecED A = VecE
+      , End zero
+      , Arg (ℕ tt) (λ n → Arg A λ _ → Rec n (End (suc n)))
+      , tt
   
-    VecCs : (A : Set) → Tag VecT → Desc (ℕ tt)
-    VecCs A = toCase (VecTD A)
+    VecCs : (A : Set) → Tag VecE → Desc (ℕ tt)
+    VecCs A = toCase (VecED A)
     
     VecD : (A : Set) → Desc (ℕ tt)
-    VecD A = toDesc (VecTD A)
+    VecD A = toDesc (VecED A)
     
     Vec : (A : Set) (n : ℕ tt) → Set
     Vec A n = μ (VecD A) n
@@ -395,8 +394,8 @@ module NoLevitation where
                  → ℕ u → ℕ u
           )
           ( (λ q ih n → n)
-          ∷ (λ m,q ih,tt n → suc (proj₁ ih,tt n))
-          ∷ []
+          , (λ m,q ih,tt n → suc (proj₁ ih,tt n))
+          , tt
           )
           (proj₁ t,c)
           (proj₂ t,c)
@@ -411,8 +410,8 @@ module NoLevitation where
                  → ℕ u → ℕ u
           )
           ( (λ q ih n → zero)
-          ∷ (λ m,q ih,tt n → add n (proj₁ ih,tt n))
-          ∷ []
+          , (λ m,q ih,tt n → add n (proj₁ ih,tt n))
+          , tt
           )
           (proj₁ t,c)
           (proj₂ t,c)
@@ -427,7 +426,7 @@ module NoLevitation where
                  (n : ℕ tt) (ys : Vec A n) → Vec A (add m n)
           )
           ( (λ q ih n ys → subst (λ m → Vec A (add m n)) q ys)
-          ∷ (λ m',x,xs,q ih,tt n ys →
+          , (λ m',x,xs,q ih,tt n ys →
               let m' = proj₁ m',x,xs,q
                   x = proj₁ (proj₂ m',x,xs,q)
                   q = proj₂ (proj₂ (proj₂ m',x,xs,q))
@@ -435,7 +434,7 @@ module NoLevitation where
               in
               subst (λ m → Vec A (add m n)) q (cons A (add m' n) x (ih n ys))
             )
-          ∷ []
+          , tt
           )
           (proj₁ t,c)
           (proj₂ t,c)
@@ -449,7 +448,7 @@ module NoLevitation where
                  → Vec A (mult n m)
           )
           ( (λ q ih → subst (λ n → Vec A (mult n m)) q (nil A))
-          ∷ (λ n',xs,xss,q ih,tt →
+          , (λ n',xs,xss,q ih,tt →
               let n' = proj₁ n',xs,xss,q
                   xs = proj₁ (proj₂ n',xs,xss,q)
                   q = proj₂ (proj₂ (proj₂ n',xs,xss,q))
@@ -457,7 +456,7 @@ module NoLevitation where
               in
               subst (λ n → Vec A (mult n m)) q (append A m xs (mult n' m) ih)
             )
-          ∷ []
+          , tt
           )
           (proj₁ t,c)
           (proj₂ t,c)
@@ -483,12 +482,12 @@ module NoLevitation where
                 pzero
                 u q
             )
-          ∷ (λ n,q ih,tt →
+          , (λ n,q ih,tt →
               elimEq ⊤ tt (λ u q → P (con (there here , proj₁ n,q , q)))
                 (psuc (proj₁ n,q) (proj₁ ih,tt))
                 u (proj₂ n,q)
             )
-          ∷ []
+          , tt
           )
           (proj₁ t,c)
           (proj₂ t,c)
@@ -512,7 +511,7 @@ module NoLevitation where
                 pnil
                 n q
             )
-          ∷ (λ n',x,xs,q ih,tt →
+          , (λ n',x,xs,q ih,tt →
               let n' = proj₁ n',x,xs,q
                   x = proj₁ (proj₂ n',x,xs,q)
                   xs = proj₁ (proj₂ (proj₂ n',x,xs,q))
@@ -523,7 +522,7 @@ module NoLevitation where
                 (pcons n' x xs ih )
                 n q
             )
-          ∷ []
+          , tt
           )
           (proj₁ t,c)
           (proj₂ t,c)
@@ -556,24 +555,24 @@ module NoLevitation where
     module GenericEliminator where
   
       add : ℕ tt → ℕ tt → ℕ tt
-      add = elim2 ℕTD _
+      add = elim2 ℕED _
         (λ n → n)
         (λ m ih n → suc (ih n))
         tt
   
       mult : ℕ tt → ℕ tt → ℕ tt
-      mult = elim2 ℕTD _
+      mult = elim2 ℕED _
         (λ n → zero)
         (λ m ih n → add n (ih n))
         tt
   
       append : (A : Set) (m : ℕ tt) (xs : Vec A m) (n : ℕ tt) (ys : Vec A n) → Vec A (add m n)
-      append A = elim2 (VecTD A) _
+      append A = elim2 (VecED A) _
         (λ n ys → ys)
         (λ m x xs ih n ys → cons A (add m n) x (ih n ys))
   
       concat : (A : Set) (m n : ℕ tt) (xss : Vec (Vec A m) n) → Vec A (mult n m)
-      concat A m = elim2 (VecTD (Vec A m)) _
+      concat A m = elim2 (VecED (Vec A m)) _
         (nil A)
         (λ n xs xss ih → append A m xs (mult n m) ih)
   
@@ -587,12 +586,12 @@ module Levitation where
   caseD : {I : Set} {E : Enum} (cs : CasesD I E) (t : Tag E) → Desc I
   caseD = case (λ _ → Desc _)
   
-  data μ {I : Set} {E : Enum} (cs : CasesD I E) : I → Set where
-    con : (t : Tag E) → UncurriedEl (caseD cs t) (μ cs)
+  data μ {I : Set} (E : Enum) (cs : CasesD I E) : I → Set where
+    con : (t : Tag E) → UncurriedEl (caseD cs t) (μ E cs)
   
   con2 : {I : Set} {E : Enum} (cs : CasesD I E) (t : Tag E)
-    → CurriedEl (caseD cs t) (μ cs)
-  con2 cs t = curryEl (caseD cs t) (μ cs) (con t)
+    → CurriedEl (caseD cs t) (μ E cs)
+  con2 cs t = curryEl (caseD cs t) (μ _ cs) (con t)
   
 ----------------------------------------------------------------------
   
@@ -600,22 +599,22 @@ module Levitation where
     {I : Set}
     {E : Enum}
     (cs : CasesD I E)
-    (P : (i : I) → μ cs i → Set)
-    (pcon : (t : Tag E) → UncurriedHyps (caseD cs t) (μ cs) P (con t))
+    (P : (i : I) → μ E cs i → Set)
+    (pcon : (t : Tag E) → UncurriedHyps (caseD cs t) (μ E cs) P (con t))
     (i : I)
-    (x : μ cs i)
+    (x : μ E cs i)
     → P i x
   
   hyps :
     {I : Set}
     {E : Enum}
     (cs : CasesD I E)
-    (P : (i : I) → μ cs i → Set)
-    (pcon : (t : Tag E) → UncurriedHyps (caseD cs t) (μ cs) P (con t))
+    (P : (i : I) → μ E cs i → Set)
+    (pcon : (t : Tag E) → UncurriedHyps (caseD cs t) (μ E cs) P (con t))
     (D : Desc I)
     (i : I)
-    (xs : El D (μ cs) i)
-    → Hyps D (μ cs) P i xs
+    (xs : El D (μ E cs) i)
+    → Hyps D (μ E cs) P i xs
   
   ind cs P pcon i (con t as) = pcon t i as (hyps cs P pcon (caseD cs t) i as)
   
@@ -630,54 +629,54 @@ module Levitation where
     {I : Set}
     {E : Enum}
     (cs : CasesD I E)
-    (P : (i : I) → μ cs i → Set)
-    (pcon : (t : Tag E) → CurriedHyps (caseD cs t) (μ cs) P (con t))
+    (P : (i : I) → μ E cs i → Set)
+    (pcon : (t : Tag E) → CurriedHyps (caseD cs t) (μ E cs) P (con t))
     (i : I)
-    (x : μ cs i)
+    (x : μ E cs i)
     → P i x
   ind2 cs P pcon i x =
-    ind cs P (λ t → uncurryHyps (caseD cs t) (μ cs) P (con t) (pcon t)) i x
+    ind cs P (λ t → uncurryHyps (caseD cs t) (μ _ cs) P (con t) (pcon t)) i x
   
   elim :
     {I : Set}
     {E : Enum}
     (cs : CasesD I E)
-    (P : (i : I) → μ cs i → Set)
+    (P : (i : I) → μ E cs i → Set)
     → let
-      Q = λ t → CurriedHyps (caseD cs t) (μ cs) P (con t)
-      X = (i : I) (x : μ cs i) → P i x
+      Q = λ t → CurriedHyps (caseD cs t) (μ E cs) P (con t)
+      X = (i : I) (x : μ E cs i) → P i x
     in UncurriedCases E Q X
   elim cs P ds i x =
-    let Q = λ t → CurriedHyps (caseD cs t) (μ cs) P (con t)
+    let Q = λ t → CurriedHyps (caseD cs t) (μ _ cs) P (con t)
     in ind2 cs P (case Q ds) i x
   
   elim2 :
     {I : Set}
     {E : Enum}
     (cs : CasesD I E)
-    (P : (i : I) → μ cs i → Set)
+    (P : (i : I) → μ E cs i → Set)
     → let
-      Q = λ t → CurriedHyps (caseD cs t) (μ cs) P (con t)
-      X = (i : I) (x : μ cs i) → P i x
+      Q = λ t → CurriedHyps (caseD cs t) (μ E cs) P (con t)
+      X = (i : I) (x : μ E cs i) → P i x
     in CurriedCases E Q X
   elim2 cs P = curryCases (elim cs P)
   
 ----------------------------------------------------------------------
   
-  ℕT : Enum
-  ℕT = "zero" ∷ "suc" ∷ []
+  ℕE : Enum
+  ℕE = "zero" ∷ "suc" ∷ []
   
-  VecT : Enum
-  VecT = "nil" ∷ "cons" ∷ []
+  VecE : Enum
+  VecE = "nil" ∷ "cons" ∷ []
   
-  ℕDs : CasesD ⊤ ℕT
+  ℕDs : CasesD ⊤ ℕE
   ℕDs =
       End tt
-    ∷ Rec tt (End tt)
-    ∷ []
+    , Rec tt (End tt)
+    , tt
   
   ℕ : ⊤ → Set
-  ℕ = μ ℕDs
+  ℕ = μ ℕE ℕDs
   
   zero : ℕ tt
   zero = con here refl
@@ -691,14 +690,14 @@ module Levitation where
   suc2 : ℕ tt → ℕ tt
   suc2 = con2 ℕDs (there here)
   
-  VecDs : (A : Set) → CasesD (ℕ tt) VecT
+  VecDs : (A : Set) → CasesD (ℕ tt) VecE
   VecDs A =
       End zero
-    ∷ Arg (ℕ tt) (λ n → Arg A λ _ → Rec n (End (suc n)))
-    ∷ []
+    , Arg (ℕ tt) (λ n → Arg A λ _ → Rec n (End (suc n)))
+    , tt
   
   Vec : (A : Set) (n : ℕ tt) → Set
-  Vec A n = μ (VecDs A) n
+  Vec A n = μ VecE (VecDs A) n
   
   nil : (A : Set) → Vec A zero
   nil A = con here refl
