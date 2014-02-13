@@ -77,11 +77,19 @@ Hyps (RecFun A B D) X P i (f , xs) = ((a : A) → P (B a) (f a)) × Hyps D X P i
 
 ----------------------------------------------------------------------
 
+BranchesD : (I : Set) (E : Enum) → Set
+BranchesD I E = Branches E (λ _ → Desc I)
+
+caseD : {I : Set} {E : Enum} (cs : BranchesD I E) (t : Tag E) → Desc I
+caseD = case (λ _ → Desc _)
+
+----------------------------------------------------------------------
+
 TagDesc : (I : Set) → Set
-TagDesc I = Σ Enum (λ E → Branches E (λ _ → Desc I))
+TagDesc I = Σ Enum (BranchesD I)
 
 toCase : {I : Set} (E,cs : TagDesc I) → Tag (proj₁ E,cs) → Desc I
-toCase (E , cs) = case (λ _ → Desc _) cs
+toCase (E , cs) = caseD cs
 
 toDesc : {I : Set} → TagDesc I → Desc I
 toDesc (E , cs) = Arg (Tag E) (toCase (E , cs))
@@ -579,12 +587,6 @@ module NoLevitation where
 ----------------------------------------------------------------------
 
 module Levitation where
-
-  BranchesD : (I : Set) (E : Enum) → Set
-  BranchesD I E = Branches E (λ _ → Desc I)
-  
-  caseD : {I : Set} {E : Enum} (cs : BranchesD I E) (t : Tag E) → Desc I
-  caseD = case (λ _ → Desc _)
   
   data μ {I : Set} (E : Enum) (cs : BranchesD I E) : I → Set where
     con : (t : Tag E) → UncurriedEl (caseD cs t) (μ E cs)
