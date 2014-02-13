@@ -161,25 +161,37 @@ eliminators. Rather than reinventing these algorithms to translate to
 \label{sec:background}
 
 We will begin with a review of the framework used to encode datatypes
-via descriptions. In the introduction we mentioned that there are
-several ways to define the datatype of descriptions {\tt Desc}, and
-several ways to encode datatypes using descriptions. For simplicity,
-in this paper we use the encoding by \citet{mcbride2010ornamental}. The related
-work in Section \ref{sec:related-work} includes some alternative
-encodings.
+via descriptions. There are
+several ways to define the datatype of descriptions {\tt Desc}. 
+For simplicity, in this paper we use the encoding by
+\citet{mcbride2010ornamental}.
 
 \subsection{Descriptions}
 
 The datatype {\tt Desc} of descriptions is used to represent
-user-defined datatype definitions. The datatypes that are captured by
-descriptions are strictly-positive indexed families of inductively
-defined types.
+user-defined definitions of strictly-positive indexed
+families of inductively defined types.
+{\tt Desc} is paramterized by 
+a type {\tt I}, the index of the encoded type family.
+
+Let's first think about how to use {\tt Desc} to encode a single
+constructor of an indexed type family.
+A constructor is a sequence of
+arguments that subsequent arguments may depend on, along with
+recursive arguments at some type indices, and ends with some type index.
+Respectively, {\tt Arg}, {\tt Rec}, and {\tt End} allow you to encode
+a dependent argument, a recursive argument at some index, and ending the
+constructor at some index.
 
 \begin{verbatim}
 data Desc (I : Set) : Set₁ where
   End : (i : I) → Desc I
   Rec : (i : I) (D : Desc I) → Desc I
   Arg : (A : Set) (B : A → Desc I) → Desc I
+\end{verbatim}
+
+\begin{verbatim}
+
 \end{verbatim}
 
 \section{Related Work}
