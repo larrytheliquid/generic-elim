@@ -166,7 +166,7 @@ several ways to define the datatype of descriptions {\tt Desc}.
 For simplicity, in this paper we use the encoding by
 \citet{mcbride2010ornamental}.
 
-\subsection{Descriptions}
+\subsection{The Type of Descriptions}
 
 The datatype {\tt Desc} of descriptions is used to represent
 user-defined definitions of strictly-positive indexed
@@ -190,8 +190,50 @@ data Desc (I : Set) : Set₁ where
   Arg : (A : Set) (B : A → Desc I) → Desc I
 \end{verbatim}
 
-\begin{verbatim}
+\subsection{Describing a Single Constructor}
 
+For example, first recall the standard type of the
+constructor {\tt cons} of vectors.
+
+\begin{verbatim}
+cons : (n : ℕ) → A → Vec A n → Vec A (suc n)
+\end{verbatim}
+
+We can encode the type of this constructor as a description as
+follows. The definition is parameterized by the vector parameter
+type {\tt A}, and returns a description over natural numbers
+{\tt Desc ℕ} because the type we are encoding {\tt Vec}
+is indexed by natural numbers.
+
+\begin{verbatim}
+consD : (A : Set) → Desc ℕ
+consD A =
+  Arg ℕ (λ n → Arg A (λ _ → Rec n (End (suc n))))
+\end{verbatim}
+
+\subsection{Describing Multiple Constructors}
+
+The datatype {\tt Desc} can also be used to describe an entire
+datatype, consisting of descriptions of multiple constructors.
+This is achieved by making use of the isomorphism between disjoint
+sums and dependent pairs whose domain is some finite enumeration.
+
+A datatype with multiple constructors is represented by an
+{\tt Arg} description whose first argument is a datatype of tags
+-- one for each constructor -- and whose second argument is
+a function that returns a description for each constructor tag.
+
+\begin{verbatim}
+data VecT : Set where
+  nilT consT : VecT
+
+VecC : (A : Set) → VecT → Desc ℕ
+VecC A nilT = End zero
+VecC A consT =
+  Arg ℕ (λ n → Arg A (λ _ → Rec n (End (suc n))))
+
+VecD : (A : Set) → Desc ℕ
+VecD A = Arg VecT (VecC A)
 \end{verbatim}
 
 \section{Related Work}

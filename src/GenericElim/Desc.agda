@@ -257,46 +257,51 @@ module NoLevitation where
   
   module Sugared where
   
-    data ℕE : Set where `zero `suc : ℕE
-    data VecE : Set where `nil `cons : VecE
+    data ℕT : Set where zeroT sucT : ℕT
+    data VecT : Set where nilT consT : VecT
   
     ℕD : Desc ⊤
-    ℕD = Arg ℕE λ
-      { `zero → End tt
-      ; `suc → Rec tt (End tt)
+    ℕD = Arg ℕT λ
+      { zeroT → End tt
+      ; sucT → Rec tt (End tt)
       }
   
     ℕ : ⊤ → Set
     ℕ = μ ℕD
   
     zero : ℕ tt
-    zero = con (`zero , refl)
+    zero = con (zeroT , refl)
   
     suc : ℕ tt → ℕ tt
-    suc n = con (`suc , n , refl)
+    suc n = con (sucT , n , refl)
+
+    consD : (A : Set) → Desc (ℕ tt)
+    consD A = Arg (ℕ tt) (λ n → Arg A (λ _ → Rec n (End (suc n))))
+
+    VecC : (A : Set) → VecT → Desc (ℕ tt)
+    VecC A nilT = End zero
+    VecC A consT =
+      Arg (ℕ tt) (λ n → Arg A (λ _ → Rec n (End (suc n))))
   
     VecD : (A : Set) → Desc (ℕ tt)
-    VecD A = Arg VecE λ
-      { `nil  → End zero
-      ; `cons → Arg (ℕ tt) λ n → Arg A λ _ → Rec n (End (suc n))
-      }
+    VecD A = Arg VecT (VecC A)
   
     Vec : (A : Set) (n : ℕ tt) → Set
     Vec A n = μ (VecD A) n
   
     nil : (A : Set) → Vec A zero
-    nil A = con (`nil , refl)
+    nil A = con (nilT , refl)
   
     cons : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n) → Vec A (suc n)
-    cons A n x xs = con (`cons , n , x , xs , refl)
+    cons A n x xs = con (consT , n , x , xs , refl)
   
 ----------------------------------------------------------------------
   
     add : ℕ tt → ℕ tt → ℕ tt
     add = ind ℕD (λ _ _ → ℕ tt → ℕ tt)
       (λ
-        { tt (`zero , q) tt n → n
-        ; tt (`suc , m , q) (ih , tt) n → suc (ih n)
+        { tt (zeroT , q) tt n → n
+        ; tt (sucT , m , q) (ih , tt) n → suc (ih n)
         }
       )
       tt
@@ -304,8 +309,8 @@ module NoLevitation where
     mult : ℕ tt → ℕ tt → ℕ tt
     mult = ind ℕD (λ _ _ → ℕ tt → ℕ tt)
       (λ
-        { tt (`zero , q) tt n → zero
-        ; tt (`suc , m , q) (ih , tt) n → add n (ih n)
+        { tt (zeroT , q) tt n → zero
+        ; tt (sucT , m , q) (ih , tt) n → add n (ih n)
         }
       )
       tt
@@ -313,16 +318,16 @@ module NoLevitation where
     append : (A : Set) (m : ℕ tt) (xs : Vec A m) (n : ℕ tt) (ys : Vec A n) → Vec A (add m n) 
     append A = ind (VecD A) (λ m xs → (n : ℕ tt) (ys : Vec A n) → Vec A (add m n))
       (λ
-        { .(con (`zero , refl)) (`nil , refl) ih n ys → ys
-        ; .(con (`suc , m , refl)) (`cons , m , x , xs , refl) (ih , tt) n ys → cons A (add m n) x (ih n ys)
+        { .(con (zeroT , refl)) (nilT , refl) ih n ys → ys
+        ; .(con (sucT , m , refl)) (consT , m , x , xs , refl) (ih , tt) n ys → cons A (add m n) x (ih n ys)
         }
       )
   
     concat : (A : Set) (m n : ℕ tt) (xss : Vec (Vec A m) n) → Vec A (mult n m)
     concat A m = ind (VecD (Vec A m)) (λ n xss → Vec A (mult n m))
       (λ
-        { .(con (`zero , refl)) (`nil , refl) tt → nil A
-        ; .(con (`suc , n , refl)) (`cons , n , xs , xss , refl) (ih , tt) → append A m xs (mult n m) ih
+        { .(con (zeroT , refl)) (nilT , refl) tt → nil A
+        ; .(con (sucT , n , refl)) (consT , n , xs , xss , refl) (ih , tt) → append A m xs (mult n m) ih
         }
       )
   
@@ -330,23 +335,23 @@ module NoLevitation where
   
   module Desugared where
   
-    ℕE : Enum
-    ℕE = "zero" ∷ "suc" ∷ []
+    ℕT : Enum
+    ℕT = "zero" ∷ "suc" ∷ []
     
-    VecE : Enum
-    VecE = "nil" ∷ "cons" ∷ []
+    VecT : Enum
+    VecT = "nil" ∷ "cons" ∷ []
   
-    ℕED : TagDesc ⊤
-    ℕED = ℕE
+    ℕTD : TagDesc ⊤
+    ℕTD = ℕT
       , End tt
       , Rec tt (End tt)
       , tt
     
-    ℕCs : Tag ℕE → Desc ⊤
-    ℕCs = toCase ℕED
+    ℕCs : Tag ℕT → Desc ⊤
+    ℕCs = toCase ℕTD
     
     ℕD : Desc ⊤
-    ℕD = toDesc ℕED
+    ℕD = toDesc ℕTD
     
     ℕ : ⊤ → Set
     ℕ = μ ℕD
@@ -363,17 +368,17 @@ module NoLevitation where
     suc2 : ℕ tt → ℕ tt
     suc2 = con2 ℕD (there here)
   
-    VecED : (A : Set) → TagDesc (ℕ tt)
-    VecED A = VecE
+    VecTD : (A : Set) → TagDesc (ℕ tt)
+    VecTD A = VecT
       , End zero
       , Arg (ℕ tt) (λ n → Arg A λ _ → Rec n (End (suc n)))
       , tt
   
-    VecCs : (A : Set) → Tag VecE → Desc (ℕ tt)
-    VecCs A = toCase (VecED A)
+    VecCs : (A : Set) → Tag VecT → Desc (ℕ tt)
+    VecCs A = toCase (VecTD A)
     
     VecD : (A : Set) → Desc (ℕ tt)
-    VecD A = toDesc (VecED A)
+    VecD A = toDesc (VecTD A)
     
     Vec : (A : Set) (n : ℕ tt) → Set
     Vec A n = μ (VecD A) n
@@ -563,24 +568,24 @@ module NoLevitation where
     module GenericEliminator where
   
       add : ℕ tt → ℕ tt → ℕ tt
-      add = elim2 ℕED _
+      add = elim2 ℕTD _
         (λ n → n)
         (λ m ih n → suc (ih n))
         tt
   
       mult : ℕ tt → ℕ tt → ℕ tt
-      mult = elim2 ℕED _
+      mult = elim2 ℕTD _
         (λ n → zero)
         (λ m ih n → add n (ih n))
         tt
   
       append : (A : Set) (m : ℕ tt) (xs : Vec A m) (n : ℕ tt) (ys : Vec A n) → Vec A (add m n)
-      append A = elim2 (VecED A) _
+      append A = elim2 (VecTD A) _
         (λ n ys → ys)
         (λ m x xs ih n ys → cons A (add m n) x (ih n ys))
   
       concat : (A : Set) (m n : ℕ tt) (xss : Vec (Vec A m) n) → Vec A (mult n m)
-      concat A m = elim2 (VecED (Vec A m)) _
+      concat A m = elim2 (VecTD (Vec A m)) _
         (nil A)
         (λ n xs xss ih → append A m xs (mult n m) ih)
   
@@ -665,20 +670,20 @@ module Levitation where
   
 ----------------------------------------------------------------------
   
-  ℕE : Enum
-  ℕE = "zero" ∷ "suc" ∷ []
+  ℕT : Enum
+  ℕT = "zero" ∷ "suc" ∷ []
   
-  VecE : Enum
-  VecE = "nil" ∷ "cons" ∷ []
+  VecT : Enum
+  VecT = "nil" ∷ "cons" ∷ []
   
-  ℕDs : BranchesD ⊤ ℕE
+  ℕDs : BranchesD ⊤ ℕT
   ℕDs =
       End tt
     , Rec tt (End tt)
     , tt
   
   ℕ : ⊤ → Set
-  ℕ = μ ℕE ℕDs
+  ℕ = μ ℕT ℕDs
   
   zero : ℕ tt
   zero = con here refl
@@ -692,14 +697,14 @@ module Levitation where
   suc2 : ℕ tt → ℕ tt
   suc2 = con2 ℕDs (there here)
   
-  VecDs : (A : Set) → BranchesD (ℕ tt) VecE
+  VecDs : (A : Set) → BranchesD (ℕ tt) VecT
   VecDs A =
       End zero
     , Arg (ℕ tt) (λ n → Arg A λ _ → Rec n (End (suc n)))
     , tt
   
   Vec : (A : Set) (n : ℕ tt) → Set
-  Vec A n = μ VecE (VecDs A) n
+  Vec A n = μ VecT (VecDs A) n
   
   nil : (A : Set) → Vec A zero
   nil A = con here refl
