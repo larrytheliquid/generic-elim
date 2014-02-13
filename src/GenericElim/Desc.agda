@@ -25,32 +25,32 @@ data Tag : Enum → Set where
   here : ∀{l E} → Tag (l ∷ E)
   there : ∀{l E} → Tag E → Tag (l ∷ E)
 
-Cases : (E : Enum) (P : Tag E → Set) → Set
-Cases [] P = ⊤
-Cases (l ∷ E) P = P here × Cases E (λ t → P (there t))
+Branches : (E : Enum) (P : Tag E → Set) → Set
+Branches [] P = ⊤
+Branches (l ∷ E) P = P here × Branches E (λ t → P (there t))
 
-case : {E : Enum} (P : Tag E → Set) (cs : Cases E P) (t : Tag E) → P t
+case : {E : Enum} (P : Tag E → Set) (cs : Branches E P) (t : Tag E) → P t
 case P (c , cs) here = c
 case P (c , cs) (there t) = case (λ t → P (there t)) cs t
 
-UncurriedCases : (E : Enum) (P : Tag E → Set) (X : Set)
+UncurriedBranches : (E : Enum) (P : Tag E → Set) (X : Set)
   → Set
-UncurriedCases E P X = Cases E P → X
+UncurriedBranches E P X = Branches E P → X
 
-CurriedCases : (E : Enum) (P : Tag E → Set) (X : Set)
+CurriedBranches : (E : Enum) (P : Tag E → Set) (X : Set)
   → Set
-CurriedCases [] P X = X
-CurriedCases (l ∷ E) P X = P here → CurriedCases E (λ t → P (there t)) X
+CurriedBranches [] P X = X
+CurriedBranches (l ∷ E) P X = P here → CurriedBranches E (λ t → P (there t)) X
 
-curryCases : {E : Enum} {P : Tag E → Set} {X : Set}
-  (f : UncurriedCases E P X) → CurriedCases E P X
-curryCases {[]} f = f tt
-curryCases {l ∷ E} f = λ c → curryCases (λ cs → f (c , cs))
+curryBranches : {E : Enum} {P : Tag E → Set} {X : Set}
+  (f : UncurriedBranches E P X) → CurriedBranches E P X
+curryBranches {[]} f = f tt
+curryBranches {l ∷ E} f = λ c → curryBranches (λ cs → f (c , cs))
 
-uncurryCases : {E : Enum} {P : Tag E → Set} {X : Set}
-  (f : CurriedCases E P X) → UncurriedCases E P X
-uncurryCases {[]} x tt = x
-uncurryCases {l ∷ E} f (c , cs) = uncurryCases (f c) cs
+uncurryBranches : {E : Enum} {P : Tag E → Set} {X : Set}
+  (f : CurriedBranches E P X) → UncurriedBranches E P X
+uncurryBranches {[]} x tt = x
+uncurryBranches {l ∷ E} f (c , cs) = uncurryBranches (f c) cs
 
 ----------------------------------------------------------------------
 
@@ -78,7 +78,7 @@ Hyps (RecFun A B D) X P i (f , xs) = ((a : A) → P (B a) (f a)) × Hyps D X P i
 ----------------------------------------------------------------------
 
 TagDesc : (I : Set) → Set
-TagDesc I = Σ Enum (λ E → Cases E (λ _ → Desc I))
+TagDesc I = Σ Enum (λ E → Branches E (λ _ → Desc I))
 
 toCase : {I : Set} (E,cs : TagDesc I) → Tag (proj₁ E,cs) → Desc I
 toCase (E , cs) = case (λ _ → Desc _) cs
@@ -222,7 +222,7 @@ module NoLevitation where
       E = proj₁ TD
       Q = λ t → CurriedHyps (Cs t) (μ D) P (λ xs → con (t , xs))
       X = (i : I) (x : μ D i) → P i x
-    in UncurriedCases E Q X
+    in UncurriedBranches E Q X
   elim TD P cs i x =
     let
       D = toDesc TD
@@ -242,8 +242,8 @@ module NoLevitation where
       E = proj₁ TD
       Q = λ t → CurriedHyps (Cs t) (μ D) P (λ xs → con (t , xs))
       X = (i : I) (x : μ D i) → P i x
-    in CurriedCases E Q X
-  elim2 TD P = curryCases (elim TD P)
+    in CurriedBranches E Q X
+  elim2 TD P = curryBranches (elim TD P)
   
 ----------------------------------------------------------------------
   
@@ -580,16 +580,16 @@ module NoLevitation where
 
 module Levitation where
 
-  CasesD : (I : Set) (E : Enum) → Set
-  CasesD I E = Cases E (λ _ → Desc I)
+  BranchesD : (I : Set) (E : Enum) → Set
+  BranchesD I E = Branches E (λ _ → Desc I)
   
-  caseD : {I : Set} {E : Enum} (cs : CasesD I E) (t : Tag E) → Desc I
+  caseD : {I : Set} {E : Enum} (cs : BranchesD I E) (t : Tag E) → Desc I
   caseD = case (λ _ → Desc _)
   
-  data μ {I : Set} (E : Enum) (cs : CasesD I E) : I → Set where
+  data μ {I : Set} (E : Enum) (cs : BranchesD I E) : I → Set where
     con : (t : Tag E) → UncurriedEl (caseD cs t) (μ E cs)
   
-  con2 : {I : Set} {E : Enum} (cs : CasesD I E) (t : Tag E)
+  con2 : {I : Set} {E : Enum} (cs : BranchesD I E) (t : Tag E)
     → CurriedEl (caseD cs t) (μ E cs)
   con2 cs t = curryEl (caseD cs t) (μ _ cs) (con t)
   
@@ -598,7 +598,7 @@ module Levitation where
   ind :
     {I : Set}
     {E : Enum}
-    (cs : CasesD I E)
+    (cs : BranchesD I E)
     (P : (i : I) → μ E cs i → Set)
     (pcon : (t : Tag E) → UncurriedHyps (caseD cs t) (μ E cs) P (con t))
     (i : I)
@@ -608,7 +608,7 @@ module Levitation where
   hyps :
     {I : Set}
     {E : Enum}
-    (cs : CasesD I E)
+    (cs : BranchesD I E)
     (P : (i : I) → μ E cs i → Set)
     (pcon : (t : Tag E) → UncurriedHyps (caseD cs t) (μ E cs) P (con t))
     (D : Desc I)
@@ -628,7 +628,7 @@ module Levitation where
   ind2 :
     {I : Set}
     {E : Enum}
-    (cs : CasesD I E)
+    (cs : BranchesD I E)
     (P : (i : I) → μ E cs i → Set)
     (pcon : (t : Tag E) → CurriedHyps (caseD cs t) (μ E cs) P (con t))
     (i : I)
@@ -640,12 +640,12 @@ module Levitation where
   elim :
     {I : Set}
     {E : Enum}
-    (cs : CasesD I E)
+    (cs : BranchesD I E)
     (P : (i : I) → μ E cs i → Set)
     → let
       Q = λ t → CurriedHyps (caseD cs t) (μ E cs) P (con t)
       X = (i : I) (x : μ E cs i) → P i x
-    in UncurriedCases E Q X
+    in UncurriedBranches E Q X
   elim cs P ds i x =
     let Q = λ t → CurriedHyps (caseD cs t) (μ _ cs) P (con t)
     in ind2 cs P (case Q ds) i x
@@ -653,13 +653,13 @@ module Levitation where
   elim2 :
     {I : Set}
     {E : Enum}
-    (cs : CasesD I E)
+    (cs : BranchesD I E)
     (P : (i : I) → μ E cs i → Set)
     → let
       Q = λ t → CurriedHyps (caseD cs t) (μ E cs) P (con t)
       X = (i : I) (x : μ E cs i) → P i x
-    in CurriedCases E Q X
-  elim2 cs P = curryCases (elim cs P)
+    in CurriedBranches E Q X
+  elim2 cs P = curryBranches (elim cs P)
   
 ----------------------------------------------------------------------
   
@@ -669,7 +669,7 @@ module Levitation where
   VecE : Enum
   VecE = "nil" ∷ "cons" ∷ []
   
-  ℕDs : CasesD ⊤ ℕE
+  ℕDs : BranchesD ⊤ ℕE
   ℕDs =
       End tt
     , Rec tt (End tt)
@@ -690,7 +690,7 @@ module Levitation where
   suc2 : ℕ tt → ℕ tt
   suc2 = con2 ℕDs (there here)
   
-  VecDs : (A : Set) → CasesD (ℕ tt) VecE
+  VecDs : (A : Set) → BranchesD (ℕ tt) VecE
   VecDs A =
       End zero
     , Arg (ℕ tt) (λ n → Arg A λ _ → Rec n (End (suc n)))
