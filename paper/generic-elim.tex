@@ -137,6 +137,8 @@ elim ℕ (VecD Bool) :
   (n : ℕ) (xs : Vec Bool n) → P n xs
 \end{verbatim}
 
+\todo[inline]{emphasize the pcons section by making it bold}
+
 Our {\tt elim} function can be defined in terms of
 {\tt ind}, making it another example of generic programming made
 possible by descriptions.
@@ -291,11 +293,20 @@ this duplication is the key to defining our generic eliminator
 
 \todo[inline]{may be able to only explain ind and Hyps intuitively
 after fold in terms of their types
-section on implementing currying/uncurrying can go into details on Hyps}
+section on implementing currying/uncurrying can go into details on
+Hyps, Branches, etc
+
+maybe do this by referencing a figure of Hyps}
 
 \todo[inline]{following the intuition of mcbride ornaments, we 
 first show fold over algebra and then ind
 dagand algebra notation for dependent version}
+
+\todo[inline]{
+first show examples of both append and concat using elims
+then in figures using ind
+make these figures have numbers that point to the duplicated
+sections}
 
 \section{Functions using {\tt elim}}
 \label{sec:elim}
