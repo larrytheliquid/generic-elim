@@ -76,7 +76,7 @@ metatheory via levitation~\citep{Chapman:2010:GAL:1932681.1863547,dagand:phd}.
 Any type represented as a description can
 be eliminated with its elimination rule -- called {\tt ind} -- which resembles a fold (or catamorphism) but
 over indexed type families. Functions written with {\tt ind} are
-verbose but follow a recognizable pattern (Section \ref{TODO}). 
+verbose but follow a recognizable pattern (Section \ref{sec:ind}). 
 On the other hand, functions written with standard {\it eliminators} (or
 induction principles) are shorter and more widely understood.
 
@@ -97,13 +97,12 @@ hypotheses {\tt ihs} for any recursive constructor arguments.
 \newpage
 
 \begin{verbatim}
-ind :
-  (I : Set)
+ind : {I : Set}
   (D : Desc I)
-  (P : (i : I) → μ I D i → Set)
-  (pinit : (i : I) (xs : El I D X i)
-    (ihs : Hyps I D X P i xs) → P i (con xs))
-  (i : I) (x : μ I D i) → P i x
+  (P : (i : I) → μ D i → Set)
+  (pinit : (i : I) (xs : El D X i)
+    (ihs : Hyps D X P i xs) → P i (init xs))
+  (i : I) (x : μ D i) → P i x
 \end{verbatim}
 
 Function definitions written with {\tt ind} are verbose
@@ -242,7 +241,7 @@ Now that we can encode datatypes as descriptions, we will see how to
 convert a description into a full datatype. You get such a datatype by
 applying the fixpoint type {\tt μ} to a description.
 The constructor {\tt init}
-for {\tt μ} is the iniitial algebra of the description interpreted as
+for {\tt μ} is the initial algebra of the description interpreted as
 an endofunctor on indexed families of sets.
 
 \begin{verbatim}
@@ -261,17 +260,45 @@ Vec A n = μ (VecD A) n
 \subsection{Endofunctors from Descriptions}
 
 The constructor for {\tt μ} takes an argument of type {\tt El}.
-This is a function that computes an endofunctor on type families.
+This is a function that when given a description computes an
+endofunctor on type families.
 
 \begin{verbatim}
 ISet : Set → Set₁
 ISet I = I → Set
 
-El : {I : Set} (D : Desc I) → ISet I → ISet I
+IFunc : Set → Set₁
+IFunc I = ISet I → ISet I
+
+El : {I : Set} (D : Desc I) → IFunc I
 El (End j) X i = j ≡ i
 El (Rec j D) X i = X j × El D X i
 El (Arg A B) X i = Σ A (λ a → El (B a) X i)
 \end{verbatim}
+
+\todo[inline]{show what El (VecD A) expands to}
+
+\section{Functions using {\tt ind}}
+\label{sec:ind}
+
+In Section \ref{sec:background} we looked at all the pieces involved
+in introducing described datatypes. Now we will review how to
+eliminate described datatypes using the primitive elimination
+rule {\tt ind}. Function definitions that use {\tt ind} are verbose,
+but we identify common elements that all such definitions share. Removing
+this duplication is the key to defining our generic eliminator
+{\tt elim} in Section \ref{sec:elim}.
+
+\todo[inline]{may be able to only explain ind and Hyps intuitively
+after fold in terms of their types
+section on implementing currying/uncurrying can go into details on Hyps}
+
+\todo[inline]{following the intuition of mcbride ornaments, we 
+first show fold over algebra and then ind
+dagand algebra notation for dependent version}
+
+\section{Functions using {\tt elim}}
+\label{sec:elim}
 
 \section{Related Work}
 \label{sec:related-work}
@@ -284,6 +311,10 @@ of constructor names. An alternative way to encode datatypes is to
 support sum types directly in descriptions and use those rather than
 their isomorphic dependent pair equivalents. Foveran~\citep{foveran} is
 an example of a language that encoded sum types directly.
+
+\acks
+
+\todo[inline]{thank reviewers and mention nsf grant}
 
 \bibliographystyle{abbrvnat}
 \bibliography{generic-elim}

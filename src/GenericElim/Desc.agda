@@ -63,7 +63,10 @@ data Desc (I : Set) : Set₁ where
 ISet : Set → Set₁
 ISet I = I → Set
 
-El : {I : Set} (D : Desc I) → ISet I → ISet I
+IFunc : Set → Set₁
+IFunc I = ISet I → ISet I
+
+El : {I : Set} (D : Desc I) → IFunc I
 El (End j) X i = j ≡ i
 El (Rec j D) X i = X j × El D X i
 El (Arg A B) X i = Σ A (λ a → El (B a) X i)
