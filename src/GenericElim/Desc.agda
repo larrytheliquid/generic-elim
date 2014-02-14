@@ -173,11 +173,11 @@ uncurryHyps (RecFun A B D) X P cn pf i (f , xs) (ihf , ihs) =
 
 module NoLevitation where
 
-  data μ {I : Set} (D : Desc I) : I → Set where
-    con : UncurriedEl D (μ D)
+  data μ {I : Set} (D : Desc I) : ISet I where
+    init : UncurriedEl D (μ D)
   
-  con2 : {I : Set} (D : Desc I) → CurriedEl D (μ D)
-  con2 D = curryEl D (μ D) con
+  init2 : {I : Set} (D : Desc I) → CurriedEl D (μ D)
+  init2 D = curryEl D (μ D) init
   
 ----------------------------------------------------------------------
   
@@ -185,7 +185,7 @@ module NoLevitation where
     {I : Set}
     (D : Desc I)
     (P : (i : I) → μ D i → Set)
-    (pcon : UncurriedHyps D (μ D) P con)
+    (pinit : UncurriedHyps D (μ D) P init)
     (i : I)
     (x : μ D i)
     → P i x
@@ -194,18 +194,18 @@ module NoLevitation where
     {I : Set}
     (D₁ : Desc I)
     (P : (i : I) → μ D₁ i → Set)
-    (pcon : UncurriedHyps D₁ (μ D₁) P con)
+    (pinit : UncurriedHyps D₁ (μ D₁) P init)
     (D₂ : Desc I)
     (i : I)
     (xs : El D₂ (μ D₁) i)
     → Hyps D₂ (μ D₁) P i xs
   
-  ind D P pcon i (con xs) = pcon i xs (hyps D P pcon D i xs)
+  ind D P pinit i (init xs) = pinit i xs (hyps D P pinit D i xs)
   
-  hyps D P pcon (End j) i q = tt
-  hyps D P pcon (Rec j A) i (x , xs) = ind D P pcon j x , hyps D P pcon A i xs
-  hyps D P pcon (Arg A B) i (a , b) = hyps D P pcon (B a) i b
-  hyps D P pcon (RecFun A B E) i (f , xs) = (λ a → ind D P pcon (B a) (f a)) , hyps D P pcon E i xs
+  hyps D P pinit (End j) i q = tt
+  hyps D P pinit (Rec j A) i (x , xs) = ind D P pinit j x , hyps D P pinit A i xs
+  hyps D P pinit (Arg A B) i (a , b) = hyps D P pinit (B a) i b
+  hyps D P pinit (RecFun A B E) i (f , xs) = (λ a → ind D P pinit (B a) (f a)) , hyps D P pinit E i xs
   
 ----------------------------------------------------------------------
   
@@ -213,11 +213,11 @@ module NoLevitation where
     {I : Set}
     (D : Desc I)
     (P : (i : I) → μ D i → Set)
-    (pcon : CurriedHyps D (μ D) P con)
+    (pinit : CurriedHyps D (μ D) P init)
     (i : I)
     (x : μ D i)
     → P i x
-  ind2 D P pcon i x = ind D P (uncurryHyps D (μ D) P con pcon) i x
+  ind2 D P pinit i x = ind D P (uncurryHyps D (μ D) P init pinit) i x
   
   elim :
     {I : Set}
@@ -228,14 +228,14 @@ module NoLevitation where
     in (P : (i : I) → μ D i → Set)
     → let
       E = proj₁ TD
-      Q = λ t → CurriedHyps (Cs t) (μ D) P (λ xs → con (t , xs))
+      Q = λ t → CurriedHyps (Cs t) (μ D) P (λ xs → init (t , xs))
       X = (i : I) (x : μ D i) → P i x
     in UncurriedBranches E Q X
   elim TD P cs i x =
     let
       D = toDesc TD
       Cs = toCase TD
-      Q = λ t → CurriedHyps (Cs t) (μ D) P (λ xs → con (t , xs))
+      Q = λ t → CurriedHyps (Cs t) (μ D) P (λ xs → init (t , xs))
       p = case Q cs
     in ind2 D P p i x
   
@@ -248,7 +248,7 @@ module NoLevitation where
     in (P : (i : I) → μ D i → Set)
     → let
       E = proj₁ TD
-      Q = λ t → CurriedHyps (Cs t) (μ D) P (λ xs → con (t , xs))
+      Q = λ t → CurriedHyps (Cs t) (μ D) P (λ xs → init (t , xs))
       X = (i : I) (x : μ D i) → P i x
     in CurriedBranches E Q X
   elim2 TD P = curryBranches (elim TD P)
@@ -270,10 +270,10 @@ module NoLevitation where
     ℕ = μ ℕD
   
     zero : ℕ tt
-    zero = con (zeroT , refl)
+    zero = init (zeroT , refl)
   
     suc : ℕ tt → ℕ tt
-    suc n = con (sucT , n , refl)
+    suc n = init (sucT , n , refl)
 
     consD : (A : Set) → Desc (ℕ tt)
     consD A = Arg (ℕ tt) (λ n → Arg A (λ _ → Rec n (End (suc n))))
@@ -290,10 +290,10 @@ module NoLevitation where
     Vec A n = μ (VecD A) n
   
     nil : (A : Set) → Vec A zero
-    nil A = con (nilT , refl)
+    nil A = init (nilT , refl)
   
     cons : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n) → Vec A (suc n)
-    cons A n x xs = con (consT , n , x , xs , refl)
+    cons A n x xs = init (consT , n , x , xs , refl)
   
 ----------------------------------------------------------------------
   
@@ -318,16 +318,16 @@ module NoLevitation where
     append : (A : Set) (m : ℕ tt) (xs : Vec A m) (n : ℕ tt) (ys : Vec A n) → Vec A (add m n) 
     append A = ind (VecD A) (λ m xs → (n : ℕ tt) (ys : Vec A n) → Vec A (add m n))
       (λ
-        { .(con (zeroT , refl)) (nilT , refl) ih n ys → ys
-        ; .(con (sucT , m , refl)) (consT , m , x , xs , refl) (ih , tt) n ys → cons A (add m n) x (ih n ys)
+        { .(init (zeroT , refl)) (nilT , refl) ih n ys → ys
+        ; .(init (sucT , m , refl)) (consT , m , x , xs , refl) (ih , tt) n ys → cons A (add m n) x (ih n ys)
         }
       )
   
     concat : (A : Set) (m n : ℕ tt) (xss : Vec (Vec A m) n) → Vec A (mult n m)
     concat A m = ind (VecD (Vec A m)) (λ n xss → Vec A (mult n m))
       (λ
-        { .(con (zeroT , refl)) (nilT , refl) tt → nil A
-        ; .(con (sucT , n , refl)) (consT , n , xs , xss , refl) (ih , tt) → append A m xs (mult n m) ih
+        { .(init (zeroT , refl)) (nilT , refl) tt → nil A
+        ; .(init (sucT , n , refl)) (consT , n , xs , xss , refl) (ih , tt) → append A m xs (mult n m) ih
         }
       )
   
@@ -357,16 +357,16 @@ module NoLevitation where
     ℕ = μ ℕD
     
     zero : ℕ tt
-    zero = con (here , refl)
+    zero = init (here , refl)
     
     suc : ℕ tt → ℕ tt
-    suc n = con (there here , n , refl)
+    suc n = init (there here , n , refl)
     
     zero2 : ℕ tt
-    zero2 = con2 ℕD here
+    zero2 = init2 ℕD here
   
     suc2 : ℕ tt → ℕ tt
-    suc2 = con2 ℕD (there here)
+    suc2 = init2 ℕD (there here)
   
     VecTD : (A : Set) → TagDesc (ℕ tt)
     VecTD A = VecT
@@ -384,16 +384,16 @@ module NoLevitation where
     Vec A n = μ (VecD A) n
     
     nil : (A : Set) → Vec A zero
-    nil A = con (here , refl)
+    nil A = init (here , refl)
     
     cons : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n) → Vec A (suc n)
-    cons A n x xs = con (there here , n , x , xs , refl)
+    cons A n x xs = init (there here , n , x , xs , refl)
    
     nil2 : (A : Set) → Vec A zero
-    nil2 A = con2 (VecD A) here
+    nil2 A = init2 (VecD A) here
   
     cons2 : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n) → Vec A (suc n)
-    cons2 A = con2 (VecD A) (there here)
+    cons2 A = init2 (VecD A) (there here)
   
 ----------------------------------------------------------------------
   
@@ -488,15 +488,15 @@ module NoLevitation where
         (λ u t,c → case
           (λ t → (c : El (ℕCs t) ℕ u)
                  (ih : Hyps ℕD ℕ (λ u n → P n) u (t , c))
-                 → P (con (t , c))
+                 → P (init (t , c))
           )
           ( (λ q ih →
-              elimEq ⊤ tt (λ u q → P (con (here , q)))
+              elimEq ⊤ tt (λ u q → P (init (here , q)))
                 pzero
                 u q
             )
           , (λ n,q ih,tt →
-              elimEq ⊤ tt (λ u q → P (con (there here , proj₁ n,q , q)))
+              elimEq ⊤ tt (λ u q → P (init (there here , proj₁ n,q , q)))
                 (psuc (proj₁ n,q) (proj₁ ih,tt))
                 u (proj₂ n,q)
             )
@@ -517,10 +517,10 @@ module NoLevitation where
         (λ n t,c → case
           (λ t → (c : El (VecCs A t) (Vec A) n)
                  (ih : Hyps (VecD A) (Vec A) (λ n xs → P n xs) n (t , c))
-                 → P n (con (t , c))
+                 → P n (init (t , c))
           )
           ( (λ q ih →
-              elimEq (ℕ tt) zero (λ n q → P n (con (here , q)))
+              elimEq (ℕ tt) zero (λ n q → P n (init (here , q)))
                 pnil
                 n q
             )
@@ -531,7 +531,7 @@ module NoLevitation where
                   q = proj₂ (proj₂ (proj₂ n',x,xs,q))
                   ih = proj₁ ih,tt
               in
-              elimEq (ℕ tt) (suc n') (λ n q → P n (con (there here , n' , x , xs , q)))
+              elimEq (ℕ tt) (suc n') (λ n q → P n (init (there here , n' , x , xs , q)))
                 (pcons n' x xs ih )
                 n q
             )
@@ -594,11 +594,11 @@ module NoLevitation where
 module Levitation where
   
   data μ {I : Set} (E : Enum) (cs : BranchesD I E) : I → Set where
-    con : (t : Tag E) → UncurriedEl (caseD cs t) (μ E cs)
+    init : (t : Tag E) → UncurriedEl (caseD cs t) (μ E cs)
   
-  con2 : {I : Set} {E : Enum} (cs : BranchesD I E) (t : Tag E)
+  init2 : {I : Set} {E : Enum} (cs : BranchesD I E) (t : Tag E)
     → CurriedEl (caseD cs t) (μ E cs)
-  con2 cs t = curryEl (caseD cs t) (μ _ cs) (con t)
+  init2 cs t = curryEl (caseD cs t) (μ _ cs) (init t)
   
 ----------------------------------------------------------------------
   
@@ -607,7 +607,7 @@ module Levitation where
     {E : Enum}
     (cs : BranchesD I E)
     (P : (i : I) → μ E cs i → Set)
-    (pcon : (t : Tag E) → UncurriedHyps (caseD cs t) (μ E cs) P (con t))
+    (pinit : (t : Tag E) → UncurriedHyps (caseD cs t) (μ E cs) P (init t))
     (i : I)
     (x : μ E cs i)
     → P i x
@@ -617,18 +617,18 @@ module Levitation where
     {E : Enum}
     (cs : BranchesD I E)
     (P : (i : I) → μ E cs i → Set)
-    (pcon : (t : Tag E) → UncurriedHyps (caseD cs t) (μ E cs) P (con t))
+    (pinit : (t : Tag E) → UncurriedHyps (caseD cs t) (μ E cs) P (init t))
     (D : Desc I)
     (i : I)
     (xs : El D (μ E cs) i)
     → Hyps D (μ E cs) P i xs
   
-  ind cs P pcon i (con t as) = pcon t i as (hyps cs P pcon (caseD cs t) i as)
+  ind cs P pinit i (init t as) = pinit t i as (hyps cs P pinit (caseD cs t) i as)
   
-  hyps cs P pcon (End j) i q = tt
-  hyps cs P pcon (Rec j A) i (x , xs) = ind cs P pcon j x , hyps cs P pcon A i xs
-  hyps cs P pcon (Arg A B) i (a , b) = hyps cs P pcon (B a) i b
-  hyps cs P pcon (RecFun A B D) i (f , xs) = (λ a → ind cs P pcon (B a) (f a)) , hyps cs P pcon D i xs
+  hyps cs P pinit (End j) i q = tt
+  hyps cs P pinit (Rec j A) i (x , xs) = ind cs P pinit j x , hyps cs P pinit A i xs
+  hyps cs P pinit (Arg A B) i (a , b) = hyps cs P pinit (B a) i b
+  hyps cs P pinit (RecFun A B D) i (f , xs) = (λ a → ind cs P pinit (B a) (f a)) , hyps cs P pinit D i xs
   
 ----------------------------------------------------------------------
   
@@ -637,12 +637,12 @@ module Levitation where
     {E : Enum}
     (cs : BranchesD I E)
     (P : (i : I) → μ E cs i → Set)
-    (pcon : (t : Tag E) → CurriedHyps (caseD cs t) (μ E cs) P (con t))
+    (pinit : (t : Tag E) → CurriedHyps (caseD cs t) (μ E cs) P (init t))
     (i : I)
     (x : μ E cs i)
     → P i x
-  ind2 cs P pcon i x =
-    ind cs P (λ t → uncurryHyps (caseD cs t) (μ _ cs) P (con t) (pcon t)) i x
+  ind2 cs P pinit i x =
+    ind cs P (λ t → uncurryHyps (caseD cs t) (μ _ cs) P (init t) (pinit t)) i x
   
   elim :
     {I : Set}
@@ -650,11 +650,11 @@ module Levitation where
     (cs : BranchesD I E)
     (P : (i : I) → μ E cs i → Set)
     → let
-      Q = λ t → CurriedHyps (caseD cs t) (μ E cs) P (con t)
+      Q = λ t → CurriedHyps (caseD cs t) (μ E cs) P (init t)
       X = (i : I) (x : μ E cs i) → P i x
     in UncurriedBranches E Q X
   elim cs P ds i x =
-    let Q = λ t → CurriedHyps (caseD cs t) (μ _ cs) P (con t)
+    let Q = λ t → CurriedHyps (caseD cs t) (μ _ cs) P (init t)
     in ind2 cs P (case Q ds) i x
   
   elim2 :
@@ -663,7 +663,7 @@ module Levitation where
     (cs : BranchesD I E)
     (P : (i : I) → μ E cs i → Set)
     → let
-      Q = λ t → CurriedHyps (caseD cs t) (μ E cs) P (con t)
+      Q = λ t → CurriedHyps (caseD cs t) (μ E cs) P (init t)
       X = (i : I) (x : μ E cs i) → P i x
     in CurriedBranches E Q X
   elim2 cs P = curryBranches (elim cs P)
@@ -686,16 +686,16 @@ module Levitation where
   ℕ = μ ℕT ℕDs
   
   zero : ℕ tt
-  zero = con here refl
+  zero = init here refl
   
   suc : ℕ tt → ℕ tt
-  suc n = con (there here) (n , refl)
+  suc n = init (there here) (n , refl)
   
   zero2 : ℕ tt
-  zero2 = con2 ℕDs here
+  zero2 = init2 ℕDs here
   
   suc2 : ℕ tt → ℕ tt
-  suc2 = con2 ℕDs (there here)
+  suc2 = init2 ℕDs (there here)
   
   VecDs : (A : Set) → BranchesD (ℕ tt) VecT
   VecDs A =
@@ -707,16 +707,16 @@ module Levitation where
   Vec A n = μ VecT (VecDs A) n
   
   nil : (A : Set) → Vec A zero
-  nil A = con here refl
+  nil A = init here refl
   
   cons : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n) → Vec A (suc n)
-  cons A n x xs = con (there here) (n , x , xs , refl)
+  cons A n x xs = init (there here) (n , x , xs , refl)
   
   nil2 : (A : Set) → Vec A zero
-  nil2 A = con2 (VecDs A) here
+  nil2 A = init2 (VecDs A) here
   
   cons2 : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n) → Vec A (suc n)
-  cons2 A = con2 (VecDs A) (there here)
+  cons2 A = init2 (VecDs A) (there here)
   
 ----------------------------------------------------------------------
   
