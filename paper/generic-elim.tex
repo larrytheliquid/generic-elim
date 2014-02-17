@@ -89,7 +89,7 @@ encoded, and {\tt i} is the value of the index whose type is {\tt I}.
 The key difference
 between {\tt ind} and a standard eliminator is that all branches for
 each constructor of the encoded type are packaged into a single branch
-{\tt pinit}. In order to prove that {\tt P} holds for any
+{\tt α}. In order to prove that {\tt P} holds for any
 {\tt μ I D i}, you get all constructors and all of their
 arguments in {\tt xs}, along with all inductive
 hypotheses {\tt ihs} for any recursive constructor arguments.
@@ -100,13 +100,13 @@ hypotheses {\tt ihs} for any recursive constructor arguments.
 ind : {I : Set}
   (D : Desc I)
   (P : (i : I) → μ D i → Set)
-  (pinit : (i : I) (xs : El D X i)
+  (α : (i : I) (xs : El D X i)
     (ihs : Hyps D X P i xs) → P i (init xs))
   (i : I) (x : μ D i) → P i x
 \end{verbatim}
 
 Function definitions written with {\tt ind} are verbose
-because they need to unpack all of the data supplied by {\tt pinit}.
+because they need to unpack all of the data supplied by {\tt α}.
 Worse still, there are several ways to define the datatype of
 descriptions {\tt Desc}, and several ways to encode datatypes once a
 particular definition of {\tt Desc} has been chosen. This means that a
@@ -297,6 +297,52 @@ Dependent arguments {\tt Arg} and recursive arguments
 {\tt End} gets interpreted as a proposition that the index that the
 type is interpreted as is equal to the index that the constructor was
 defined to be.
+
+\subsection{First-class Enumerations \& Tags}
+
+When defining the description of vectors, we previously used a custom
+tag type {\tt VecT} to name each constructor. Descriptions are
+primarily meant as a construction for representing user-defined
+datatypes in a dependent type theory with a closed universe of types.
+To prevent the need to extend the type theory with new tag types
+constantly, we can instead define first-class enumerations and tags.
+Enumerations are just a list of labels. A tag is an index into an
+enumeration, pointing at a specific label.
+
+\begin{verbatim}
+Label : Set
+Label = String
+
+Enum : Set
+Enum = List Label
+
+data Tag : Enum → Set where
+  here : ∀{l E} → Tag (l ∷ E)
+  there : ∀{l E} → Tag E → Tag (l ∷ E)
+\end{verbatim}
+
+A tag can be eliminated with a {\tt case} construct (known elsewhere as
+{\tt switch}~\citep{Chapman:2010:GAL:1932681.1863547,dagand:phd}).
+In addition to the tag being elimnated, the case construct is given a
+list of branches.
+
+\begin{verbatim}
+case : {E : Enum} (P : Tag E → Set)
+  (cs : Branches E P) (t : Tag E) → P t
+case P (c , cs) here = c
+case P (c , cs) (there t) =
+  case (λ t → P (there t)) cs t
+\end{verbatim}
+
+There is a branch for each label in the enumeration, and the type of
+each branch depends on the tag representing the position of the label
+in the enumeration.
+
+\begin{verbatim}
+Branches : (E : Enum) (P : Tag E → Set) → Set
+Branches [] P = ⊤
+Branches (l ∷ E) P = P here × Branches E (λ t → P (there t))
+\end{verbatim}
 
 \section{Functions using {\tt ind}}
 \label{sec:ind}
