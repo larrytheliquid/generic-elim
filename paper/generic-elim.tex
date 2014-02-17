@@ -97,8 +97,7 @@ hypotheses {\tt ihs} for any recursive constructor arguments.
 \newpage
 
 \begin{verbatim}
-ind : {I : Set}
-  (D : Desc I)
+ind : {I : Set} (D : Desc I)
   (P : (i : I) → μ D i → Set)
   (α : Hyps D X P ⇒ P ∘ init)
   (i : I) (x : μ D i) → P i x
@@ -371,6 +370,55 @@ rule {\tt ind}. Function definitions that use {\tt ind} are verbose,
 but we identify common elements shared between them. Removing
 this duplication is the key to defining our generic eliminator
 {\tt elim} in Section \ref{sec:elim}.
+
+\subsection{The Type of {\tt ind}}
+
+In the introduction we presented sugared type signature of
+{\tt ind}. Following \citet{dagand:phd}, we emphasized
+the categorical nature of the algebra argument
+{\tt α : Hyps D X P ⇒ P ∘ init}. 
+This argument appears below in its desugared form.
+
+\begin{verbatim}
+ind : {I : Set} (D : Desc I)
+  (P : (i : I) → μ D i → Set)
+  (α : ∀ i → (xs : El D (μ D) i)
+    (ihs : Hyps D (μ D) P i xs) → P i (init xs))
+  (i : I) (x : μ D i) → P i x
+\end{verbatim}
+
+The arrow {\tt (⇒)} is notation for an index-preserving function
+between families of sets indexed by
+{\tt ∀ i → (xs : El D (μ D) i)}.
+In the expanded form, we can recognize {\tt ind} as an induction
+principle. In order to prove {\tt P} for any {\tt μ D i},
+we prove that it holds for any subterm by supplying the function
+{\tt α}.
+Recall that {\tt init} has type {\tt El D (μ D) i → μ D i}.
+All of the constructors and arguments are packaged up in
+{\tt El D (μ D) i}, which we are given as an argument to
+{\tt α}. The indutive hypotheses for each constructor are simililarly
+packaged up in {\tt Hyps D (μ D) P i xs} and given as an argument to 
+{\tt α}.
+
+\subsection{Inductive Hypotheses from Descriptions}
+
+The type of inductive hypotheses {\tt Hyps} for a described datatype
+is very similiar to the definition of endofunctor {\tt El} for
+described types. The structure of descriptions is crawled, ignoring
+any dependent arguments and requiring the motive applied to subterm
+indices for recursive arguments.
+
+\begin{verbatim}
+Hyps : {I : Set} (D : Desc I) (X : ISet I)
+  (P : (i : I) → X i → Set)
+  (i : I) (xs : El D X i) → Set
+Hyps (End j) X P i q = ⊤
+Hyps (Rec j D) X P i (x , xs) =
+  P j x × Hyps D X P i xs
+Hyps (Arg A B) X P i (a , b) = Hyps (B a) X P i b
+\end{verbatim}
+
 
 \todo[inline]{may be able to only explain ind and Hyps intuitively
 after fold in terms of their types
