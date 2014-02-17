@@ -41,8 +41,8 @@
 \titlebanner{DRAFT}        % These are ignored unless
 %% \preprintfooter{short description of paper}   % 'preprint' option specified.
 
-\title{Generic Eliminators via Descriptions}
-\subtitle{Programming without the algebra}
+\title{Generic Eliminators from Descriptions}
+\subtitle{Dependently typed programming without the algebra}
 
 \authorinfo{Larry Diehl\and Tim Sheard}
            {Portland State University}
@@ -100,8 +100,7 @@ hypotheses {\tt ihs} for any recursive constructor arguments.
 ind : {I : Set}
   (D : Desc I)
   (P : (i : I) → μ D i → Set)
-  (α : (i : I) (xs : El D X i)
-    (ihs : Hyps D X P i xs) → P i (init xs))
+  (α : Hyps D X P ⇒ P ∘ init)
   (i : I) (x : μ D i) → P i x
 \end{verbatim}
 
@@ -136,8 +135,6 @@ elim ℕ (VecD Bool) :
     → P n xs → P (suc n) (cons n x xs))
   (n : ℕ) (xs : Vec Bool n) → P n xs
 \end{verbatim}
-
-\todo[inline]{emphasize the pcons section by making it bold}
 
 Our {\tt elim} function can be defined in terms of
 {\tt ind}, making it another example of generic programming made
@@ -341,8 +338,28 @@ in the enumeration.
 \begin{verbatim}
 Branches : (E : Enum) (P : Tag E → Set) → Set
 Branches [] P = ⊤
-Branches (l ∷ E) P = P here × Branches E (λ t → P (there t))
+Branches (l ∷ E) P =
+  P here × Branches E (λ t → P (there t))
 \end{verbatim}
+
+The only definitions we need to change are to replace
+{\tt VecT} with an {\tt Enum}, and to define
+{\tt VecC} in terms of the {\tt case} eliminator rather than
+by pattern matching. Note that a right-nested product of
+{\tt Branches} always ends in the unit type {\tt ⊤}.
+
+\begin{verbatim}
+VecT : Enum
+VecT = "nil" ∷ "cons" ∷ []
+
+VecC : (A : Set) → Tag VecT → Desc ℕ
+VecC A = caseD $
+    End zero
+  , Arg ℕ (λ n → Arg A (λ _ → Rec n (End (suc n))))
+  , tt
+\end{verbatim}
+
+
 
 \section{Functions using {\tt ind}}
 \label{sec:ind}
