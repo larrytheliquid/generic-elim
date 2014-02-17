@@ -63,6 +63,9 @@ data Desc (I : Set) : Set₁ where
 ISet : Set → Set₁
 ISet I = I → Set
 
+_⇒_ : {I : Set} → ISet I → ISet I → Set
+X ⇒ Y = ∀{i} → X i → Y i
+
 IFunc : Set → Set₁
 IFunc I = ISet I → ISet I
 
@@ -72,6 +75,7 @@ El (Rec j D) X i = X j × El D X i
 El (Arg A B) X i = Σ A (λ a → El (B a) X i)
 El (RecFun A B D) X i = ((a : A) → X (B a)) × El D X i
 
+-- probably can make X an implicit argument
 Hyps : {I : Set} (D : Desc I) (X : ISet I) (P : (i : I) → X i → Set) (i : I) (xs : El D X i) → Set
 Hyps (End j) X P i q = ⊤
 Hyps (Rec j D) X P i (x , xs) = P j x × Hyps D X P i xs
@@ -100,7 +104,7 @@ toDesc (E , cs) = Arg (Tag E) (toCase (E , cs))
 ----------------------------------------------------------------------
 
 UncurriedEl : {I : Set} (D : Desc I) (X : ISet I) → Set
-UncurriedEl D X = ∀{i} → El D X i → X i
+UncurriedEl D X = El D X ⇒ X
 
 CurriedEl : {I : Set} (D : Desc I) (X : ISet I) → Set
 CurriedEl (End i) X = X i
@@ -173,6 +177,11 @@ uncurryHyps (RecFun A B D) X P cn pf i (f , xs) (ihf , ihs) =
   uncurryHyps D X P (λ ys → cn (f , ys)) (pf f ihf) i xs ihs
 
 ----------------------------------------------------------------------
+
+module ExplicitMu where
+
+  data μ {I : Set} (D : Desc I) : ISet I where
+    init : El D (μ D) ⇒ μ D
 
 module NoLevitation where
 
@@ -291,7 +300,10 @@ module NoLevitation where
   
     Vec : (A : Set) (n : ℕ tt) → Set
     Vec A n = μ (VecD A) n
-  
+
+    consType : (A : Set) → ℕ tt → Set
+    consType A n = El (consD A) (Vec A) n
+
     nil : (A : Set) → Vec A zero
     nil A = init (nilT , refl)
   

@@ -42,7 +42,7 @@
 %% \preprintfooter{short description of paper}   % 'preprint' option specified.
 
 \title{Generic Eliminators via Descriptions}
-%% \subtitle{Curry Strikes Back}
+\subtitle{Programming without the algebra}
 
 \authorinfo{Larry Diehl\and Tim Sheard}
            {Portland State University}
@@ -237,6 +237,10 @@ VecD : (A : Set) → Desc ℕ
 VecD A = Arg VecT (VecC A)
 \end{verbatim}
 
+Notice that our previous description of the {\tt cons} constructor,
+{\tt consD A}, is equal to the tagged description
+{\tt VecC A consT}.
+
 \subsection{Datatypes from Descriptions}
 
 Now that we can encode datatypes as descriptions, we will see how to
@@ -248,7 +252,7 @@ an endofunctor on indexed families of sets.
 
 \begin{verbatim}
 data μ {I : Set} (D : Desc I) (i : I) : Set where
-  init : El D X i → X i
+  init : El D (μ D) i → μ D i
 \end{verbatim}
 
 For example, we can define the datatype {\tt Vec} by applying
@@ -263,7 +267,8 @@ Vec A n = μ (VecD A) n
 
 The constructor for {\tt μ} takes an argument of type {\tt El}.
 This is a function that when given a description computes an
-endofunctor on type families.
+endofunctor between type families. Below, {\tt ISet} is the type of
+type families, and {\tt IFunc} is the endofunctor type.
 
 \begin{verbatim}
 ISet : Set → Set₁
@@ -278,7 +283,20 @@ El (Rec j D) X i = X j × El D X i
 El (Arg A B) X i = Σ A (λ a → El (B a) X i)
 \end{verbatim}
 
-\todo[inline]{show what El (VecD A) expands to}
+For example, below is the type that the {\tt cons} branch of
+{\tt VecD} gets interpreted as. Precisely, this is the type returned
+by {\tt El (VecC A consT) (Vec A) n}.
+
+\begin{verbatim}
+Σ ℕ (λ m → A × Vec A m × (suc m ≡ n))
+\end{verbatim}
+
+Dependent arguments {\tt Arg} and recursive arguments
+{\tt Rec} get interpreted respectively as dependent pair
+{\tt Σ} and non-dependent pair {\tt (×)}. The end of a constructor
+{\tt End} gets interpreted as a proposition that the index that the
+type is interpreted as is equal to the index that the constructor was
+defined to be.
 
 \section{Functions using {\tt ind}}
 \label{sec:ind}
@@ -287,7 +305,7 @@ In Section \ref{sec:background} we looked at all the pieces involved
 in introducing described datatypes. Now we will review how to
 eliminate described datatypes using the primitive elimination
 rule {\tt ind}. Function definitions that use {\tt ind} are verbose,
-but we identify common elements that all such definitions share. Removing
+but we identify common elements shared between them. Removing
 this duplication is the key to defining our generic eliminator
 {\tt elim} in Section \ref{sec:elim}.
 
@@ -311,6 +329,11 @@ sections}
 \section{Functions using {\tt elim}}
 \label{sec:elim}
 
+\section{Currying and Uncurrying}
+\label{sec:curry}
+
+\todo[inline]{compare everything to respective simple haskell functions}
+
 \section{Related Work}
 \label{sec:related-work}
 
@@ -322,6 +345,8 @@ of constructor names. An alternative way to encode datatypes is to
 support sum types directly in descriptions and use those rather than
 their isomorphic dependent pair equivalents. Foveran~\citep{foveran} is
 an example of a language that encoded sum types directly.
+
+\todo[inline]{cite generic/generic-algebras.pdf}
 
 \acks
 
