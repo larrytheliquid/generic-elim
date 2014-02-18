@@ -3,6 +3,7 @@
 
 \usepackage{todonotes}
 \usepackage{amsmath}
+\usepackage{amsthm}
 \usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{comment}
@@ -31,6 +32,8 @@
 \usepackage{fancyvrb}
 
 \usepackage[labelfont=bf]{caption}
+
+\newtheorem{definition}{Definition}
 
 \begin{document}
 
@@ -272,12 +275,19 @@ ISet I = I → Set
 
 IFunc : Set → Set₁
 IFunc I = ISet I → ISet I
+\end{verbatim}
 
+\begin{definition}\label{def:el}
+Endofunctor
+
+\begin{verbatim}
 El : {I : Set} (D : Desc I) → IFunc I
 El (End j) X i = j ≡ i
 El (Rec j D) X i = X j × El D X i
 El (Arg A B) X i = Σ A (λ a → El (B a) X i)
 \end{verbatim}
+
+\end{definition}
 
 For example, below is the type that the {\tt cons} branch of
 {\tt VecD} gets interpreted as. Precisely, this is the type returned
@@ -358,7 +368,75 @@ VecC A = caseD $
   , tt
 \end{verbatim}
 
+\subsection{Examples using Specialized Eliminators}
 
+Below is a review of standard eliminators and how to define functions
+with them. If you are already comfortable with this, you still may
+find it useful to compare the examples below with the more complex
+definitions in Section \ref{sec:ind}.
+
+The {\tt concat} functions flattens a vector of vectors,
+each of which is equal in length. The second argument to {\tt elimVec}
+is the motive, which allows the return type to depend on the vector
+being eliminated and its index. In this simple example, the motive is
+the same type as the return type of {\tt concat}. After the motive
+comes a branch for each constructor of the type being eliminated. For
+{\tt Vec}, the first branch is the {\tt nil} case and the second
+branch is the {\tt cons} case. If a constructor has arguments, its
+corresponding branch takes a function that binds each of the
+arguments. Finally, after each recursive argument you also get the
+inductive hypothesis. Below, the first branch simply returns
+{\tt nil} to concatenate the empty vector. The second branch
+returns the result of appending the current nested vector with
+the induction hypothesis (the recursive call). Also notice that we
+do not supply the eliminated vector explicitly, and instead partially
+apply {\tt elimVec} to our arguments.
+
+\begin{verbatim}
+concat : (A : Set)
+  (m n : ℕ)
+  (xss : Vec (Vec A m) n)
+  → Vec A (mult n m)
+concat A m = elimVec (Vec A m)
+  (λ n xss → Vec A (mult n m))
+  nil
+  (λ n xs xss ih → append A m xs (mult n m) ih)
+\end{verbatim}
+
+Next we define the {\tt append} function, which combines two vectors
+together. Append is also defined by partially applying
+{\tt elimVec}, but the index and vector being eliminated are
+the first arguments {\tt m} and {\tt xs} in the type signature.
+Because we are left with the remaining arguments {\tt n} and 
+{\tt ys}, our motive needs to include them. Notice how the motive is
+supplied {\tt m} and {\tt xs} as arguments, but returns {\tt n} and
+{\tt ys} as {\tt Π} types. Because of this, now the {\tt nil} branch
+binds the remaining arguments {\tt n} and {\tt ys} instead of being
+empty. The {\tt cons} branch also binds the extra arguments.
+Furthermore, the inductive hypothesis now takes two arguments because
+the type that the motive returns is a function type!
+
+\begin{verbatim}
+append : (A : Set)
+  (m : ℕ) (xs : Vec A m)
+  (n : ℕ) (ys : Vec A n)
+  → Vec A (add m n)
+append A = elimVec A
+  (λ m xs → (n : ℕ) (ys : Vec A n) → Vec A (add m n))
+  (λ n ys → ys)
+  (λ m x xs ih n ys → cons (add m n) x (ih n ys))
+\end{verbatim}
+
+Eliminators always follow a certain structure. The first arguments are
+the type parameters of the type being eliminated. Next is the motive,
+which is a type family indexed by the type being eliminated and its
+indices. Next come a branch for each constructor in the eliminated
+type. Each branch binds the arguments of the constructor and the
+motive instantiated to recursive arguments. Finally, the type of the
+eliminator takes the type being eliminated and its indices and returns
+the motive applied to the eliminated type. \citet{paulin1993inductive}
+gives a formal account of eliminator structure, used to specify
+inductive definitions in {\sc Coq}.
 
 \section{Functions using {\tt ind}}
 \label{sec:ind}
@@ -373,7 +451,7 @@ this duplication is the key to defining our generic eliminator
 
 \subsection{The Type of {\tt ind}}
 
-In the introduction we presented sugared type signature of
+In the introduction we presented a sugared type signature of
 {\tt ind}. Following \citet{dagand:phd}, we emphasized
 the categorical nature of the algebra argument
 {\tt α : Hyps D X P ⇒ P ∘ init}. 
@@ -409,6 +487,9 @@ described types. The structure of descriptions is crawled, ignoring
 any dependent arguments and requiring the motive applied to subterm
 indices for recursive arguments.
 
+\begin{definition}\label{def:hyps}
+Inductive Hypotheses
+
 \begin{verbatim}
 Hyps : {I : Set} (D : Desc I) (X : ISet I)
   (P : (i : I) → X i → Set)
@@ -419,23 +500,7 @@ Hyps (Rec j D) X P i (x , xs) =
 Hyps (Arg A B) X P i (a , b) = Hyps (B a) X P i b
 \end{verbatim}
 
-
-\todo[inline]{may be able to only explain ind and Hyps intuitively
-after fold in terms of their types
-section on implementing currying/uncurrying can go into details on
-Hyps, Branches, etc
-
-maybe do this by referencing a figure of Hyps}
-
-\todo[inline]{following the intuition of mcbride ornaments, we 
-first show fold over algebra and then ind
-dagand algebra notation for dependent version}
-
-\todo[inline]{
-first show examples of both append and concat using elims
-then in figures using ind
-make these figures have numbers that point to the duplicated
-sections}
+\end{definition}
 
 \section{Functions using {\tt elim}}
 \label{sec:elim}
