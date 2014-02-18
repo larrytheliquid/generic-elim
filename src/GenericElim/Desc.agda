@@ -131,54 +131,54 @@ uncurryEl (RecFun A B D) X cn (f , xs) = uncurryEl D X (cn f) xs
 
 ----------------------------------------------------------------------
 
-UncurriedHyps : {I : Set} (D : Desc I) (X : ISet I)
+UncurriedAlg : {I : Set} (D : Desc I) (X : ISet I)
   (P : (i : I) → X i → Set)
   (cn : UncurriedEl D X)
   → Set
-UncurriedHyps D X P cn =
+UncurriedAlg D X P cn =
   D ∣ X ∣ Hyps D X P ⇛ (λ i → P i ∘ cn)
   -- ∀ i → (xs : El D X i) (ihs : Hyps D X P i xs) → P i (cn xs)
 
-CurriedHyps : {I : Set} (D : Desc I) (X : ISet I)
+CurriedAlg : {I : Set} (D : Desc I) (X : ISet I)
   (P : (i : I) → X i → Set)
   (cn : UncurriedEl D X)
   → Set
-CurriedHyps (End i) X P cn =
+CurriedAlg (End i) X P cn =
   P i (cn refl)
-CurriedHyps (Rec i D) X P cn =
-  (x : X i) → P i x → CurriedHyps D X P (λ xs → cn (x , xs))
-CurriedHyps (Arg A B) X P cn =
-  (a : A) → CurriedHyps (B a) X P (λ xs → cn (a , xs))
-CurriedHyps (RecFun A B D) X P cn =
-  (f : (a : A) → X (B a)) (ihf : (a : A) → P (B a) (f a)) → CurriedHyps D X P (λ xs → cn (f , xs))
+CurriedAlg (Rec i D) X P cn =
+  (x : X i) → P i x → CurriedAlg D X P (λ xs → cn (x , xs))
+CurriedAlg (Arg A B) X P cn =
+  (a : A) → CurriedAlg (B a) X P (λ xs → cn (a , xs))
+CurriedAlg (RecFun A B D) X P cn =
+  (f : (a : A) → X (B a)) (ihf : (a : A) → P (B a) (f a)) → CurriedAlg D X P (λ xs → cn (f , xs))
 
-curryHyps : {I : Set} (D : Desc I) (X : ISet I)
+curryAlg : {I : Set} (D : Desc I) (X : ISet I)
   (P : (i : I) → X i → Set)
   (cn : UncurriedEl D X)
-  (pf : UncurriedHyps D X P cn)
-  → CurriedHyps D X P cn
-curryHyps (End i) X P cn pf =
+  (pf : UncurriedAlg D X P cn)
+  → CurriedAlg D X P cn
+curryAlg (End i) X P cn pf =
   pf i refl tt
-curryHyps (Rec i D) X P cn pf =
-  λ x ih → curryHyps D X P (λ xs → cn (x , xs)) (λ i xs ihs → pf i (x , xs) (ih , ihs))
-curryHyps (Arg A B) X P cn pf =
-  λ a → curryHyps (B a) X P (λ xs → cn (a , xs)) (λ i xs ihs → pf i (a , xs) ihs)
-curryHyps (RecFun A B D) X P cn pf =
-  λ f ihf → curryHyps D X P (λ xs → cn (f , xs)) (λ i xs ihs → pf i (f , xs) (ihf , ihs))
+curryAlg (Rec i D) X P cn pf =
+  λ x ih → curryAlg D X P (λ xs → cn (x , xs)) (λ i xs ihs → pf i (x , xs) (ih , ihs))
+curryAlg (Arg A B) X P cn pf =
+  λ a → curryAlg (B a) X P (λ xs → cn (a , xs)) (λ i xs ihs → pf i (a , xs) ihs)
+curryAlg (RecFun A B D) X P cn pf =
+  λ f ihf → curryAlg D X P (λ xs → cn (f , xs)) (λ i xs ihs → pf i (f , xs) (ihf , ihs))
 
-uncurryHyps : {I : Set} (D : Desc I) (X : ISet I)
+uncurryAlg : {I : Set} (D : Desc I) (X : ISet I)
   (P : (i : I) → X i → Set)
   (cn : UncurriedEl D X)
-  (pf : CurriedHyps D X P cn)
-  → UncurriedHyps D X P cn
-uncurryHyps (End .i) X P cn pf i refl tt =
+  (pf : CurriedAlg D X P cn)
+  → UncurriedAlg D X P cn
+uncurryAlg (End .i) X P cn pf i refl tt =
   pf
-uncurryHyps (Rec j D) X P cn pf i (x , xs) (ih , ihs) =
-  uncurryHyps D X P (λ ys → cn (x , ys)) (pf x ih) i xs ihs
-uncurryHyps (Arg A B) X P cn pf i (a , xs) ihs =
-  uncurryHyps (B a) X P (λ ys → cn (a , ys)) (pf a) i xs ihs
-uncurryHyps (RecFun A B D) X P cn pf i (f , xs) (ihf , ihs) =
-  uncurryHyps D X P (λ ys → cn (f , ys)) (pf f ihf) i xs ihs
+uncurryAlg (Rec j D) X P cn pf i (x , xs) (ih , ihs) =
+  uncurryAlg D X P (λ ys → cn (x , ys)) (pf x ih) i xs ihs
+uncurryAlg (Arg A B) X P cn pf i (a , xs) ihs =
+  uncurryAlg (B a) X P (λ ys → cn (a , ys)) (pf a) i xs ihs
+uncurryAlg (RecFun A B D) X P cn pf i (f , xs) (ihf , ihs) =
+  uncurryAlg D X P (λ ys → cn (f , ys)) (pf f ihf) i xs ihs
 
 ----------------------------------------------------------------------
 
@@ -201,7 +201,7 @@ module NoLevitation where
     {I : Set}
     (D : Desc I)
     (P : (i : I) → μ D i → Set)
-    (α : UncurriedHyps D (μ D) P init)
+    (α : UncurriedAlg D (μ D) P init)
     (i : I)
     (x : μ D i)
     → P i x
@@ -210,7 +210,7 @@ module NoLevitation where
     {I : Set}
     (D₁ : Desc I)
     (P : (i : I) → μ D₁ i → Set)
-    (α : UncurriedHyps D₁ (μ D₁) P init)
+    (α : UncurriedAlg D₁ (μ D₁) P init)
     (D₂ : Desc I)
     (i : I)
     (xs : El D₂ (μ D₁) i)
@@ -229,11 +229,11 @@ module NoLevitation where
     {I : Set}
     (D : Desc I)
     (P : (i : I) → μ D i → Set)
-    (α : CurriedHyps D (μ D) P init)
+    (α : CurriedAlg D (μ D) P init)
     (i : I)
     (x : μ D i)
     → P i x
-  ind2 D P α i x = ind D P (uncurryHyps D (μ D) P init α) i x
+  ind2 D P α i x = ind D P (uncurryAlg D (μ D) P init α) i x
   
   elim :
     {I : Set}
@@ -244,14 +244,14 @@ module NoLevitation where
     in (P : (i : I) → μ D i → Set)
     → let
       E = proj₁ TD
-      Q = λ t → CurriedHyps (C t) (μ D) P (λ xs → init (t , xs))
+      Q = λ t → CurriedAlg (C t) (μ D) P (λ xs → init (t , xs))
       X = (i : I) (x : μ D i) → P i x
     in UncurriedBranches E Q X
   elim TD P cs i x =
     let
       D = toDesc TD
       C = toCase TD
-      Q = λ t → CurriedHyps (C t) (μ D) P (λ xs → init (t , xs))
+      Q = λ t → CurriedAlg (C t) (μ D) P (λ xs → init (t , xs))
       p = case Q cs
     in ind2 D P p i x
   
@@ -264,7 +264,7 @@ module NoLevitation where
     in (P : (i : I) → μ D i → Set)
     → let
       E = proj₁ TD
-      Q = λ t → CurriedHyps (C t) (μ D) P (λ xs → init (t , xs))
+      Q = λ t → CurriedAlg (C t) (μ D) P (λ xs → init (t , xs))
       X = (i : I) (x : μ D i) → P i x
     in CurriedBranches E Q X
   elim2 TD P = curryBranches (elim TD P)
@@ -670,7 +670,7 @@ module Levitation where
     {E : Enum}
     (cs : BranchesD I E)
     (P : (i : I) → μ E cs i → Set)
-    (α : (t : Tag E) → UncurriedHyps (caseD cs t) (μ E cs) P (init t))
+    (α : (t : Tag E) → UncurriedAlg (caseD cs t) (μ E cs) P (init t))
     (i : I)
     (x : μ E cs i)
     → P i x
@@ -680,7 +680,7 @@ module Levitation where
     {E : Enum}
     (cs : BranchesD I E)
     (P : (i : I) → μ E cs i → Set)
-    (α : (t : Tag E) → UncurriedHyps (caseD cs t) (μ E cs) P (init t))
+    (α : (t : Tag E) → UncurriedAlg (caseD cs t) (μ E cs) P (init t))
     (D : Desc I)
     (i : I)
     (xs : El D (μ E cs) i)
@@ -700,12 +700,12 @@ module Levitation where
     {E : Enum}
     (cs : BranchesD I E)
     (P : (i : I) → μ E cs i → Set)
-    (α : (t : Tag E) → CurriedHyps (caseD cs t) (μ E cs) P (init t))
+    (α : (t : Tag E) → CurriedAlg (caseD cs t) (μ E cs) P (init t))
     (i : I)
     (x : μ E cs i)
     → P i x
   ind2 cs P α i x =
-    ind cs P (λ t → uncurryHyps (caseD cs t) (μ _ cs) P (init t) (α t)) i x
+    ind cs P (λ t → uncurryAlg (caseD cs t) (μ _ cs) P (init t) (α t)) i x
   
   elim :
     {I : Set}
@@ -713,11 +713,11 @@ module Levitation where
     (cs : BranchesD I E)
     (P : (i : I) → μ E cs i → Set)
     → let
-      Q = λ t → CurriedHyps (caseD cs t) (μ E cs) P (init t)
+      Q = λ t → CurriedAlg (caseD cs t) (μ E cs) P (init t)
       X = (i : I) (x : μ E cs i) → P i x
     in UncurriedBranches E Q X
   elim cs P ds i x =
-    let Q = λ t → CurriedHyps (caseD cs t) (μ _ cs) P (init t)
+    let Q = λ t → CurriedAlg (caseD cs t) (μ _ cs) P (init t)
     in ind2 cs P (case Q ds) i x
   
   elim2 :
@@ -726,7 +726,7 @@ module Levitation where
     (cs : BranchesD I E)
     (P : (i : I) → μ E cs i → Set)
     → let
-      Q = λ t → CurriedHyps (caseD cs t) (μ E cs) P (init t)
+      Q = λ t → CurriedAlg (caseD cs t) (μ E cs) P (init t)
       X = (i : I) (x : μ E cs i) → P i x
     in CurriedBranches E Q X
   elim2 cs P = curryBranches (elim cs P)

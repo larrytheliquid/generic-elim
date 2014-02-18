@@ -538,7 +538,7 @@ A definition begins by using {\tt ind} to eliminate a particular
 argument of the function. The motive supplied to {\tt ind} is the same
 that would be given for an eliminator-based definition.
 
-\subsubsection{Breaking up constructors into branches}
+\subsubsection{Breaking up Constructors into Branches}
 Next comes the main part of the function definition, which is the
 algebra argument {\tt α}. In an eliminator-based definition we would
 supply branches for each constructor. Here we the index, all
@@ -552,7 +552,7 @@ pattern~\citep{TODO} lets us access the arguments of the constructor
 (the second component of the pair) by case analyzing the
 constructor {\tt Tag} (the first component of the pair).
 
-\subsubsection{Projecting arguments and inductive hypotheses}
+\subsubsection{Projecting Arguments and Inductive Hypotheses}
 Each branch gets two arguments. The first is a tuple of all
 constructor arguments. This tuple ends with an equality proof
 indicating the value of the index of the constructor. For example,
@@ -561,7 +561,7 @@ is a tuple of all inductive hypotheses. This tuple ends with a value
 of type unit. In order to use any constructor arguments or inductive
 hypotheses, we must project them out of a tuple.
 
-\subsubsection{Coercing constructor indices}
+\subsubsection{Coercing Constructor Indices}
 Functions returning a value of a type family require that value to
 inhabit a particular index. For example, we expect to return the zero
 length vector {\tt nil} in the first branch of {\tt concat}.
