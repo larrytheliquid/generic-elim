@@ -216,6 +216,7 @@ consD A =
 \end{verbatim}
 
 \subsection{Describing Multiple Constructors}
+\label{sec:background:multiple}
 
 The datatype {\tt Desc} can also be used to describe an entire
 datatype, consisting of descriptions of multiple constructors.
@@ -309,6 +310,7 @@ type is interpreted as is equal to the index that the constructor was
 defined to be.
 
 \subsection{First-class Enumerations \& Tags}
+\label{sec:background:case}
 
 When defining the description of vectors, we previously used a custom
 tag type {\tt VecT} to name each constructor. Descriptions are
@@ -373,6 +375,7 @@ VecC A = caseD $
 \end{verbatim}
 
 \subsection{Examples using Specialized Eliminators}
+\label{sec:background:elim}
 
 Below is a review of standard eliminators and how to define functions
 with them. If you are already comfortable with this, you still may
@@ -426,7 +429,8 @@ append : (A : Set)
   (n : ℕ) (ys : Vec A n)
   → Vec A (add m n)
 append A = elimVec A
-  (λ m xs → (n : ℕ) (ys : Vec A n) → Vec A (add m n))
+  (λ m xs →
+    (n : ℕ) (ys : Vec A n) → Vec A (add m n))
   (λ n ys → ys)
   (λ m x xs ih n ys → cons (add m n) x (ih n ys))
 \end{verbatim}
@@ -489,7 +493,7 @@ are replaced by the single algebra {\tt α}.
 The type of inductive hypotheses {\tt Hyps} for a described datatype
 is very similiar to the definition of endofunctor {\tt El} for
 described types. The definition of {\tt Hyps} crawls the structure of
-descriptions. It ignores any dependent arguments and requires the
+descriptions. It ignores any dependent arguments and demands the
 motive applied to subterm indices for recursive arguments.
 
 \begin{definition}\label{def:hyps}
@@ -509,24 +513,86 @@ Hyps (Arg A B) X P i (a , b) = Hyps (B a) X P i b
 
 \subsection{Examples using {\tt ind}}
 
-\begin{figure*}\label{fig:ind:concat}
+Now let's take a look at functions over types built with descriptions
+and eliminated with {\tt ind}. Definitions for the vector functions
+{\tt concat} and {\tt append} appear respectively in
+Figure \ref{fig:ind:concat} and Figure \ref{fig:ind:append}. These
+functions have quite a lot going on, so you might like to compare them with
+simpler versions defined in terms of eliminators in
+Section \ref{sec:background:elim}.
+
+In languages like
+{\sc Agda}~\citep{norell2007towards},
+{\sc Coq}~\citep{coq08}, and
+{\sc Idris}~\citep{brady2011idris} user's define
+datatypes as a sum (the constructors) of products (their arguments),
+along with the specification of indices for recursive arguments and at
+the end of each constructor. Defining a function using {\tt ind} over
+such types consists of 4 steps. The numbers of the subsections below
+correspond with the numbers in
+the code appearing in Figure \ref{fig:ind:concat} and
+Figure \ref{fig:ind:append}.
+
+\subsubsection{Eliminating using {\tt ind}}
+A definition begins by using {\tt ind} to eliminate a particular
+argument of the function. The motive supplied to {\tt ind} is the same
+that would be given for an eliminator-based definition.
+
+\subsubsection{Breaking up constructors into branches}
+Next comes the main part of the function definition, which is the
+algebra argument {\tt α}. In an eliminator-based definition we would
+supply branches for each constructor. Here we the index, all
+constructors, and all their inductive hypotheses packaged as a single
+argument. We use {\tt case} from Section
+\ref{sec:background:case} so that we can supply separate branches, one
+for each constructor. A sum of constructors is represented
+using a dependent pair (Section
+\ref{sec:background:multiple}), and the convoy
+pattern~\citep{TODO} lets us access the arguments of the constructor
+(the second component of the pair) by case analyzing the
+constructor {\tt Tag} (the first component of the pair).
+
+\subsubsection{Projecting arguments and inductive hypotheses}
+Each branch gets two arguments. The first is a tuple of all
+constructor arguments. This tuple ends with an equality proof
+indicating the value of the index of the constructor. For example,
+{\tt m ≡ suc n} for the {\tt cons} branch. The second branch argument
+is a tuple of all inductive hypotheses. This tuple ends with a value
+of type unit. In order to use any constructor arguments or inductive
+hypotheses, we must project them out of a tuple.
+
+\subsubsection{Coercing constructor indices}
+Functions returning a value of a type family require that value to
+inhabit a particular index. For example, we expect to return the zero
+length vector {\tt nil} in the first branch of {\tt concat}.
+However, by default the branch still expects a value of type
+{\tt Vec A (mult n m)} where {\tt n} is the index of the vector being
+eliminated. In order for {\tt mult n m} to reduce, we must coerce {\tt n}
+to be zero by applying {\tt subst} to a proof of {\tt n ≡ zero}. This
+is the equality proof that appears at the end of the tuple of
+arguments for each constructor.
+
+
+\begin{figure*}
 \caption{Definition of vector {\tt concat} using {\tt ind}.}
+\label{fig:ind:concat}
 
 \begin{verbatim}
 concat : (A : Set) (m n : ℕ) (xss : Vec (Vec A m) n) → Vec A (mult n m)
-concat A m = ind (VecD (Vec A m)) (λ n xss → Vec A (mult n m))
-  (λ n t,c → case
+concat A m = ind (VecD (Vec A m))                              -- # 1
+  (λ n xss → Vec A (mult n m))
+  (λ n t,c → case                                              -- # 2
     (λ t → (c : El (VecC (Vec A m) t) (Vec (Vec A m)) n)
            (ih : Hyps (VecD (Vec A m)) (Vec (Vec A m)) (λ n xss → Vec A (mult n m)) n (t , c))
            → Vec A (mult n m)
     )
-    ( (λ q ih → subst (λ n → Vec A (mult n m)) q (nil A))
-    , (λ n',xs,xss,q ih,tt →
+    ( (λ q ih → subst (λ n → Vec A (mult n m)) q (nil A))     -- # 4
+    , (λ n',xs,xss,q ih,tt →                                  -- # 3
         let n' = proj₁ n',xs,xss,q
             xs = proj₁ (proj₂ n',xs,xss,q)
             q = proj₂ (proj₂ (proj₂ n',xs,xss,q))
             ih = proj₁ ih,tt
-        in
+        in                                                     -- # 4
         subst (λ n → Vec A (mult n m)) q (append A m xs (mult n' m) ih)
       )
     , tt
@@ -538,24 +604,26 @@ concat A m = ind (VecD (Vec A m)) (λ n xss → Vec A (mult n m))
 
 \end{figure*}
 
-\begin{figure*}\label{fig:ind:append}
+\begin{figure*}
 \caption{Definition of vector {\tt append} using {\tt ind}.}
+\label{fig:ind:append}
 
 \begin{verbatim}
 append : (A : Set) (m : ℕ) (xs : Vec A m) (n : ℕ) (ys : Vec A n) → Vec A (add m n) 
-append A = ind (VecD A) (λ m xs → (n : ℕ) (ys : Vec A n) → Vec A (add m n))
-  (λ m t,c → case
+append A = ind (VecD A)                                         -- # 1
+  (λ m xs → (n : ℕ) (ys : Vec A n) → Vec A (add m n)) 
+  (λ m t,c → case                                               -- # 2
     (λ t → (c : El (VecC A t) (Vec A) m)
            (ih : Hyps (VecD A) (Vec A) (λ m xs → (n : ℕ) (ys : Vec A n) → Vec A (add m n)) m (t , c))
            (n : ℕ) (ys : Vec A n) → Vec A (add m n)
     )
-    ( (λ q ih n ys → subst (λ m → Vec A (add m n)) q ys)
-    , (λ m',x,xs,q ih,tt n ys →
+    ( (λ q ih n ys → subst (λ m → Vec A (add m n)) q ys)       -- # 4
+    , (λ m',x,xs,q ih,tt n ys →                                -- # 3
         let m' = proj₁ m',x,xs,q
             x = proj₁ (proj₂ m',x,xs,q)
             q = proj₂ (proj₂ (proj₂ m',x,xs,q))
             ih = proj₁ ih,tt
-        in
+        in                                                      -- # 4
         subst (λ m → Vec A (add m n)) q (cons A (add m' n) x (ih n ys))
       )
     , tt
@@ -588,6 +656,8 @@ their isomorphic dependent pair equivalents. Foveran~\citep{foveran} is
 an example of a language that encoded sum types directly.
 
 \todo[inline]{cite generic/generic-algebras.pdf}
+
+\clearpage
 
 \acks
 
