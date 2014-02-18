@@ -16,6 +16,10 @@
 \usepackage{stmaryrd}
 \usepackage{enumitem}
 
+\usepackage{float}
+\floatstyle{boxed}
+\restylefloat{figure}
+
 \DeclareUnicodeCharacter{8988}{\ensuremath{\ulcorner}}
 \DeclareUnicodeCharacter{8989}{\ensuremath{\urcorner}}
 \DeclareUnicodeCharacter{8803}{\ensuremath{\overline{\equiv}}}
@@ -475,17 +479,18 @@ we prove that it holds for any subterm by supplying the function
 Recall that {\tt init} has type {\tt El D (μ D) i → μ D i}.
 All of the constructors and arguments are packaged up in
 {\tt El D (μ D) i}, which we are given as an argument to
-{\tt α}. The indutive hypotheses for each constructor are simililarly
+{\tt α}. The inductive hypotheses for each constructor are simililarly
 packaged up in {\tt Hyps D (μ D) P i xs} and given as an argument to 
-{\tt α}.
+{\tt α}. Thus, all the ``branch'' arguments of a regular eliminator
+are replaced by the single algebra {\tt α}.
 
 \subsection{Inductive Hypotheses from Descriptions}
 
 The type of inductive hypotheses {\tt Hyps} for a described datatype
 is very similiar to the definition of endofunctor {\tt El} for
-described types. The structure of descriptions is crawled, ignoring
-any dependent arguments and requiring the motive applied to subterm
-indices for recursive arguments.
+described types. The definition of {\tt Hyps} crawls the structure of
+descriptions. It ignores any dependent arguments and requires the
+motive applied to subterm indices for recursive arguments.
 
 \begin{definition}\label{def:hyps}
 Inductive Hypotheses
@@ -501,6 +506,66 @@ Hyps (Arg A B) X P i (a , b) = Hyps (B a) X P i b
 \end{verbatim}
 
 \end{definition}
+
+\subsection{Examples using {\tt ind}}
+
+\begin{figure*}\label{fig:ind:concat}
+\caption{Definition of vector {\tt concat} using {\tt ind}.}
+
+\begin{verbatim}
+concat : (A : Set) (m n : ℕ) (xss : Vec (Vec A m) n) → Vec A (mult n m)
+concat A m = ind (VecD (Vec A m)) (λ n xss → Vec A (mult n m))
+  (λ n t,c → case
+    (λ t → (c : El (VecC (Vec A m) t) (Vec (Vec A m)) n)
+           (ih : Hyps (VecD (Vec A m)) (Vec (Vec A m)) (λ n xss → Vec A (mult n m)) n (t , c))
+           → Vec A (mult n m)
+    )
+    ( (λ q ih → subst (λ n → Vec A (mult n m)) q (nil A))
+    , (λ n',xs,xss,q ih,tt →
+        let n' = proj₁ n',xs,xss,q
+            xs = proj₁ (proj₂ n',xs,xss,q)
+            q = proj₂ (proj₂ (proj₂ n',xs,xss,q))
+            ih = proj₁ ih,tt
+        in
+        subst (λ n → Vec A (mult n m)) q (append A m xs (mult n' m) ih)
+      )
+    , tt
+    )
+    (proj₁ t,c)
+    (proj₂ t,c)
+  )
+\end{verbatim}
+
+\end{figure*}
+
+\begin{figure*}\label{fig:ind:append}
+\caption{Definition of vector {\tt append} using {\tt ind}.}
+
+\begin{verbatim}
+append : (A : Set) (m : ℕ) (xs : Vec A m) (n : ℕ) (ys : Vec A n) → Vec A (add m n) 
+append A = ind (VecD A) (λ m xs → (n : ℕ) (ys : Vec A n) → Vec A (add m n))
+  (λ m t,c → case
+    (λ t → (c : El (VecC A t) (Vec A) m)
+           (ih : Hyps (VecD A) (Vec A) (λ m xs → (n : ℕ) (ys : Vec A n) → Vec A (add m n)) m (t , c))
+           (n : ℕ) (ys : Vec A n) → Vec A (add m n)
+    )
+    ( (λ q ih n ys → subst (λ m → Vec A (add m n)) q ys)
+    , (λ m',x,xs,q ih,tt n ys →
+        let m' = proj₁ m',x,xs,q
+            x = proj₁ (proj₂ m',x,xs,q)
+            q = proj₂ (proj₂ (proj₂ m',x,xs,q))
+            ih = proj₁ ih,tt
+        in
+        subst (λ m → Vec A (add m n)) q (cons A (add m' n) x (ih n ys))
+      )
+    , tt
+    )
+    (proj₁ t,c)
+    (proj₂ t,c)
+  )
+\end{verbatim}
+
+\end{figure*}
 
 \section{Functions using {\tt elim}}
 \label{sec:elim}
