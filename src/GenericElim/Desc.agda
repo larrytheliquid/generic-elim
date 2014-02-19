@@ -192,8 +192,8 @@ module NoLevitation where
   data μ {I : Set} (D : Desc I) : ISet I where
     init : UncurriedEl D (μ D)
   
-  init2 : {I : Set} (D : Desc I) → CurriedEl D (μ D)
-  init2 D = curryEl D (μ D) init
+  initCurried : {I : Set} (D : Desc I) → CurriedEl D (μ D)
+  initCurried D = curryEl D (μ D) init
   
 ----------------------------------------------------------------------
   
@@ -225,7 +225,7 @@ module NoLevitation where
   
 ----------------------------------------------------------------------
   
-  ind2 :
+  indCurried :
     {I : Set}
     (D : Desc I)
     (P : (i : I) → μ D i → Set)
@@ -233,9 +233,9 @@ module NoLevitation where
     (i : I)
     (x : μ D i)
     → P i x
-  ind2 D P α i x = ind D P (uncurryAlg D (μ D) P init α) i x
+  indCurried D P α i x = ind D P (uncurryAlg D (μ D) P init α) i x
   
-  elim :
+  elimUncurried :
     {I : Set}
     (E : Enum)
     (C : Tag E → Desc I)
@@ -244,13 +244,13 @@ module NoLevitation where
     → UncurriedBranches E
       (λ t → CurriedAlg (C t) (μ D) P (λ xs → init (t , xs)))
       ((i : I) (x : μ D i) → P i x)
-  elim E C P cs i x =
+  elimUncurried E C P cs i x =
     let D = Arg (Tag E) C in
-    ind2 D P
+    indCurried D P
       (case (λ t → CurriedAlg (C t) (μ D) P (λ xs → init (t , xs))) cs)
       i x
   
-  elim2 :
+  elim :
     {I : Set}
     (E : Enum)
     (C : Tag E → Desc I)
@@ -259,7 +259,7 @@ module NoLevitation where
     → CurriedBranches E
       (λ t → CurriedAlg (C t) (μ D) P (λ xs → init (t , xs)))
       ((i : I) (x : μ D i) → P i x)
-  elim2 E C P = curryBranches (elim E C P)
+  elim E C P = curryBranches (elimUncurried E C P)
   
 ----------------------------------------------------------------------
   
@@ -389,10 +389,10 @@ module NoLevitation where
     cons A n x xs = init (there here , n , x , xs , refl)
    
     nil2 : (A : Set) → Vec A zero
-    nil2 A = init2 (VecD A) here
+    nil2 A = initCurried (VecD A) here
   
     cons2 : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n) → Vec A (suc n)
-    cons2 A = init2 (VecD A) (there here)
+    cons2 A = initCurried (VecD A) (there here)
   
 ----------------------------------------------------------------------
   
@@ -476,14 +476,14 @@ module NoLevitation where
   
 ----------------------------------------------------------------------
   
-    module Eliminator where
+    module ElimUncurriedinator where
   
-      elimℕ : (P : (ℕ tt) → Set)
+      elimUncurriedℕ : (P : (ℕ tt) → Set)
         (pzero : P zero)
         (psuc : (m : ℕ tt) → P m → P (suc m))
         (n : ℕ tt)
         → P n
-      elimℕ P pzero psuc = ind ℕD (λ u n → P n)
+      elimUncurriedℕ P pzero psuc = ind ℕD (λ u n → P n)
         (λ u t,c → case
           (λ t → (c : El (ℕC t) ℕ u)
                  (ih : Hyps ℕD ℕ (λ u n → P n) u (t , c))
@@ -506,13 +506,13 @@ module NoLevitation where
         )
         tt
   
-      elimVec : (A : Set) (P : (n : ℕ tt) → Vec A n → Set)
+      elimUncurriedVec : (A : Set) (P : (n : ℕ tt) → Vec A n → Set)
         (pnil : P zero (nil A))
         (pcons : (n : ℕ tt) (a : A) (xs : Vec A n) → P n xs → P (suc n) (cons A n a xs))
         (n : ℕ tt)
         (xs : Vec A n)
         → P n xs
-      elimVec A P pnil pcons = ind (VecD A) (λ n xs → P n xs)
+      elimUncurriedVec A P pnil pcons = ind (VecD A) (λ n xs → P n xs)
         (λ n t,c → case
           (λ t → (c : El (VecC A t) (Vec A) n)
                  (ih : Hyps (VecD A) (Vec A) (λ n xs → P n xs) n (t , c))
@@ -543,48 +543,48 @@ module NoLevitation where
 ----------------------------------------------------------------------
   
       add : ℕ tt → ℕ tt → ℕ tt
-      add = elimℕ (λ _ → ℕ tt → ℕ tt)
+      add = elimUncurriedℕ (λ _ → ℕ tt → ℕ tt)
         (λ n → n)
         (λ m ih n → suc (ih n))
     
       mult : ℕ tt → ℕ tt → ℕ tt
-      mult = elimℕ (λ _ → ℕ tt → ℕ tt)
+      mult = elimUncurriedℕ (λ _ → ℕ tt → ℕ tt)
         (λ n → zero)
         (λ m ih n → add n (ih n))
     
       append : (A : Set) (m : ℕ tt) (xs : Vec A m) (n : ℕ tt) (ys : Vec A n) → Vec A (add m n)
-      append A = elimVec A (λ m xs → (n : ℕ tt) (ys : Vec A n) → Vec A (add m n))
+      append A = elimUncurriedVec A (λ m xs → (n : ℕ tt) (ys : Vec A n) → Vec A (add m n))
         (λ n ys → ys)
         (λ m x xs ih n ys → cons A (add m n) x (ih n ys))
     
       concat : (A : Set) (m n : ℕ tt) (xss : Vec (Vec A m) n) → Vec A (mult n m)
-      concat A m = elimVec (Vec A m) (λ n xss → Vec A (mult n m))
+      concat A m = elimUncurriedVec (Vec A m) (λ n xss → Vec A (mult n m))
         (nil A)
         (λ n xs xss ih → append A m xs (mult n m) ih)
   
 ----------------------------------------------------------------------
   
-    module GenericEliminator where
+    module GenericElimUncurriedinator where
   
       add : ℕ tt → ℕ tt → ℕ tt
-      add = elim2 ℕT ℕC _
+      add = elim ℕT ℕC _
         (λ n → n)
         (λ m ih n → suc (ih n))
         tt
   
       mult : ℕ tt → ℕ tt → ℕ tt
-      mult = elim2 ℕT ℕC _
+      mult = elim ℕT ℕC _
         (λ n → zero)
         (λ m ih n → add n (ih n))
         tt
   
       append : (A : Set) (m : ℕ tt) (xs : Vec A m) (n : ℕ tt) (ys : Vec A n) → Vec A (add m n)
-      append A = elim2 VecT (VecC A) _
+      append A = elim VecT (VecC A) _
         (λ n ys → ys)
         (λ m x xs ih n ys → cons A (add m n) x (ih n ys))
   
       concat : (A : Set) (m n : ℕ tt) (xss : Vec (Vec A m) n) → Vec A (mult n m)
-      concat A m = elim2 VecT (VecC (Vec A m)) _
+      concat A m = elim VecT (VecC (Vec A m)) _
         (nil A)
         (λ n xs xss ih → append A m xs (mult n m) ih)
   
@@ -595,9 +595,9 @@ module Levitation where
   data μ {I : Set} (E : Enum) (C : BranchesD I E) : I → Set where
     init : (t : Tag E) → UncurriedEl (caseD C t) (μ E C)
   
-  init2 : {I : Set} {E : Enum} (C : BranchesD I E) (t : Tag E)
+  initCurried : {I : Set} {E : Enum} (C : BranchesD I E) (t : Tag E)
     → CurriedEl (caseD C t) (μ E C)
-  init2 C t = curryEl (caseD C t) (μ _ C) (init t)
+  initCurried C t = curryEl (caseD C t) (μ _ C) (init t)
   
 ----------------------------------------------------------------------
   
@@ -631,7 +631,7 @@ module Levitation where
   
 ----------------------------------------------------------------------
   
-  ind2 :
+  indCurried :
     {I : Set}
     {E : Enum}
     (C : BranchesD I E)
@@ -640,8 +640,21 @@ module Levitation where
     (i : I)
     (x : μ E C i)
     → P i x
-  ind2 C P α i x =
+  indCurried C P α i x =
     ind C P (λ t → uncurryAlg (caseD C t) (μ _ C) P (init t) (α t)) i x
+  
+  elimUncurried :
+    {I : Set}
+    {E : Enum}
+    (C : BranchesD I E)
+    (P : (i : I) → μ E C i → Set)
+    → let
+      Q = λ t → CurriedAlg (caseD C t) (μ E C) P (init t)
+      X = (i : I) (x : μ E C i) → P i x
+    in UncurriedBranches E Q X
+  elimUncurried C P ds i x =
+    let Q = λ t → CurriedAlg (caseD C t) (μ _ C) P (init t)
+    in indCurried C P (case Q ds) i x
   
   elim :
     {I : Set}
@@ -651,21 +664,8 @@ module Levitation where
     → let
       Q = λ t → CurriedAlg (caseD C t) (μ E C) P (init t)
       X = (i : I) (x : μ E C i) → P i x
-    in UncurriedBranches E Q X
-  elim C P ds i x =
-    let Q = λ t → CurriedAlg (caseD C t) (μ _ C) P (init t)
-    in ind2 C P (case Q ds) i x
-  
-  elim2 :
-    {I : Set}
-    {E : Enum}
-    (C : BranchesD I E)
-    (P : (i : I) → μ E C i → Set)
-    → let
-      Q = λ t → CurriedAlg (caseD C t) (μ E C) P (init t)
-      X = (i : I) (x : μ E C i) → P i x
     in CurriedBranches E Q X
-  elim2 C P = curryBranches (elim C P)
+  elim C P = curryBranches (elimUncurried C P)
   
 ----------------------------------------------------------------------
   
@@ -691,10 +691,10 @@ module Levitation where
   suc n = init (there here) (n , refl)
   
   zero2 : ℕ tt
-  zero2 = init2 ℕDs here
+  zero2 = initCurried ℕDs here
   
   suc2 : ℕ tt → ℕ tt
-  suc2 = init2 ℕDs (there here)
+  suc2 = initCurried ℕDs (there here)
   
   VecDs : (A : Set) → BranchesD (ℕ tt) VecT
   VecDs A =
@@ -712,32 +712,32 @@ module Levitation where
   cons A n x xs = init (there here) (n , x , xs , refl)
   
   nil2 : (A : Set) → Vec A zero
-  nil2 A = init2 (VecDs A) here
+  nil2 A = initCurried (VecDs A) here
   
   cons2 : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n) → Vec A (suc n)
-  cons2 A = init2 (VecDs A) (there here)
+  cons2 A = initCurried (VecDs A) (there here)
   
 ----------------------------------------------------------------------
   
   add : ℕ tt → ℕ tt → ℕ tt
-  add = elim2 ℕDs _
+  add = elim ℕDs _
     (λ n → n)
     (λ m ih n → suc (ih n))
     tt
   
   mult : ℕ tt → ℕ tt → ℕ tt
-  mult = elim2 ℕDs _
+  mult = elim ℕDs _
     (λ n → zero)
     (λ m ih n → add n (ih n))
     tt
   
   append : (A : Set) (m : ℕ tt) (xs : Vec A m) (n : ℕ tt) (ys : Vec A n) → Vec A (add m n)
-  append A = elim2 (VecDs A) _
+  append A = elim (VecDs A) _
     (λ n ys → ys)
     (λ m x xs ih n ys → cons A (add m n) x (ih n ys))
   
   concat : (A : Set) (m n : ℕ tt) (xss : Vec (Vec A m) n) → Vec A (mult n m)
-  concat A m = elim2 (VecDs (Vec A m)) _
+  concat A m = elim (VecDs (Vec A m)) _
     (nil A)
     (λ n xs xss ih → append A m xs (mult n m) ih)
   
