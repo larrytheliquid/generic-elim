@@ -37,7 +37,8 @@
 
 \usepackage[labelfont=bf]{caption}
 
-\newtheorem{definition}{Definition}
+\newtheorem{mydef}{mydef}
+\newtheorem{mypart}{Part}
 
 \begin{document}
 
@@ -282,7 +283,7 @@ IFunc : Set → Set₁
 IFunc I = ISet I → ISet I
 \end{verbatim}
 
-\begin{definition}\label{def:el}
+\begin{mydef}\label{def:el}
 Endofunctor
 
 \begin{verbatim}
@@ -292,7 +293,7 @@ El (Rec j D) X i = X j × El D X i
 El (Arg A B) X i = Σ A (λ a → El (B a) X i)
 \end{verbatim}
 
-\end{definition}
+\end{mydef}
 
 For example, below is the type that the {\tt cons} branch of
 {\tt VecD} gets interpreted as. Precisely, this is the type returned
@@ -350,7 +351,7 @@ There is a branch for each label in the enumeration, and the type of
 each branch depends on the tag representing the position of the label
 in the enumeration.
 
-\begin{definition}\label{def:branches}
+\begin{mydef}\label{def:branches}
 Branches of a case-statement for tags
 
 \begin{verbatim}
@@ -360,7 +361,7 @@ Branches (l ∷ E) P =
   P here × Branches E (λ t → P (there t))
 \end{verbatim}
 
-\end{definition}
+\end{mydef}
 
 The only definitions we need to change are to replace
 {\tt VecT} with an {\tt Enum}, and to define
@@ -501,7 +502,7 @@ described types. The definition of {\tt Hyps} crawls the structure of
 descriptions. It ignores any dependent arguments and demands the
 motive applied to subterm indices for recursive arguments.
 
-\begin{definition}\label{def:hyps}
+\begin{mydef}\label{def:hyps}
 Inductive Hypotheses
 
 \begin{verbatim}
@@ -514,7 +515,7 @@ Hyps (Rec j D) X P i (x , xs) =
 Hyps (Arg A B) X P i (a , b) = Hyps (B a) X P i b
 \end{verbatim}
 
-\end{definition}
+\end{mydef}
 
 \subsection{Examples using {\tt ind}}
 
@@ -538,12 +539,16 @@ correspond with the numbers in
 the code appearing in Figure \ref{fig:ind:concat} and
 Figure \ref{fig:ind:append}.
 
-\subsubsection{Eliminating using {\tt ind}}
+\begin{mypart}[Eliminating using {\tt ind}]
+\label{part:one}
 A definition begins by using {\tt ind} to eliminate a particular
 argument of the function. The motive supplied to {\tt ind} is the same
 that would be given for an eliminator-based definition.
+\end{mypart}
 
-\subsubsection{Breaking up Constructors into Branches}
+
+\begin{mypart}[Breaking up Constructors into Branches]
+\label{part:two}
 Next comes the main part of the function definition, which is the
 algebra argument {\tt α}. In an eliminator-based definition we would
 supply branches for each constructor. Here we the index, all
@@ -556,8 +561,10 @@ using a dependent pair (Section
 pattern~\citep{TODO} lets us access the arguments of the constructor
 (the second component of the pair) by case analyzing the
 constructor {\tt Tag} (the first component of the pair).
+\end{mypart}
 
-\subsubsection{Projecting Arguments and Inductive Hypotheses}
+\begin{mypart}[Projecting Arguments and Inductive Hypotheses]
+\label{part:three}
 Each branch gets two arguments. The first is a tuple of all
 constructor arguments. This tuple ends with an equality proof
 indicating the value of the index of the constructor. For example,
@@ -565,8 +572,10 @@ indicating the value of the index of the constructor. For example,
 is a tuple of all inductive hypotheses. This tuple ends with a value
 of type unit. In order to use any constructor arguments or inductive
 hypotheses, we must project them out of a tuple.
+\end{mypart}
 
-\subsubsection{Coercing Constructor Indices}
+\begin{mypart}[Coercing Constructor Indices]
+\label{part:four}
 Functions returning a value of a type family require that value to
 inhabit a particular index. For example, we expect to return the zero
 length vector {\tt nil} in the first branch of {\tt concat}.
@@ -576,6 +585,7 @@ eliminated. In order for {\tt mult n m} to reduce, we must coerce {\tt n}
 to be zero by applying {\tt subst} to a proof of {\tt n ≡ zero}. This
 is the equality proof that appears at the end of the tuple of
 arguments for each constructor.
+\end{mypart}
 
 
 \begin{figure*}
@@ -642,6 +652,126 @@ append A = ind (VecD A)                                         -- # 1
 
 \section{Defining Generic Eliminators}
 \label{sec:elim}
+
+In Section \ref{sec:ind} we looked at examples of functions defined
+with {\tt ind}, and how each such definition can be broken up into 4
+parts. Now we will systematically derive new induction principles,
+each building on the next, that implements some of the 4 parts. The
+final induction principle will be the generic eliminator {\tt elim}
+that is the primary contribution of this paper. 
+
+Throughout this section we will refer to curried versions of
+definitions given elsewhere in the paper. The definitions for these
+curried versions appear in Section \ref{sec:curry}.
+
+\subsection{Curried {\tt ind}}
+
+First let's recall the type of the algebra argument for {\tt ind}.
+
+\begin{verbatim}
+(α : ∀ i
+    (xs : El D (μ D) i)
+    (ihs : Hyps D (μ D) P i xs)
+    → P i (init xs))
+\end{verbatim}
+
+You can think of this like an uncurried function of type
+{\tt (A × B) → (C × D) → X}. Here {\tt xs} corresponds to uncurried
+argument {\tt (A × B)}, {\tt ihs} corresponds to {\tt C × D}, and 
+{\tt P i (init xs)} corresponds to the return type {\tt X}.
+
+We can implement a function like {\tt ind} that takes a curried
+version of the algebra argument instead. The {\tt CurriedAlg} argument
+(defined in Section \ref{sec:curry}) represents the curried function
+{\tt A → B → C → D → X}.
+
+\begin{verbatim}
+indCurried : {I : Set} (D : Desc I)
+  (P : (i : I) → μ D i → Set)
+  (α : CurriedAlg D (μ D) P init)
+  (i : I)
+  (x : μ D i)
+  → P i x
+indCurried D P α i x =
+  ind D P (uncurryAlg D (μ D) P init α) i x
+\end{verbatim}
+
+The {\tt indCurried} functions implements 3 of the 4 parts of our
+pattern. It starts off the definition with {\tt ind}
+(Part \ref{part:one}) and it implicitly projects arguments and inductive
+hypotheses by using a curried {\tt α} argument
+(Part \ref{part:three}). Although it isn't obvious here, we will see
+in Section \ref{sec:curry} that {\tt CurriedAlg} also implicitly
+coerces constructor indices (Part \ref{part:four}).
+
+\subsection{Uncurried {\tt elim}}
+
+To implement Part \ref{part:two} we need to break up a sum of
+constructors into branches, one for each constructor. Recall that the
+shape of datatypes built out of descrptions that we would like to
+eliminate is a sum of products. To capture this, our new induction
+principle is specialied to descriptions representing a sum of
+products. This is achieved by parameterizing not by any description,
+but by an {\tt E : Enum} and a function {\tt C} from tags of that enumeration to
+descriptions representing the constructor choices. We can use these
+pieces to build a description starting with {\tt Arg}, as seen in the
+{\tt let} construct below. Finally, Part \ref{part:two} is implemented
+by performing {\tt case} analysis in the body of {\tt ind}.
+
+\begin{verbatim}
+elimUncurried : {I : Set} (E : Enum) (C : Tag E → Desc I)
+  → let D = Arg (Tag E) C in
+  (P : (i : I) → μ D i → Set)
+  → UncurriedBranches E
+  (λ t → CurriedAlg (C t) (μ D) P (λ xs → init (t , xs)))
+  ((i : I) (x : μ D i) → P i x)
+elimUncurried E C P cs i x =
+  let D = Arg (Tag E) C in
+  indCurried D P
+    (case (λ t →
+      CurriedAlg (C t) (μ D) P (λ xs → init (t , xs)))
+      cs)
+    i x
+\end{verbatim}
+
+Here, {\tt UncurriedBranches} is just a type synonym for a function
+from {\tt Branches E P} to some result type {\tt X}.
+It's definition can
+be found in Section \ref{sec:curry}. 
+Above {\tt P} is
+the {\tt CurriedAlg} argument, and {\tt X} is
+{\tt (i : I) (x : μ D i) → P i x}.
+
+\subsection{Curried {\tt elim}}
+
+Although we have technically implemented all four parts of our
+pattern, the induction principle {\tt elimUncurried} isn't quite what
+we want. The ``uncurried'' part of the name of the function refers to
+the {\tt Branches} argument.
+{\tt UncurriedBranches} is similar to the function
+{\tt A × B → X}. Just like we did in {\tt indCurried}, we can define
+our final generic eliminator {\tt elim} by returning
+{\tt CurriedBranches} instead of {\tt UncurriedBranches}. Here
+{\tt CurriedBranches} is analogous to {\tt A → B → X}.
+
+\begin{verbatim}
+  elim : {I : Set} (E : Enum) (C : Tag E → Desc I)
+    → let D = Arg (Tag E) C in
+    (P : (i : I) → μ D i → Set)
+    → CurriedBranches E
+    (λ t → CurriedAlg (C t) (μ D) P
+      (λ xs → init (t , xs)))
+    ((i : I) (x : μ D i) → P i x)
+  elim E C P = curryBranches (elimUncurried E C P)
+\end{verbatim}
+
+Why do we need to do this? Recall that eliminators take a sequence of
+branch arguments, one for each constructor. The type of
+{\tt elimUncurried} is almost like a generic eliminator, except it
+takes all branch arguments as a tuple (because that's what {\tt case}
+takes), rather than taking a sequence of curried arguments. Thus, by
+currying these branches we arrive at our final desired definition of
+{\tt elim}.
 
 \section{Defining Generic Constructors}
 \label{sec:init}

@@ -137,7 +137,7 @@ UncurriedAlg : {I : Set} (D : Desc I) (X : ISet I)
   → Set
 UncurriedAlg D X P cn =
   -- D ∣ X ∣ Hyps D X P ⇛ (λ i → P i ∘ cn)
-  ∀ i → (xs : El D X i) (ihs : Hyps D X P i xs) → P i (cn xs)
+  ∀ i (xs : El D X i) (ihs : Hyps D X P i xs) → P i (cn xs)
 
 CurriedAlg : {I : Set} (D : Desc I) (X : ISet I)
   (P : (i : I) → X i → Set)
@@ -225,9 +225,7 @@ module NoLevitation where
   
 ----------------------------------------------------------------------
   
-  indCurried :
-    {I : Set}
-    (D : Desc I)
+  indCurried : {I : Set} (D : Desc I)
     (P : (i : I) → μ D i → Set)
     (α : CurriedAlg D (μ D) P init)
     (i : I)
@@ -235,10 +233,7 @@ module NoLevitation where
     → P i x
   indCurried D P α i x = ind D P (uncurryAlg D (μ D) P init α) i x
   
-  elimUncurried :
-    {I : Set}
-    (E : Enum)
-    (C : Tag E → Desc I)
+  elimUncurried : {I : Set} (E : Enum) (C : Tag E → Desc I)
     → let D = Arg (Tag E) C in
     (P : (i : I) → μ D i → Set)
     → UncurriedBranches E
@@ -247,19 +242,30 @@ module NoLevitation where
   elimUncurried E C P cs i x =
     let D = Arg (Tag E) C in
     indCurried D P
-      (case (λ t → CurriedAlg (C t) (μ D) P (λ xs → init (t , xs))) cs)
+      (case
+        (λ t → CurriedAlg (C t) (μ D) P (λ xs → init (t , xs)))
+        cs)
       i x
   
-  elim :
-    {I : Set}
-    (E : Enum)
-    (C : Tag E → Desc I)
+  elim : {I : Set} (E : Enum) (C : Tag E → Desc I)
     → let D = Arg (Tag E) C in
     (P : (i : I) → μ D i → Set)
     → CurriedBranches E
       (λ t → CurriedAlg (C t) (μ D) P (λ xs → init (t , xs)))
       ((i : I) (x : μ D i) → P i x)
   elim E C P = curryBranches (elimUncurried E C P)
+
+  -- elim : {I : Set} (E : Enum) (C : Tag E → Desc I)
+  --   → let D = Arg (Tag E) C in
+  --   (P : (i : I) → μ D i → Set)
+  --   → CurriedBranches E
+  --     (λ t → CurriedAlg (C t) (μ D) P (λ xs → init (t , xs)))
+  --     ((i : I) (x : μ D i) → P i x)
+  -- elim E C P = curryBranches λ cs i x →
+  --   let D = Arg (Tag E) C in
+  --   indCurried D P
+  --     (case (λ t → CurriedAlg (C t) (μ D) P (λ xs → init (t , xs))) cs)
+  --     i x
   
 ----------------------------------------------------------------------
   
