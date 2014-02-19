@@ -350,12 +350,17 @@ There is a branch for each label in the enumeration, and the type of
 each branch depends on the tag representing the position of the label
 in the enumeration.
 
+\begin{definition}\label{def:branches}
+Branches of a case-statement
+
 \begin{verbatim}
 Branches : (E : Enum) (P : Tag E → Set) → Set
 Branches [] P = ⊤
 Branches (l ∷ E) P =
   P here × Branches E (λ t → P (there t))
 \end{verbatim}
+
+\end{definition}
 
 The only definitions we need to change are to replace
 {\tt VecT} with an {\tt Enum}, and to define
@@ -524,7 +529,7 @@ Section \ref{sec:background:elim}.
 In languages like
 {\sc Agda}~\citep{norell2007towards},
 {\sc Coq}~\citep{coq08}, and
-{\sc Idris}~\citep{brady2011idris} user's define
+{\sc Idris}~\citep{brady2011idris} users define
 datatypes as a sum (the constructors) of products (their arguments),
 along with the specification of indices for recursive arguments and at
 the end of each constructor. Defining a function using {\tt ind} over
@@ -642,6 +647,9 @@ append A = ind (VecD A)                                         -- # 1
 \label{sec:curry}
 
 \todo[inline]{compare everything to respective simple haskell functions}
+
+\section{Curried {\tt init}}
+\label{sec:init}
 
 \section{Related Work}
 \label{sec:related-work}

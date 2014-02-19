@@ -237,37 +237,29 @@ module NoLevitation where
   
   elim :
     {I : Set}
-    (TD : TagDesc I)
-    → let
-      D = toDesc TD
-      C = toCase TD
-    in (P : (i : I) → μ D i → Set)
-    → let
-      E = proj₁ TD
-      Q = λ t → CurriedAlg (C t) (μ D) P (λ xs → init (t , xs))
-      X = (i : I) (x : μ D i) → P i x
-    in UncurriedBranches E Q X
-  elim TD P cs i x =
-    let
-      D = toDesc TD
-      C = toCase TD
-      Q = λ t → CurriedAlg (C t) (μ D) P (λ xs → init (t , xs))
-      p = case Q cs
-    in ind2 D P p i x
+    (E : Enum)
+    (C : Tag E → Desc I)
+    → let D = Arg (Tag E) C in
+    (P : (i : I) → μ D i → Set)
+    → UncurriedBranches E
+      (λ t → CurriedAlg (C t) (μ D) P (λ xs → init (t , xs)))
+      ((i : I) (x : μ D i) → P i x)
+  elim E C P cs i x =
+    let D = Arg (Tag E) C in
+    ind2 D P
+      (case (λ t → CurriedAlg (C t) (μ D) P (λ xs → init (t , xs))) cs)
+      i x
   
   elim2 :
     {I : Set}
-    (TD : TagDesc I)
-    → let
-      D = toDesc TD
-      C = toCase TD
-    in (P : (i : I) → μ D i → Set)
-    → let
-      E = proj₁ TD
-      Q = λ t → CurriedAlg (C t) (μ D) P (λ xs → init (t , xs))
-      X = (i : I) (x : μ D i) → P i x
-    in CurriedBranches E Q X
-  elim2 TD P = curryBranches (elim TD P)
+    (E : Enum)
+    (C : Tag E → Desc I)
+    → let D = Arg (Tag E) C in
+    (P : (i : I) → μ D i → Set)
+    → CurriedBranches E
+      (λ t → CurriedAlg (C t) (μ D) P (λ xs → init (t , xs)))
+      ((i : I) (x : μ D i) → P i x)
+  elim2 E C P = curryBranches (elim E C P)
   
 ----------------------------------------------------------------------
   
@@ -352,7 +344,7 @@ module NoLevitation where
   
 ----------------------------------------------------------------------
 
-  module PaperDesugared where
+  module Desugared where
 
     ℕT : Enum
     ℕT = "zero" ∷ "suc" ∷ []
@@ -393,62 +385,6 @@ module NoLevitation where
     nil : (A : Set) → Vec A zero
     nil A = init (here , refl)
 
-    cons : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n) → Vec A (suc n)
-    cons A n x xs = init (there here , n , x , xs , refl)
-
-  module Desugared where
-  
-    ℕT : Enum
-    ℕT = "zero" ∷ "suc" ∷ []
-    
-    VecT : Enum
-    VecT = "nil" ∷ "cons" ∷ []
-  
-    ℕTD : TagDesc ⊤
-    ℕTD = ℕT
-      , End tt
-      , Rec tt (End tt)
-      , tt
-    
-    ℕC : Tag ℕT → Desc ⊤
-    ℕC = toCase ℕTD
-    
-    ℕD : Desc ⊤
-    ℕD = toDesc ℕTD
-    
-    ℕ : ⊤ → Set
-    ℕ = μ ℕD
-    
-    zero : ℕ tt
-    zero = init (here , refl)
-    
-    suc : ℕ tt → ℕ tt
-    suc n = init (there here , n , refl)
-    
-    zero2 : ℕ tt
-    zero2 = init2 ℕD here
-  
-    suc2 : ℕ tt → ℕ tt
-    suc2 = init2 ℕD (there here)
-  
-    VecTD : (A : Set) → TagDesc (ℕ tt)
-    VecTD A = VecT
-      , End zero
-      , Arg (ℕ tt) (λ n → Arg A λ _ → Rec n (End (suc n)))
-      , tt
-  
-    VecC : (A : Set) → Tag VecT → Desc (ℕ tt)
-    VecC A = toCase (VecTD A)
-    
-    VecD : (A : Set) → Desc (ℕ tt)
-    VecD A = toDesc (VecTD A)
-    
-    Vec : (A : Set) (n : ℕ tt) → Set
-    Vec A n = μ (VecD A) n
-    
-    nil : (A : Set) → Vec A zero
-    nil A = init (here , refl)
-    
     cons : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n) → Vec A (suc n)
     cons A n x xs = init (there here , n , x , xs , refl)
    
@@ -631,24 +567,24 @@ module NoLevitation where
     module GenericEliminator where
   
       add : ℕ tt → ℕ tt → ℕ tt
-      add = elim2 ℕTD _
+      add = elim2 ℕT ℕC _
         (λ n → n)
         (λ m ih n → suc (ih n))
         tt
   
       mult : ℕ tt → ℕ tt → ℕ tt
-      mult = elim2 ℕTD _
+      mult = elim2 ℕT ℕC _
         (λ n → zero)
         (λ m ih n → add n (ih n))
         tt
   
       append : (A : Set) (m : ℕ tt) (xs : Vec A m) (n : ℕ tt) (ys : Vec A n) → Vec A (add m n)
-      append A = elim2 (VecTD A) _
+      append A = elim2 VecT (VecC A) _
         (λ n ys → ys)
         (λ m x xs ih n ys → cons A (add m n) x (ih n ys))
   
       concat : (A : Set) (m n : ℕ tt) (xss : Vec (Vec A m) n) → Vec A (mult n m)
-      concat A m = elim2 (VecTD (Vec A m)) _
+      concat A m = elim2 VecT (VecC (Vec A m)) _
         (nil A)
         (λ n xs xss ih → append A m xs (mult n m) ih)
   
@@ -656,80 +592,80 @@ module NoLevitation where
 
 module Levitation where
   
-  data μ {I : Set} (E : Enum) (cs : BranchesD I E) : I → Set where
-    init : (t : Tag E) → UncurriedEl (caseD cs t) (μ E cs)
+  data μ {I : Set} (E : Enum) (C : BranchesD I E) : I → Set where
+    init : (t : Tag E) → UncurriedEl (caseD C t) (μ E C)
   
-  init2 : {I : Set} {E : Enum} (cs : BranchesD I E) (t : Tag E)
-    → CurriedEl (caseD cs t) (μ E cs)
-  init2 cs t = curryEl (caseD cs t) (μ _ cs) (init t)
+  init2 : {I : Set} {E : Enum} (C : BranchesD I E) (t : Tag E)
+    → CurriedEl (caseD C t) (μ E C)
+  init2 C t = curryEl (caseD C t) (μ _ C) (init t)
   
 ----------------------------------------------------------------------
   
   ind :
     {I : Set}
     {E : Enum}
-    (cs : BranchesD I E)
-    (P : (i : I) → μ E cs i → Set)
-    (α : (t : Tag E) → UncurriedAlg (caseD cs t) (μ E cs) P (init t))
+    (C : BranchesD I E)
+    (P : (i : I) → μ E C i → Set)
+    (α : (t : Tag E) → UncurriedAlg (caseD C t) (μ E C) P (init t))
     (i : I)
-    (x : μ E cs i)
+    (x : μ E C i)
     → P i x
   
   hyps :
     {I : Set}
     {E : Enum}
-    (cs : BranchesD I E)
-    (P : (i : I) → μ E cs i → Set)
-    (α : (t : Tag E) → UncurriedAlg (caseD cs t) (μ E cs) P (init t))
+    (C : BranchesD I E)
+    (P : (i : I) → μ E C i → Set)
+    (α : (t : Tag E) → UncurriedAlg (caseD C t) (μ E C) P (init t))
     (D : Desc I)
     (i : I)
-    (xs : El D (μ E cs) i)
-    → Hyps D (μ E cs) P i xs
+    (xs : El D (μ E C) i)
+    → Hyps D (μ E C) P i xs
   
-  ind cs P α i (init t as) = α t i as (hyps cs P α (caseD cs t) i as)
+  ind C P α i (init t as) = α t i as (hyps C P α (caseD C t) i as)
   
-  hyps cs P α (End j) i q = tt
-  hyps cs P α (Rec j A) i (x , xs) = ind cs P α j x , hyps cs P α A i xs
-  hyps cs P α (Arg A B) i (a , b) = hyps cs P α (B a) i b
-  hyps cs P α (RecFun A B D) i (f , xs) = (λ a → ind cs P α (B a) (f a)) , hyps cs P α D i xs
+  hyps C P α (End j) i q = tt
+  hyps C P α (Rec j A) i (x , xs) = ind C P α j x , hyps C P α A i xs
+  hyps C P α (Arg A B) i (a , b) = hyps C P α (B a) i b
+  hyps C P α (RecFun A B D) i (f , xs) = (λ a → ind C P α (B a) (f a)) , hyps C P α D i xs
   
 ----------------------------------------------------------------------
   
   ind2 :
     {I : Set}
     {E : Enum}
-    (cs : BranchesD I E)
-    (P : (i : I) → μ E cs i → Set)
-    (α : (t : Tag E) → CurriedAlg (caseD cs t) (μ E cs) P (init t))
+    (C : BranchesD I E)
+    (P : (i : I) → μ E C i → Set)
+    (α : (t : Tag E) → CurriedAlg (caseD C t) (μ E C) P (init t))
     (i : I)
-    (x : μ E cs i)
+    (x : μ E C i)
     → P i x
-  ind2 cs P α i x =
-    ind cs P (λ t → uncurryAlg (caseD cs t) (μ _ cs) P (init t) (α t)) i x
+  ind2 C P α i x =
+    ind C P (λ t → uncurryAlg (caseD C t) (μ _ C) P (init t) (α t)) i x
   
   elim :
     {I : Set}
     {E : Enum}
-    (cs : BranchesD I E)
-    (P : (i : I) → μ E cs i → Set)
+    (C : BranchesD I E)
+    (P : (i : I) → μ E C i → Set)
     → let
-      Q = λ t → CurriedAlg (caseD cs t) (μ E cs) P (init t)
-      X = (i : I) (x : μ E cs i) → P i x
+      Q = λ t → CurriedAlg (caseD C t) (μ E C) P (init t)
+      X = (i : I) (x : μ E C i) → P i x
     in UncurriedBranches E Q X
-  elim cs P ds i x =
-    let Q = λ t → CurriedAlg (caseD cs t) (μ _ cs) P (init t)
-    in ind2 cs P (case Q ds) i x
+  elim C P ds i x =
+    let Q = λ t → CurriedAlg (caseD C t) (μ _ C) P (init t)
+    in ind2 C P (case Q ds) i x
   
   elim2 :
     {I : Set}
     {E : Enum}
-    (cs : BranchesD I E)
-    (P : (i : I) → μ E cs i → Set)
+    (C : BranchesD I E)
+    (P : (i : I) → μ E C i → Set)
     → let
-      Q = λ t → CurriedAlg (caseD cs t) (μ E cs) P (init t)
-      X = (i : I) (x : μ E cs i) → P i x
+      Q = λ t → CurriedAlg (caseD C t) (μ E C) P (init t)
+      X = (i : I) (x : μ E C i) → P i x
     in CurriedBranches E Q X
-  elim2 cs P = curryBranches (elim cs P)
+  elim2 C P = curryBranches (elim C P)
   
 ----------------------------------------------------------------------
   
