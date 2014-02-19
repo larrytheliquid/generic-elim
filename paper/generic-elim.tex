@@ -351,7 +351,7 @@ each branch depends on the tag representing the position of the label
 in the enumeration.
 
 \begin{definition}\label{def:branches}
-Branches of a case-statement
+Branches of a case-statement for tags
 
 \begin{verbatim}
 Branches : (E : Enum) (P : Tag E → Set) → Set
@@ -451,7 +451,7 @@ the motive applied to the eliminated type. \citet{paulin1993inductive}
 gives a formal account of eliminator structure, used to specify
 inductive definitions in {\sc Coq}.
 
-\section{Functions using {\tt ind}}
+\section{Programming with Algebras}
 \label{sec:ind}
 
 In Section \ref{sec:background} we looked at all the pieces involved
@@ -640,16 +640,16 @@ append A = ind (VecD A)                                         -- # 1
 
 \end{figure*}
 
-\section{Functions using {\tt elim}}
+\section{Defining Generic Eliminators}
 \label{sec:elim}
+
+\section{Defining Generic Constructors}
+\label{sec:init}
 
 \section{Currying and Uncurrying}
 \label{sec:curry}
 
 \todo[inline]{compare everything to respective simple haskell functions}
-
-\section{Curried {\tt init}}
-\label{sec:init}
 
 \section{Related Work}
 \label{sec:related-work}

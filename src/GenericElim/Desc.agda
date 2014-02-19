@@ -136,8 +136,8 @@ UncurriedAlg : {I : Set} (D : Desc I) (X : ISet I)
   (cn : UncurriedEl D X)
   → Set
 UncurriedAlg D X P cn =
-  D ∣ X ∣ Hyps D X P ⇛ (λ i → P i ∘ cn)
-  -- ∀ i → (xs : El D X i) (ihs : Hyps D X P i xs) → P i (cn xs)
+  -- D ∣ X ∣ Hyps D X P ⇛ (λ i → P i ∘ cn)
+  ∀ i → (xs : El D X i) (ihs : Hyps D X P i xs) → P i (cn xs)
 
 CurriedAlg : {I : Set} (D : Desc I) (X : ISet I)
   (P : (i : I) → X i → Set)
