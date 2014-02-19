@@ -773,8 +773,36 @@ takes), rather than taking a sequence of curried arguments. Thus, by
 currying these branches we arrive at our final desired definition of
 {\tt elim}.
 
+Finally, we should point out that we gave separate definitions, each
+building upon the previous, for pedagogical reaons. Of course, {\tt elim}
+can be defined in one go by inlining the other definitions.
+
 \section{Defining Generic Constructors}
 \label{sec:init}
+
+The opposite of eliminating values is introducing, or constructing,
+values. A value of type built from a description is constructed using
+the initial algebra constructor {\tt init} of {\tt μ}. Recall that the
+type of {\tt init} is {\tt El D (μ D) i → μ D i}. When eliminating a
+datatype with {\tt ind} you get an algebra with {\tt El D (μ D) i} as
+an argument. Any arguments of constructors contained therein have
+product types and  must be projected out.
+Constructing a value also uses an algebra, the initial
+one! Thus, to construct a value you need to pass it a tuple of
+arguments.
+
+For example, below is a specialized constructor {\tt cons}
+of vectors. To construct the vector, use init and pass it a tuple
+starting with the named tag of the constructor, followed by all of its
+arguments, and ending with a proof that it has the correct
+index value.
+
+\begin{verbatim}
+cons : (n : ℕ) → A → Vec A n → Vec A (suc n)
+cons A n x xs = init (consT , n , x , xs , refl)
+\end{verbatim}
+
+
 
 \section{Currying and Uncurrying}
 \label{sec:curry}
