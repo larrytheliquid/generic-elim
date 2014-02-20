@@ -192,8 +192,8 @@ module NoLevitation where
   data μ {I : Set} (D : Desc I) : ISet I where
     init : UncurriedEl D (μ D)
   
-  initCurried : {I : Set} (D : Desc I) → CurriedEl D (μ D)
-  initCurried D = curryEl D (μ D) init
+  inj : {I : Set} (D : Desc I) → CurriedEl D (μ D)
+  inj D = curryEl D (μ D) init
   
 ----------------------------------------------------------------------
   
@@ -395,10 +395,10 @@ module NoLevitation where
     cons A n x xs = init (there here , n , x , xs , refl)
    
     nil2 : (A : Set) → Vec A zero
-    nil2 A = initCurried (VecD A) here
+    nil2 A = inj (VecD A) here
   
     cons2 : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n) → Vec A (suc n)
-    cons2 A = initCurried (VecD A) (there here)
+    cons2 A = inj (VecD A) (there here)
   
 ----------------------------------------------------------------------
   
@@ -601,9 +601,9 @@ module Levitation where
   data μ {I : Set} (E : Enum) (C : BranchesD I E) : I → Set where
     init : (t : Tag E) → UncurriedEl (caseD C t) (μ E C)
   
-  initCurried : {I : Set} {E : Enum} (C : BranchesD I E) (t : Tag E)
+  inj : {I : Set} {E : Enum} (C : BranchesD I E) (t : Tag E)
     → CurriedEl (caseD C t) (μ E C)
-  initCurried C t = curryEl (caseD C t) (μ _ C) (init t)
+  inj C t = curryEl (caseD C t) (μ _ C) (init t)
   
 ----------------------------------------------------------------------
   
@@ -697,10 +697,10 @@ module Levitation where
   suc n = init (there here) (n , refl)
   
   zero2 : ℕ tt
-  zero2 = initCurried ℕDs here
+  zero2 = inj ℕDs here
   
   suc2 : ℕ tt → ℕ tt
-  suc2 = initCurried ℕDs (there here)
+  suc2 = inj ℕDs (there here)
   
   VecDs : (A : Set) → BranchesD (ℕ tt) VecT
   VecDs A =
@@ -718,10 +718,10 @@ module Levitation where
   cons A n x xs = init (there here) (n , x , xs , refl)
   
   nil2 : (A : Set) → Vec A zero
-  nil2 A = initCurried (VecDs A) here
+  nil2 A = inj (VecDs A) here
   
   cons2 : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n) → Vec A (suc n)
-  cons2 A = initCurried (VecDs A) (there here)
+  cons2 A = inj (VecDs A) (there here)
   
 ----------------------------------------------------------------------
   
