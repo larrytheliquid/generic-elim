@@ -37,8 +37,13 @@
 
 \usepackage[labelfont=bf]{caption}
 
-\newtheorem{mydef}{mydef}
-\newtheorem{mypart}{Part}
+\newtheorem{mydef}{Definition}
+\newtheorem{myparte}{Part$_E$}
+\newtheorem{myparti}{Part$_I$}
+
+\newcommand{\refsec}[1]{Section \ref{sec:#1}}
+\newcommand{\refparte}[1]{Part$_E$ \ref{parte:#1}}
+\newcommand{\refparti}[1]{Part$_I$ \ref{parti:#1}}
 
 \begin{document}
 
@@ -84,7 +89,7 @@ metatheory via levitation~\citep{Chapman:2010:GAL:1932681.1863547,dagand:phd}.
 Any type represented as a description can
 be eliminated with its elimination rule -- called {\tt ind} -- which resembles a fold (or catamorphism) but
 over indexed type families. Functions written with {\tt ind} are
-verbose but follow a recognizable pattern (Section \ref{sec:ind}). 
+verbose but follow a recognizable pattern (\refsec{ind}). 
 On the other hand, functions written with standard {\it eliminators} (or
 induction principles) are shorter and more widely understood.
 
@@ -386,7 +391,7 @@ VecC A = caseD $
 Below is a review of standard eliminators and how to define functions
 with them. If you are already comfortable with this, you still may
 find it useful to compare the examples below with the more complex
-definitions in Section \ref{sec:ind}.
+definitions in \refsec{ind}.
 
 The {\tt concat} functions flattens a vector of vectors,
 each of which is equal in length. The second argument to {\tt elimVec}
@@ -455,13 +460,13 @@ inductive definitions in {\sc Coq}.
 \section{Programming with Algebras}
 \label{sec:ind}
 
-In Section \ref{sec:background} we looked at all the pieces involved
+In \refsec{background} we looked at all the pieces involved
 in introducing described datatypes. Now we will review how to
 eliminate described datatypes using the primitive elimination
 rule {\tt ind}. Function definitions that use {\tt ind} are verbose,
 but we identify common elements shared between them. Removing
 this duplication is the key to defining our generic eliminator
-{\tt elim} in Section \ref{sec:elim}.
+{\tt elim} in \ref{elim}.
 
 \subsection{The Type of {\tt ind}}
 
@@ -525,7 +530,7 @@ and eliminated with {\tt ind}. Definitions for the vector functions
 Figure \ref{fig:ind:concat} and Figure \ref{fig:ind:append}. These
 functions have quite a lot going on, so you might like to compare them with
 simpler versions defined in terms of eliminators in
-Section \ref{sec:background:elim}.
+\refsec{background:elim}.
 
 In languages like
 {\sc Agda}~\citep{norell2007towards},
@@ -539,32 +544,32 @@ correspond with the numbers in
 the code appearing in Figure \ref{fig:ind:concat} and
 Figure \ref{fig:ind:append}.
 
-\begin{mypart}[Eliminating using {\tt ind}]
-\label{part:one}
+\begin{myparte}[Eliminating using {\tt ind}]
+\label{parte:one}
 A definition begins by using {\tt ind} to eliminate a particular
 argument of the function. The motive supplied to {\tt ind} is the same
 that would be given for an eliminator-based definition.
-\end{mypart}
+\end{myparte}
 
 
-\begin{mypart}[Breaking up Constructors into Branches]
-\label{part:two}
+\begin{myparte}[Breaking up Constructors into Branches]
+\label{parte:two}
 Next comes the main part of the function definition, which is the
 algebra argument {\tt α}. In an eliminator-based definition we would
 supply branches for each constructor. Here we the index, all
 constructors, and all their inductive hypotheses packaged as a single
-argument. We use {\tt case} from Section
-\ref{sec:background:case} so that we can supply separate branches, one
+argument. We use {\tt case} from
+\refsec{background:case} so that we can supply separate branches, one
 for each constructor. A sum of constructors is represented
-using a dependent pair (Section
-\ref{sec:background:multiple}), and the convoy
+using a dependent pair (
+\refsec{background:multiple}), and the convoy
 pattern~\citep{TODO} lets us access the arguments of the constructor
 (the second component of the pair) by case analyzing the
 constructor {\tt Tag} (the first component of the pair).
-\end{mypart}
+\end{myparte}
 
-\begin{mypart}[Projecting Arguments and Inductive Hypotheses]
-\label{part:three}
+\begin{myparte}[Projecting Arguments and Inductive Hypotheses]
+\label{parte:three}
 Each branch gets two arguments. The first is a tuple of all
 constructor arguments. This tuple ends with an equality proof
 indicating the value of the index of the constructor. For example,
@@ -572,10 +577,10 @@ indicating the value of the index of the constructor. For example,
 is a tuple of all inductive hypotheses. This tuple ends with a value
 of type unit. In order to use any constructor arguments or inductive
 hypotheses, we must project them out of a tuple.
-\end{mypart}
+\end{myparte}
 
-\begin{mypart}[Coercing Constructor Indices]
-\label{part:four}
+\begin{myparte}[Coercing Constructor Indices]
+\label{parte:four}
 Functions returning a value of a type family require that value to
 inhabit a particular index. For example, we expect to return the zero
 length vector {\tt nil} in the first branch of {\tt concat}.
@@ -585,7 +590,7 @@ eliminated. In order for {\tt mult n m} to reduce, we must coerce {\tt n}
 to be zero by applying {\tt subst} to a proof of {\tt n ≡ zero}. This
 is the equality proof that appears at the end of the tuple of
 arguments for each constructor.
-\end{mypart}
+\end{myparte}
 
 
 \begin{figure*}
@@ -653,7 +658,7 @@ append A = ind (VecD A)                                         -- # 1
 \section{Defining Generic Eliminators}
 \label{sec:elim}
 
-In Section \ref{sec:ind} we looked at examples of functions defined
+In \refsec{ind} we looked at examples of functions defined
 with {\tt ind}, and how each such definition can be broken up into 4
 parts. Now we will systematically derive new induction principles,
 each building on the next, that implements some of the 4 parts. The
@@ -662,7 +667,7 @@ that is the primary contribution of this paper.
 
 Throughout this section we will refer to curried versions of
 definitions given elsewhere in the paper. The definitions for these
-curried versions appear in Section \ref{sec:curry}.
+curried versions appear in \refsec{curry}.
 
 \subsection{Curried {\tt ind}}
 
@@ -682,7 +687,7 @@ argument {\tt (A × B)}, {\tt ihs} corresponds to {\tt C × D}, and
 
 We can implement a function like {\tt ind} that takes a curried
 version of the algebra argument instead. The {\tt CurriedAlg} argument
-(defined in Section \ref{sec:curry}) represents the curried function
+(defined in \refsec{curry}) represents the curried function
 {\tt A → B → C → D → X}.
 
 \begin{verbatim}
@@ -698,15 +703,15 @@ indCurried D P α i x =
 
 The {\tt indCurried} functions implements 3 of the 4 parts of our
 pattern. It starts off the definition with {\tt ind}
-(Part \ref{part:one}) and it implicitly projects arguments and inductive
+(\refparte{one}) and it implicitly projects arguments and inductive
 hypotheses by using a curried {\tt α} argument
-(Part \ref{part:three}). Although it isn't obvious here, we will see
-in Section \ref{sec:curry} that {\tt CurriedAlg} also implicitly
-coerces constructor indices (Part \ref{part:four}).
+(\refparte{three}). Although it isn't obvious here, we will see
+in \refsec{curry} that {\tt CurriedAlg} also implicitly
+coerces constructor indices (\refparte{four}).
 
 \subsection{Uncurried {\tt elim}}
 
-To implement Part \ref{part:two} we need to break up a sum of
+To implement \refparte{two} we need to break up a sum of
 constructors into branches, one for each constructor. Recall that the
 shape of datatypes built out of descrptions that we would like to
 eliminate is a sum of products. To capture this, our new induction
@@ -715,7 +720,7 @@ products. This is achieved by parameterizing not by any description,
 but by an {\tt E : Enum} and a function {\tt C} from tags of that enumeration to
 descriptions representing the constructor choices. We can use these
 pieces to build a description starting with {\tt Arg}, as seen in the
-{\tt let} construct below. Finally, Part \ref{part:two} is implemented
+{\tt let} construct below. Finally, \refparte{two} is implemented
 by performing {\tt case} analysis in the body of {\tt ind}.
 
 \begin{verbatim}
@@ -737,7 +742,7 @@ elimUncurried E C P cs i x =
 Here, {\tt UncurriedBranches} is just a type synonym for a function
 from {\tt Branches E P} to some result type {\tt X}.
 It's definition can
-be found in Section \ref{sec:curry}. 
+be found in \refsec{curry}. 
 Above {\tt P} is
 the {\tt CurriedAlg} argument, and {\tt X} is
 {\tt (i : I) (x : μ D i) → P i x}.
@@ -791,18 +796,20 @@ Constructing a value also uses an algebra, the initial
 one! Thus, to construct a value you need to pass it a tuple of
 arguments.
 
+\subsection{Examples using {\tt init}}
+
 For example, below is a specialized constructor {\tt cons}
-of vectors. To construct the vector, use init and pass it a tuple
-starting with the named tag of the constructor, followed by all of its
-arguments, and ending with a proof that it has the correct
-index value.
+of vectors.
 
 \begin{verbatim}
 cons : (n : ℕ) → A → Vec A n → Vec A (suc n)
 cons A n x xs = init (consT , n , x , xs , refl)
 \end{verbatim}
 
-
+To construct the vector, use init and pass it a tuple
+starting with the named tag of the constructor, followed by all of its
+arguments, and ending with a proof that it has the correct
+index value.
 
 \section{Currying and Uncurrying}
 \label{sec:curry}
