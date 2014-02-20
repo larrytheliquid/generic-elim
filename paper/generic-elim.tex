@@ -866,6 +866,25 @@ if {\tt zero} was specified as the return type of {\tt cons}.
 \section{Defining Generic Constructors}
 \label{sec:inj}
 
+In \refsec{init} we looked at examples of constructors defined
+with {\tt init}, and how each such definition can be broken up into 4
+parts. Now we will derive a generic constructor {\tt inj} that
+implements these 4 parts.
+
+\subsection{Curried {\tt init}}
+
+First let’s once more recall the type of the initial
+algebra {\tt init}.
+
+\begin{verbatim}
+El D (μ D) i → μ D i
+\end{verbatim}
+
+You can think of this like an uncurried function of type
+{\tt (A , B) → X}, where {\tt A × B} corresponds to
+{\tt El D (μ D) i} and {\tt X} corresponds to
+{\tt μ D i}.
+
 \section{Currying and Uncurrying}
 \label{sec:curry}
 
