@@ -41,6 +41,7 @@
 \newtheorem{myparte}{Part$_E$}
 \newtheorem{myparti}{Part$_I$}
 
+\newcommand{\reffig}[1]{Figure \ref{fig:#1}}
 \newcommand{\refsec}[1]{Section \ref{sec:#1}}
 \newcommand{\refparte}[1]{Part$_E$ \ref{parte:#1}}
 \newcommand{\refparti}[1]{Part$_I$ \ref{parti:#1}}
@@ -527,7 +528,7 @@ Hyps (Arg A B) X P i (a , b) = Hyps (B a) X P i b
 Now let's take a look at functions over types built with descriptions
 and eliminated with {\tt ind}. Definitions for the vector functions
 {\tt concat} and {\tt append} appear respectively in
-Figure \ref{fig:ind:concat} and Figure \ref{fig:ind:append}. These
+\reffig{ind:concat} and \reffig{ind:append}. These
 functions have quite a lot going on, so you might like to compare them with
 simpler versions defined in terms of eliminators in
 \refsec{background:elim}.
@@ -539,10 +540,10 @@ In languages like
 datatypes as a sum (the constructors) of products (their arguments),
 along with the specification of indices for recursive arguments and at
 the end of each constructor. Defining a function using {\tt ind} over
-such types consists of 4 steps. The numbers of the subsections below
+such types consists of 4 parts. The numbers of the parts below
 correspond with the numbers in
-the code appearing in Figure \ref{fig:ind:concat} and
-Figure \ref{fig:ind:append}.
+the code appearing in \reffig{ind:concat} and
+\reffig{ind:append}.
 
 \begin{myparte}[Eliminating with {\tt ind}]
 \label{parte:one}
@@ -663,7 +664,7 @@ with {\tt ind}, and how each such definition can be broken up into 4
 parts. Now we will systematically derive new induction principles,
 each building on the next, that implements some of the 4 parts. The
 final induction principle will be the generic eliminator {\tt elim}
-that is the primary contribution of this paper. 
+that is the primary contribution of this paper.
 
 Throughout this section we will refer to curried versions of
 definitions given elsewhere in the paper. The definitions for these
@@ -753,11 +754,12 @@ Although we have technically implemented all four parts of our
 pattern, the induction principle {\tt elimUncurried} isn't quite what
 we want. The ``uncurried'' part of the name of the function refers to
 the {\tt Branches} argument.
-{\tt UncurriedBranches} is similar to the function
+{\tt UncurriedBranches} is analogous to the function
 {\tt A × B → X}. Just like we did in {\tt indCurried}, we can define
 our final generic eliminator {\tt elim} by returning
-{\tt CurriedBranches} instead of {\tt UncurriedBranches}. Here
-{\tt CurriedBranches} is analogous to {\tt A → B → X}.
+{\tt CurriedBranches} instead of {\tt UncurriedBranches}.
+\linebreak
+Here {\tt CurriedBranches} is analogous to {\tt A → B → X}.
 
 \begin{verbatim}
   elim : {I : Set} (E : Enum) (C : Tag E → Desc I)
@@ -793,10 +795,15 @@ can be defined in one go by inlining the other definitions.
 
 The opposite of eliminating values is introducing values.
 A value of a type built from a description is introduced using
-the initial algebra constructor {\tt init} of {\tt μ}. Recall that the
-type of {\tt init} is {\tt El D (μ D) i → μ D i}. When eliminating a
-datatype with {\tt ind} you get an algebra with {\tt El D (μ D) i} as
-an argument. To access an argument of some constructor, you
+the initial algebra constructor {\tt init} of {\tt μ}. 
+
+\subsection{The Type of {\tt init}}
+
+Recall that the type of {\tt init} is {\tt El D (μ D) i → μ D i}.
+When eliminating a
+datatype with {\tt ind} you get {\tt El D (μ D) i} as
+an argument to implement the algebra. If you want to access an
+argument of some constructor contained in {\tt El D (μ D) i}, you
 must project it out of the product of arguments.
 When introducing a value you also use an algebra, the initial
 one! Thus, to construct a value you need to pass it a tuple of
@@ -804,21 +811,57 @@ all arguments.
 
 \subsection{Examples using {\tt init}}
 
-For example, below are the specialized constructors
+Below are the specialized constructors
 {\tt nil} and {\tt cons} for vectors.
 
 \begin{verbatim}
 nil : (A : Set) → Vec A zero
-nil A = init (here , refl)
+nil A = init          -- # 1
+  (here               -- # 2
+  , refl)             -- # 4
 
 cons : (n : ℕ) → A → Vec A n → Vec A (suc n)
-cons A n x xs = init (there here , n , x , xs , refl)
+cons A n x xs = init  -- # 1
+  (there here         -- # 2
+  , n , x , xs        -- # 3
+  , refl)             -- # 4
 \end{verbatim}
 
-To introduce the vector, apply {\tt init} to a tuple
-starting with the tag of the constructor, followed by all of its
-arguments, and ending with a proof that it has the correct
-index value.
+Definitions using the initial algebra {\tt init} are much simpler than
+definitions using {\tt ind}. To see this, just notice how much shorter
+the definition of {\tt nil} and {\tt cons} above are compared to the
+definitions of {\tt concat} and {\tt append} in \reffig{ind:concat}
+and \reffig{ind:append}. Nonetheless, definitions of constructors
+still can be broken up into 4 parts. The numbers of these parts are
+referenced in the example code above.
+
+\begin{myparti}[Introducing with {\tt init}]
+\label{parti:one}
+A definition begins by applying {\tt init} to a tuple of arguments.
+\end{myparti}
+
+\begin{myparti}[Choosing a tagged constructor]
+\label{parti:two}
+The first argument of the tuple is the tag that indexes into the
+enumeration of constructor names. This tag represents the constructor
+choice and  determines the type of subsequent elements of the tuple.
+\end{myparti}
+
+\begin{myparti}[Providing a tuple of arguments]
+\label{parti:three}
+The middle part of the tuple consists of all proper arguments of the
+constructor. Some constructors, such as {\tt nil}, may not have any
+proper arguments.
+\end{myparti}
+
+\begin{myparti}[Proving the constructor index correct]
+\label{parti:three}
+The final argument of the tuple is a proof that index of the codomain
+of the initial algebra matches the index specified in the return
+type of the constructor. This proof is merely the {\tt refl}
+constructor of the equality type. For example, this proof would fail
+if {\tt zero} was specified as the return type of {\tt cons}.
+\end{myparti}
 
 \section{Defining Generic Constructors}
 \label{sec:inj}
