@@ -340,8 +340,8 @@ data Tag : Enum → Set where
   there : ∀{l E} → Tag E → Tag (l ∷ E)
 \end{verbatim}
 
-A tag can be eliminated with a {\tt case} construct (known elsewhere as
-{\tt switch}~\citep{Chapman:2010:GAL:1932681.1863547,dagand:phd}).
+A tag can be eliminated with a {\tt case} construct (this is referred to
+as {\tt switch} by \citet{Chapman:2010:GAL:1932681.1863547,dagand:phd}).
 In addition to the tag being elimnated, the case construct is given a
 list of branches.
 
@@ -476,6 +476,9 @@ In the introduction we presented a sugared type signature of
 the categorical nature of the algebra argument
 {\tt α : Hyps D X P ⇒ P ∘ init}. 
 This argument appears below in its desugared form.
+The arrow {\tt (⇒)} is notation for an index-preserving function
+between families of sets indexed by
+{\tt ∀ i → (xs : El D (μ D) i)}.
 
 \begin{verbatim}
 ind : {I : Set} (D : Desc I)
@@ -485,9 +488,6 @@ ind : {I : Set} (D : Desc I)
   (i : I) (x : μ D i) → P i x
 \end{verbatim}
 
-The arrow {\tt (⇒)} is notation for an index-preserving function
-between families of sets indexed by
-{\tt ∀ i → (xs : El D (μ D) i)}.
 In the expanded form, we can recognize {\tt ind} as an induction
 principle. In order to prove {\tt P} for any {\tt μ D i},
 we prove that it holds for any subterm by supplying the function
