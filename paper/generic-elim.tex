@@ -168,11 +168,24 @@ translate dependent pattern matching into
 eliminators. Rather than reinventing these algorithms to translate to
 {\tt ind}, we can instead directly reuse them with our derived {\tt elim}.
 
-\section{Background}
+\section{Background on Declaring Datatypes}
 \label{sec:background}
 
-We will begin with a review of the framework used to encode datatypes
-via descriptions. There are
+The goal of this section is to use a first-class encoding of datatype
+declarations to define the following type.
+
+\begin{verbatim}
+data Vec (A : Set) : ℕ → Set where
+  nil : Vec A zero
+  cons : (n : ℕ) (a : A) (xs : Vec A n)
+    → Vec A (suc n)
+\end{verbatim}
+
+Whereas such a declaration typically involves axiomatically extending
+the type theory, the technology of
+descriptions~\citep{Chapman:2010:GAL:1932681.1863547,mcbride2010ornamental,dagand:phd}
+lets us define datatypes within a closed type theory.
+There are
 several ways to define the datatype of descriptions {\tt Desc}. 
 For simplicity, in this paper we use the encoding by
 \citet{mcbride2010ornamental}.
@@ -185,14 +198,18 @@ families of inductively defined types.
 {\tt Desc} is paramterized by 
 a type {\tt I}, the index of the encoded type family.
 
-Let's first think about how to use {\tt Desc} to encode a single
-constructor of an indexed type family.
+Throughout this paper it will be easier to first pretend like we
+defined {\tt Vec} with a single constructor, either
+{\tt nil} or {\tt cons}. This makes it easier to understand
+later definitions where vector contains both constructors.
+
+Imagine declaring a datatype with a single constructor.
 A constructor is a sequence of
 arguments that subsequent arguments may depend on, along with
-recursive arguments at some type indices, and ends with some type index.
+recursive arguments at some type indices, and it ends with some type index.
 Respectively, {\tt Arg}, {\tt Rec}, and {\tt End} allow you to encode
 a dependent argument, a recursive argument at some index, and ending the
-constructor at some index.
+constructor definition at some index.
 
 \begin{verbatim}
 data Desc (I : Set) : Set₁ where
@@ -203,18 +220,35 @@ data Desc (I : Set) : Set₁ where
 
 \subsection{Describing a Single Constructor}
 
-For example, first recall the standard type of the
+For example, first recall the type of the
+constructor {\tt nil} of vectors.
+
+\begin{verbatim}
+nil : (A : Set) → Vec A zero
+\end{verbatim}
+
+The constructor {\tt nil} takes no arguments, so its description
+ends immediately at index {\tt zero}. The type of the description
+returned is {\tt Desc ℕ} because the type we are encoding {\tt Vec}
+is indexed by natural numbers.
+
+\begin{verbatim}
+nilD : (A : Set) → Desc ℕ
+nilD A = End zero
+\end{verbatim}
+
+Next recall the type of the
 constructor {\tt cons} of vectors.
 
 \begin{verbatim}
-cons : (n : ℕ) → A → Vec A n → Vec A (suc n)
+cons : (A : Set) (n : ℕ) → A → Vec A n
+  → Vec A (suc n)
 \end{verbatim}
 
-We can encode the type of this constructor as a description as
-follows. The definition is parameterized by the vector parameter
-type {\tt A}, and returns a description over natural numbers
-{\tt Desc ℕ} because the type we are encoding {\tt Vec}
-is indexed by natural numbers.
+The description of {\tt cons} requires a dependent argument
+{\tt n : ℕ} for the index, a non-dependent argument {\tt A} for the value
+being added to the vector, a recursive argument indexed by the
+natural number {\tt n}, and finally ends at index {\tt suc n}.
 
 \begin{verbatim}
 consD : (A : Set) → Desc ℕ
@@ -230,9 +264,13 @@ datatype, consisting of descriptions of multiple constructors.
 This is achieved by making use of the isomorphism between disjoint
 sums and dependent pairs whose domain is some finite enumeration.
 
+\begin{verbatim}
+A ⊎ B ≅ Σ Bool (λ b → if b then A else B)
+\end{verbatim}
+
 A datatype with multiple constructors is represented by an
-{\tt Arg} description whose first argument is a datatype of tags
--- one for each constructor -- and whose second argument is
+{\tt Arg} description whose first argument {\tt VecT} is a datatype of tags
+-- one for each constructor -- and whose second argument {\tt VecC} is
 a function that returns a description for each constructor tag.
 
 \begin{verbatim}
@@ -248,73 +286,11 @@ VecD : (A : Set) → Desc ℕ
 VecD A = Arg VecT (VecC A)
 \end{verbatim}
 
-Notice that our previous description of the {\tt cons} constructor,
-{\tt consD A}, is equal to the tagged description
+Notice that our previous description of the {\tt nil} constructor,
+{\tt nilD A}, is equal to the tagged description
+{\tt VecC A nilT}, and {\tt consD A}
+is equal to the tagged description
 {\tt VecC A consT}.
-
-\subsection{Datatypes from Descriptions}
-
-Now that we can encode datatypes as descriptions, we will see how to
-convert a description into a full datatype. You get such a datatype by
-applying the fixpoint type {\tt μ} to a description.
-The constructor {\tt init}
-for {\tt μ} is the initial algebra of the description interpreted as
-an endofunctor on indexed families of sets.
-
-\begin{verbatim}
-data μ {I : Set} (D : Desc I) (i : I) : Set where
-  init : El D (μ D) i → μ D i
-\end{verbatim}
-
-For example, we can define the datatype {\tt Vec} by applying
-{\tt μ} to its description.
-
-\begin{verbatim}
-Vec : (A : Set) (n : ℕ) → Set
-Vec A n = μ (VecD A) n
-\end{verbatim}
-
-\subsection{Endofunctors from Descriptions}
-
-The constructor for {\tt μ} takes an argument of type {\tt El}.
-This is a function that when given a description computes an
-endofunctor between type families. Below, {\tt ISet} is the type of
-type families, and {\tt IFunc} is the endofunctor type.
-
-\begin{verbatim}
-ISet : Set → Set₁
-ISet I = I → Set
-
-IFunc : Set → Set₁
-IFunc I = ISet I → ISet I
-\end{verbatim}
-
-\begin{mydef}\label{def:el}
-Endofunctor
-
-\begin{verbatim}
-El : {I : Set} (D : Desc I) → IFunc I
-El (End j) X i = j ≡ i
-El (Rec j D) X i = X j × El D X i
-El (Arg A B) X i = Σ A (λ a → El (B a) X i)
-\end{verbatim}
-
-\end{mydef}
-
-For example, below is the type that the {\tt cons} branch of
-{\tt VecD} gets interpreted as. Precisely, this is the type returned
-by {\tt El (VecC A consT) (Vec A) n}.
-
-\begin{verbatim}
-Σ ℕ (λ m → A × Vec A m × (suc m ≡ n))
-\end{verbatim}
-
-Dependent arguments {\tt Arg} and recursive arguments
-{\tt Rec} get interpreted respectively as dependent pair
-{\tt Σ} and non-dependent pair {\tt (×)}. The end of a constructor
-{\tt End} gets interpreted as a proposition that the index that the
-type is interpreted as is equal to the index that the constructor was
-defined to be.
 
 \subsection{First-class Enumerations \& Tags}
 \label{sec:background:case}
@@ -338,6 +314,28 @@ Enum = List Label
 data Tag : Enum → Set where
   here : ∀{l E} → Tag (l ∷ E)
   there : ∀{l E} → Tag E → Tag (l ∷ E)
+\end{verbatim}
+
+Thus, the type of vector tags {\tt VecT} can be defined as
+{\tt Tag} applied to the enumeration {\tt "nil" ∷ "cons" ∷ []}.
+We can also define the {\tt VecT} constructors
+{\tt nilT} and {\tt consT} by using
+{\tt Tag} constructors to index into the enumeration of labels. The
+constructors {\tt here} and {\tt there} are analogous to {\tt zero}
+and {\tt suc}.
+
+\begin{verbatim}
+VecE : Enum
+VecE = "nil" ∷ "cons" ∷ []
+
+VecT : Set
+VecT = Tag VecE
+
+nilT : VecT
+nilT = here
+
+consT : VecT
+consT = there here
 \end{verbatim}
 
 A tag can be eliminated with a {\tt case} construct (this is referred to
@@ -369,24 +367,80 @@ Branches (l ∷ E) P =
 
 \end{mydef}
 
-The only definitions we need to change are to replace
-{\tt VecT} with an {\tt Enum}, and to define
-{\tt VecC} in terms of the {\tt case} eliminator rather than
-by pattern matching. Note that a right-nested product of
-{\tt Branches} always ends in the unit type {\tt ⊤}.
+Now we can redefine {\tt VecC} with the {\tt case} eliminator instead
+of by pattern matching. Note that a right-nested product of
+{\tt Branches} always ends with the unit type {\tt ⊤}.
 
 \begin{verbatim}
-VecT : Enum
-VecT = "nil" ∷ "cons" ∷ []
-
-VecC : (A : Set) → Tag VecT → Desc ℕ
-VecC A = caseD $
-    End zero
+VecC : (A : Set) → VecT → Desc ℕ
+VecC A = case (λ _ → Desc ℕ)
+  ( End zero
   , Arg ℕ (λ n → Arg A (λ _ → Rec n (End (suc n))))
-  , tt
+  , tt )
 \end{verbatim}
 
-\subsection{Examples using Specialized Eliminators}
+\section{Datatypes from Descriptions}
+
+Now that we can encode datatypes as descriptions, we will see how to
+convert a description into a full datatype. You get such a datatype by
+applying the fixpoint type {\tt μ} to a description.
+The constructor {\tt init}
+for {\tt μ} is the initial algebra of the description interpreted as
+an endofunctor on indexed families of sets.
+
+\begin{verbatim}
+data μ {I : Set} (D : Desc I) (i : I) : Set where
+  init : El D (μ D) i → μ D i
+\end{verbatim}
+
+For example, we can define the datatype {\tt Vec} by applying
+{\tt μ} to its description.
+
+\begin{verbatim}
+Vec : (A : Set) (n : ℕ) → Set
+Vec A n = μ (VecD A) n
+\end{verbatim}
+
+\section{Endofunctors from Descriptions}
+
+The constructor for {\tt μ} takes an argument of type {\tt El}.
+This is a function that when given a description computes an
+endofunctor between type families. Below, {\tt ISet} is the type of
+type families.
+
+\begin{verbatim}
+ISet : Set → Set₁
+ISet I = I → Set
+\end{verbatim}
+
+\begin{mydef}\label{def:el}
+Endofunctor
+
+\begin{verbatim}
+El : {I : Set} (D : Desc I) → ISet I → ISet I
+El (End j) X i = j ≡ i
+El (Rec j D) X i = X j × El D X i
+El (Arg A B) X i = Σ A (λ a → El (B a) X i)
+\end{verbatim}
+
+\end{mydef}
+
+For example, below is the type that the {\tt cons} branch of
+{\tt VecD} gets interpreted as. Precisely, this is the type returned
+by {\tt El (VecC A consT) (Vec A) n}.
+
+\begin{verbatim}
+Σ ℕ (λ m → A × Vec A m × (suc m ≡ n))
+\end{verbatim}
+
+Dependent arguments {\tt Arg} and recursive arguments
+{\tt Rec} get interpreted respectively as dependent pair
+{\tt Σ} and non-dependent pair {\tt (×)}. The end of a constructor
+{\tt End} gets interpreted as a proposition that the index that the
+type is interpreted as is equal to the index that the constructor was
+defined to be.
+
+\section{Examples using Specialized Eliminators}
 \label{sec:background:elim}
 
 Below is a review of standard eliminators and how to define functions

@@ -67,10 +67,7 @@ ISet I = I → Set
 _⇒_ : {I : Set} → ISet I → ISet I → Set
 X ⇒ Y = ∀{i} → X i → Y i
 
-IFunc : Set → Set₁
-IFunc I = ISet I → ISet I
-
-El : {I : Set} (D : Desc I) → IFunc I
+El : {I : Set} (D : Desc I) → ISet I → ISet I
 El (End j) X i = j ≡ i
 El (Rec j D) X i = X j × El D X i
 El (Arg A B) X i = Σ A (λ a → El (B a) X i)
@@ -289,6 +286,9 @@ module NoLevitation where
     suc : ℕ tt → ℕ tt
     suc n = init (sucT , n , refl)
 
+    nilD : (A : Set) → Desc (ℕ tt)
+    nilD A = End zero
+
     consD : (A : Set) → Desc (ℕ tt)
     consD A = Arg (ℕ tt) (λ n → Arg A (λ _ → Rec n (End (suc n))))
 
@@ -352,53 +352,71 @@ module NoLevitation where
 
   module Desugared where
 
-    ℕT : Enum
-    ℕT = "zero" ∷ "suc" ∷ []
+    ℕE : Enum
+    ℕE = "zero" ∷ "suc" ∷ []
 
-    VecT : Enum
-    VecT = "nil" ∷ "cons" ∷ []
+    VecE : Enum
+    VecE = "nil" ∷ "cons" ∷ []
 
-    ℕC : Tag ℕT → Desc ⊤
+    ℕT : Set
+    ℕT = Tag ℕE
+
+    VecT : Set
+    VecT = Tag VecE
+
+    zeroT : ℕT
+    zeroT = here
+
+    sucT : ℕT
+    sucT = there here
+
+    nilT : VecT
+    nilT = here
+
+    consT : VecT
+    consT = there here
+
+    ℕC : ℕT → Desc ⊤
     ℕC = caseD $
         End tt
       , Rec tt (End tt)
       , tt
 
     ℕD : Desc ⊤
-    ℕD = Arg (Tag ℕT) ℕC
+    ℕD = Arg ℕT ℕC
 
     ℕ : ⊤ → Set
     ℕ = μ ℕD
 
     zero : ℕ tt
-    zero = init (here , refl)
+    zero = init (zeroT , refl)
 
     suc : ℕ tt → ℕ tt
-    suc n = init (there here , n , refl)
+    suc n = init (sucT , n , refl)
 
-    VecC : (A : Set) → Tag VecT → Desc (ℕ tt)
+    VecC : (A : Set) → VecT → Desc (ℕ tt)
     VecC A = caseD $
         End zero
       , Arg (ℕ tt) (λ n → Arg A λ _ → Rec n (End (suc n)))
       , tt
 
     VecD : (A : Set) → Desc (ℕ tt)
-    VecD A = Arg (Tag VecT) (VecC A)
+    VecD A = Arg VecT (VecC A)
 
     Vec : (A : Set) → ℕ tt → Set
     Vec A = μ (VecD A)
 
     nil : (A : Set) → Vec A zero
-    nil A = init (here , refl)
+    nil A = init (nilT , refl)
 
     cons : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n) → Vec A (suc n)
-    cons A n x xs = init (there here , n , x , xs , refl)
+    cons A n x xs = init (consT , n , x , xs , refl)
    
     nil2 : (A : Set) → Vec A zero
-    nil2 A = inj (VecD A) here
+    nil2 A = inj (VecD A) nilT
   
     cons2 : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n) → Vec A (suc n)
-    cons2 A = inj (VecD A) (there here)
+    cons2 A = inj (VecD A) consT
   
 ----------------------------------------------------------------------
   
@@ -573,24 +591,24 @@ module NoLevitation where
     module GenericElimUncurriedinator where
   
       add : ℕ tt → ℕ tt → ℕ tt
-      add = elim ℕT ℕC _
+      add = elim ℕE ℕC _
         (λ n → n)
         (λ m ih n → suc (ih n))
         tt
   
       mult : ℕ tt → ℕ tt → ℕ tt
-      mult = elim ℕT ℕC _
+      mult = elim ℕE ℕC _
         (λ n → zero)
         (λ m ih n → add n (ih n))
         tt
   
       append : (A : Set) (m : ℕ tt) (xs : Vec A m) (n : ℕ tt) (ys : Vec A n) → Vec A (add m n)
-      append A = elim VecT (VecC A) _
+      append A = elim VecE (VecC A) _
         (λ n ys → ys)
         (λ m x xs ih n ys → cons A (add m n) x (ih n ys))
   
       concat : (A : Set) (m n : ℕ tt) (xss : Vec (Vec A m) n) → Vec A (mult n m)
-      concat A m = elim VecT (VecC (Vec A m)) _
+      concat A m = elim VecE (VecC (Vec A m)) _
         (nil A)
         (λ n xs xss ih → append A m xs (mult n m) ih)
   
@@ -675,20 +693,20 @@ module Levitation where
   
 ----------------------------------------------------------------------
   
-  ℕT : Enum
-  ℕT = "zero" ∷ "suc" ∷ []
+  ℕE : Enum
+  ℕE = "zero" ∷ "suc" ∷ []
   
-  VecT : Enum
-  VecT = "nil" ∷ "cons" ∷ []
+  VecE : Enum
+  VecE = "nil" ∷ "cons" ∷ []
   
-  ℕDs : BranchesD ⊤ ℕT
+  ℕDs : BranchesD ⊤ ℕE
   ℕDs =
       End tt
     , Rec tt (End tt)
     , tt
   
   ℕ : ⊤ → Set
-  ℕ = μ ℕT ℕDs
+  ℕ = μ ℕE ℕDs
   
   zero : ℕ tt
   zero = init here refl
@@ -702,14 +720,14 @@ module Levitation where
   suc2 : ℕ tt → ℕ tt
   suc2 = inj ℕDs (there here)
   
-  VecDs : (A : Set) → BranchesD (ℕ tt) VecT
+  VecDs : (A : Set) → BranchesD (ℕ tt) VecE
   VecDs A =
       End zero
     , Arg (ℕ tt) (λ n → Arg A λ _ → Rec n (End (suc n)))
     , tt
   
   Vec : (A : Set) (n : ℕ tt) → Set
-  Vec A n = μ VecT (VecDs A) n
+  Vec A n = μ VecE (VecDs A) n
   
   nil : (A : Set) → Vec A zero
   nil A = init here refl
