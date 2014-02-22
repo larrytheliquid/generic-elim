@@ -30,6 +30,7 @@
 \DeclareUnicodeCharacter{10215}{\ensuremath{\rrbracket}}
 \DeclareUnicodeCharacter{8614}{\ensuremath{\mapsto}}
 \DeclareUnicodeCharacter{8799}{\ensuremath{\stackrel{?}{=}}}
+\DeclareUnicodeCharacter{8669}{\ensuremath{\leadsto}}
 
 \DeclareUnicodeCharacter{7496}{\ensuremath{^{d}}}
 
@@ -171,8 +172,8 @@ eliminators. Rather than reinventing these algorithms to translate to
 \section{Background on Declaring Datatypes}
 \label{sec:background}
 
-The goal of this section is to use a first-class encoding of datatype
-declarations to define the following type.
+The goal of this section is to learn how to define the following type
+declaration as a first-class value of our type theory. 
 
 \begin{verbatim}
 data Vec (A : Set) : ℕ → Set where
@@ -379,19 +380,20 @@ VecC A = case (λ _ → Desc ℕ)
 \section{Introducing with Algebras}
 \label{sec:init}
 
-The goal of this section is to use the primitive introduction rule for
-datatypes built using descriptions to define the constructors of
-{\tt Vec}.
+The goal of this section is to learn how to use the primitive
+introduction rule for datatypes built using descriptions to define the
+constructors of {\tt Vec}.
 
 \begin{verbatim}
 nil : (A : Set) → Vec A zero
-cons : (A : Set) (n : ℕ) → A → Vec A n → Vec A (suc n)
+cons : (A : Set) (n : ℕ) → A → Vec A n
+  → Vec A (suc n)
 \end{verbatim}
 
 In a system where the datatype declaration {\tt Vec} is an axiomatic
 extension, the constructors {\tt cons} and {\tt nil} are defined for
 us. When using descriptions to define {\tt Vec}, we can instead
-introduce values of type {\tt Vec} using an initial algebra.
+introduce values of type {\tt Vec} using its initial algebra.
 
 \subsection{The Type of Fixpoints}
 
@@ -454,7 +456,8 @@ equal to the successor of the index argument.
 consType : (A : Set) (n : ℕ) → Set
 consType A n = El (consD A) (Vec A) n
 
-consType A n ⇝ Σ ℕ (λ m → Σ A (λ _ → Vec A m × (suc m ≡ n)))
+consType A n ⇝
+  Σ ℕ (λ m → Σ A (λ _ → Vec A m × (suc m ≡ n)))
 \end{verbatim}
 
 \subsection{Interpreting Multiple Constructors}
@@ -468,27 +471,30 @@ using a dependent pair (\refsec{background:multiple}). Thus,
 VecType : (A : Set) (n : ℕ) → Set
 VecType A n = El (VecD A) (Vec A) n
 
-VecType A n ⇝ Σ VecT (case (λ _ → Desc ℕ)
+VecType A n ⇝ Σ VecT (case (λ _ → Set)
   (nilType A n , consType A n , tt))
 \end{verbatim}
+\todo[inline]{Motive for case is wrong}
 
-\subsection{The Type of Endofunctors}
+\subsection{Defining Constructors}
 
-{\tt El} is a a function that computes an endofunctor on families of
-indexed sets from a description. The constructor {\tt init}
-represents the initial algebra of the functor computed by {\tt El D}.
-The initial F-algebra is usually denoted {\tt F X ⟶ X}.
-Here, {\tt F = El D} and the arrow is an index-preserving map between
-the type families {\tt F X : I → Set} and {\tt X : I → Set}.
+We are now ready define the constructors {\tt nil} and
+{\tt cons} using the initial algebra {\tt init}, which is the goal of
+this section.
+We have already seen
+{\tt VecType}, the type of the argument to {\tt init} for vectors.
+Thus a constructor is defined by applying {\tt init} to a tuple. The
+first argument is the tag choosing a particular constructor. Next comes
+the tuple of proper arguments for the constructor. The tuple
+ends with a proof that the index has the correct value.
 
 \begin{verbatim}
-ISet : Set → Set₁
-ISet I = I → Set
+nil : (A : Set) → Vec A zero
+nil A = init (nilT , refl)
 
-El : {I : Set} (D : Desc I) → ISet I → ISet I
-El (End j) X i = j ≡ i
-El (Rec j D) X i = Σ (X j) (λ _ → El D X i)
-El (Arg A B) X i = Σ A (λ a → El (B a) X i)
+cons : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n)
+  → Vec A (suc n)
+cons A n x xs = init (consT , n , x , xs , refl)
 \end{verbatim}
 
 \section{Datatypes from Descriptions}
