@@ -303,8 +303,14 @@ module NoLevitation where
     Vec : (A : Set) (n : ℕ tt) → Set
     Vec A n = μ (VecD A) n
 
+    nilType : (A : Set) (n : ℕ tt) → Set
+    nilType A n = El (nilD A) (Vec A) n
+
     consType : (A : Set) → ℕ tt → Set
     consType A n = El (consD A) (Vec A) n
+
+    VecType : (A : Set) → ℕ tt → Set
+    VecType A n = El (VecD A) (Vec A) n
 
     nil : (A : Set) → Vec A zero
     nil A = init (nilT , refl)
@@ -400,11 +406,26 @@ module NoLevitation where
       , Arg (ℕ tt) (λ n → Arg A λ _ → Rec n (End (suc n)))
       , tt
 
+    nilD : (A : Set) → Desc (ℕ tt)
+    nilD A = End zero
+
+    consD : (A : Set) → Desc (ℕ tt)
+    consD A = Arg (ℕ tt) (λ n → Arg A (λ _ → Rec n (End (suc n))))
+
     VecD : (A : Set) → Desc (ℕ tt)
     VecD A = Arg VecT (VecC A)
 
     Vec : (A : Set) → ℕ tt → Set
     Vec A = μ (VecD A)
+
+    nilType : (A : Set) (n : ℕ tt) → Set
+    nilType A n = El (nilD A) (Vec A) n
+
+    consType : (A : Set) → ℕ tt → Set
+    consType A n = El (consD A) (Vec A) n
+
+    VecType : (A : Set) → ℕ tt → Set
+    VecType A n = El (VecD A) (Vec A) n
 
     nil : (A : Set) → Vec A zero
     nil A = init (nilT , refl)
