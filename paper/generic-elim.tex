@@ -172,7 +172,7 @@ eliminators. Rather than reinventing these algorithms to translate to
 \section{Background on Declaring Datatypes}
 \label{sec:background}
 
-The goal of this section is to learn how to define the following type
+The goal of this section is to {\it review} how to define the following type
 declaration as a first-class value of our type theory. 
 
 \begin{verbatim}
@@ -190,6 +190,8 @@ There are
 several ways to define the datatype of descriptions {\tt Desc}. 
 For simplicity, in this paper we use the encoding by
 \citet{mcbride2010ornamental}.
+
+\todo[inline]{cite dagand paper for actually translating data to desc}
 
 \subsection{The Type of Descriptions}
 
@@ -380,7 +382,7 @@ VecC A = case (λ _ → Desc ℕ)
 \section{Introducing with Algebras}
 \label{sec:init}
 
-The goal of this section is to learn how to use the primitive
+The goal of this section is to {\it review} how to use the primitive
 introduction rule for datatypes built using descriptions to define the
 constructors of {\tt Vec}.
 
@@ -496,6 +498,37 @@ cons : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n)
   → Vec A (suc n)
 cons A n x xs = init (consT , n , x , xs , refl)
 \end{verbatim}
+
+\section{Defining Generic Constructors}
+\label{sec:inj}
+
+The goal of this section is to {\it contribute} a novel generic
+constructor for datatypes built from descriptions. This constructor
+may be used to define {\tt nil} and {\tt cons} as follows.
+
+\begin{verbatim}
+nil : (A : Set) → Vec A zero
+nil A = inj (VecD A) nilT
+
+cons : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n)
+  → Vec A (suc n)
+cons A = inj (VecD A) consT
+\end{verbatim}
+
+The constructors {\tt nil} and {\tt cons} are manually
+defined in \refsec{init} using the initial algebra
+{\tt init} as a primitive. Now we will define a generic constructor
+{\tt inj} that once and for all captures the pattern inherent in
+definitions of constructors. This amounts to:
+
+\begin{enumerate}
+\item Currying constructor arguments.
+\item Inserting a proof that the constructor has the correct index.
+\end{enumerate}
+
+Defining {\tt inj} may not seem impressive by itself, but it acts as
+nice pedagogical step towards understanding how to define the generic
+eliminator {\tt elim} in \refsec{elim}.
 
 \section{Datatypes from Descriptions}
 
@@ -1035,27 +1068,27 @@ can be defined in one go by inlining the other definitions.
 %% if {\tt zero} was specified as the return type of {\tt cons}.
 %% \end{myparti}
 
-\section{Defining Generic Constructors}
-\label{sec:inj}
+%% \section{Defining Generic Constructors}
+%% \label{sec:inj}
 
-In \refsec{init} we looked at examples of constructors defined
-with {\tt init}, and how each such definition can be broken up into 4
-parts. Now we will derive a generic constructor {\tt inj} that
-implements these 4 parts.
+%% In \refsec{init} we looked at examples of constructors defined
+%% with {\tt init}, and how each such definition can be broken up into 4
+%% parts. Now we will derive a generic constructor {\tt inj} that
+%% implements these 4 parts.
 
-\subsection{Curried {\tt init}}
+%% \subsection{Curried {\tt init}}
 
-First let’s once more recall the type of the initial
-algebra {\tt init}.
+%% First let’s once more recall the type of the initial
+%% algebra {\tt init}.
 
-\begin{verbatim}
-El D (μ D) i → μ D i
-\end{verbatim}
+%% \begin{verbatim}
+%% El D (μ D) i → μ D i
+%% \end{verbatim}
 
-You can think of this like an uncurried function of type
-{\tt (A , B) → X}, where {\tt A × B} corresponds to
-{\tt El D (μ D) i} and {\tt X} corresponds to
-{\tt μ D i}.
+%% You can think of this like an uncurried function of type
+%% {\tt (A , B) → X}, where {\tt A × B} corresponds to
+%% {\tt El D (μ D) i} and {\tt X} corresponds to
+%% {\tt μ D i}.
 
 \section{Currying and Uncurrying}
 \label{sec:curry}
