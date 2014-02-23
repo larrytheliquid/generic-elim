@@ -169,7 +169,7 @@ translate dependent pattern matching into
 eliminators. Rather than reinventing these algorithms to translate to
 {\tt ind}, we can instead directly reuse them with our derived {\tt elim}.
 
-\section{Background on Declaring Datatypes}
+\section{Declaring Datatypes}
 \label{sec:background}
 
 The goal of this section is to {\it review} how to define the following type
@@ -479,6 +479,7 @@ VecType A n ⇝ Σ VecT (case (λ _ → Set)
 \todo[inline]{Motive for case is wrong}
 
 \subsection{Defining Constructors}
+\label{sec:init:cons}
 
 We are now ready define the constructors {\tt nil} and
 {\tt cons} using the initial algebra {\tt init}, which is the goal of
@@ -499,7 +500,7 @@ cons : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n)
 cons A n x xs = init (consT , n , x , xs , refl)
 \end{verbatim}
 
-\section{Defining Generic Constructors}
+\section{Generic Constructors}
 \label{sec:inj}
 
 The goal of this section is to {\it contribute} a novel generic
@@ -519,77 +520,142 @@ The constructors {\tt nil} and {\tt cons} are manually
 defined in \refsec{init} using the initial algebra
 {\tt init} as a primitive. Now we will define a generic constructor
 {\tt inj} that once and for all captures the pattern inherent in
-definitions of constructors. This amounts to:
+definitions of constructors. Importantly, our generic constructor is
+defined in terms of the existing primitives and does not extend the
+metatheory.
+This amounts to:
 
-\begin{enumerate}
-\item Currying constructor arguments.
-\item Inserting a proof that the constructor has the correct index.
-\end{enumerate}
+\begin{myparti}
+\label{parti:one}
+Currying constructor arguments.
+\end{myparti}
+
+\begin{myparti}
+\label{parti:two}
+Inserting a proof that the constructor has the correct index.
+\end{myparti}
 
 Defining {\tt inj} may not seem impressive by itself, but it acts as
 nice pedagogical step towards understanding how to define the generic
 eliminator {\tt elim} in \refsec{elim}.
 
-\section{Datatypes from Descriptions}
+\subsection{Uncurried Algebra}
 
-Now that we can encode datatypes as descriptions, we will see how to
-convert a description into a full datatype. You get such a datatype by
-applying the fixpoint type {\tt μ} to a description.
-The constructor {\tt init}
-for {\tt μ} is the initial algebra of the description interpreted as
-an endofunctor on indexed families of sets.
-
-\begin{verbatim}
-data μ {I : Set} (D : Desc I) (i : I) : Set where
-  init : El D (μ D) i → μ D i
-\end{verbatim}
-
-For example, we can define the datatype {\tt Vec} by applying
-{\tt μ} to its description.
+In order to implement \refparti{one}, we must first recognize the
+initial algebra as an uncurried function. Recall the type of the
+initial algebra {\tt init : El D (μ D) i → μ D i}. Rather than
+focusing on the initial algebra, we can generalize the uncurried view
+of this constructor by replacing {\tt μ D} with an arbitrary
+type family {\tt X : I → Set}.
 
 \begin{verbatim}
-Vec : (A : Set) (n : ℕ) → Set
-Vec A n = μ (VecD A) n
+UncurriedEl : {I : Set}
+  (D : Desc I) (X : ISet I) → Set
+UncurriedEl D X = ∀ {i} → El D X i → X i
 \end{verbatim}
 
-\section{Endofunctors from Descriptions}
+Recognize {\tt UncurriedEl} as an uncurried function by thinking of
+{\tt El D X i} as a product of $n$ arguments $A_1 × ... × A_n$, an
+argument requiring a proof of correct indexing $(j≡i)$, and
+X i as the result type $Z$.
+\[
+A_1 × ... × A_n × (j ≡ i) → Z
+\]
 
-The constructor for {\tt μ} takes an argument of type {\tt El}.
-This is a function that when given a description computes an
-endofunctor between type families. Below, {\tt ISet} is the type of
-type families.
+For example, the applying {\tt UncurriedEl} to the description of the
+{\tt cons} constructor results in the following type.
 
 \begin{verbatim}
-ISet : Set → Set₁
-ISet I = I → Set
+UncurriedEl (consD A) (μ D) ⇝ ∀{n} →
+  Σ ℕ (λ m → Σ A (λ _ → Vec A m × (suc m ≡ n)))
+  →
+  μ D n
 \end{verbatim}
 
-\begin{mydef}\label{def:el}
-Endofunctor
+\subsection{Curried Algebra}
+
+Now let's define the curried version of the function. Recall that the
+type {\tt El} is a product of arguments, and {\tt UncurriedEl} is a
+function from that product to some other type family. In contrast,
+{\tt CurriedEl} is one large right-nested definition of function
+arguments.
 
 \begin{verbatim}
-El : {I : Set} (D : Desc I) → ISet I → ISet I
-El (End j) X i = j ≡ i
-El (Rec j D) X i = X j × El D X i
-El (Arg A B) X i = Σ A (λ a → El (B a) X i)
+CurriedEl : {I : Set} (D : Desc I) (X : ISet I) → Set
+CurriedEl (End i) X = X i
+CurriedEl (Rec i D) X = (x : X i) → CurriedEl D X
+CurriedEl (Arg A B) X = (a : A) → CurriedEl (B a) X
 \end{verbatim}
 
-\end{mydef}
+Recognize {\tt CurriedEl} as a curried function that demands
+$n$ constructor arguments as function arguments
+$A_1 → ... → A_n$, and has the result type $Z$.
+\[
+A_1 → ... → A_n → Z
+\]
 
-For example, below is the type that the {\tt cons} branch of
-{\tt VecD} gets interpreted as. Precisely, this is the type returned
-by {\tt El (VecC A consT) (Vec A) n}.
+Signifcantly, {\tt CurriedEl} does not require a proof of correct
+indexing $(j≡i)$. Thus, in addition to solving \refparti{one} by
+currying arguments, {\tt CurriedEl} also solves \refparti{two} by
+implicitly supplying this correctness proof. Compare this to the
+alternative definition {\tt CurriedEl'} that explicitly requires the
+correctness proof below. The extra proof can be seen in the
+{\tt End} constructor case.
 
 \begin{verbatim}
-Σ ℕ (λ m → A × Vec A m × (suc m ≡ n))
+CurriedEl' : {I : Set}
+  (D : Desc I) (X : ISet I) (i : I) → Set
+CurriedEl' (End j) X i =
+  j ≡ i → X i
+CurriedEl' (Rec j D) X i =
+  (x : X j) → CurriedEl' D X i
+CurriedEl' (Arg A B) X i =
+  (a : A) → CurriedEl' (B a) X i
 \end{verbatim}
 
-Dependent arguments {\tt Arg} and recursive arguments
-{\tt Rec} get interpreted respectively as dependent pair
-{\tt Σ} and non-dependent pair {\tt (×)}. The end of a constructor
-{\tt End} gets interpreted as a proposition that the index that the
-type is interpreted as is equal to the index that the constructor was
-defined to be.
+Finally, below is an example of applying {\tt CurriedEl} to the
+description of the {\tt cons} constructor. Notice that all arguments
+are curried, and a proof of index correctness is not demanded.
+
+\begin{verbatim}
+CurriedEl (consD A) (μ D) ⇝
+  (m : ℕ) → A → Vec A m → μ D (suc m)
+\end{verbatim}
+
+\subsection{Curry Function}
+
+All we need now is a curry function that takes an
+{\tt UncurriedEl} and returns a {\tt CurriedEl}. The definition of
+this function is unremarkable, but its type clearly explains its
+intentions.
+
+\begin{verbatim}
+curryEl : {I : Set} (D : Desc I) (X : ISet I)
+  (cn : UncurriedEl D X) → CurriedEl D X
+curryEl (End i) X cn =
+  cn refl
+curryEl (Rec i D) X cn =
+  λ x → curryEl D X (λ xs → cn (x , xs))
+curryEl (Arg A B) X cn =
+  λ a → curryEl (B a) X (λ xs → cn (a , xs))
+\end{verbatim}
+
+\subsection{The Generic Constructor}
+
+The moment has arrived, with the help of our {\tt curryEl} function we
+can easily define the generic constructor {\tt inj}.
+
+\begin{verbatim}
+inj : {I : Set} (D : Desc I) → CurriedEl D (μ D)
+inj D = curryEl D (μ D) init
+\end{verbatim}
+
+Unlike previous functions, this one is specialized to datatypes
+defined with {\tt μ} rather than arbitrary type families {\tt X}. This
+is the function we set out to define at the beginning of this section.
+Compared to values of some type introduced with {\tt init} (\refsec{init:cons}),
+values introduced with {\tt inj} have curried arguments and do not
+need to supply a proof {\tt refl} of correct indexing.
 
 \section{Examples using Specialized Eliminators}
 \label{sec:background:elim}
@@ -861,7 +927,7 @@ append A = ind (VecD A)                                         -- # 1
 
 \end{figure*}
 
-\section{Defining Generic Eliminators}
+\section{Generic Eliminators}
 \label{sec:elim}
 
 In \refsec{ind} we looked at examples of functions defined

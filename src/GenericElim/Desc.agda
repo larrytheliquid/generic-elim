@@ -108,7 +108,7 @@ UncurriedEl D X = El D X ⇒ X
 
 CurriedEl : {I : Set} (D : Desc I) (X : ISet I) → Set
 CurriedEl (End i) X = X i
-CurriedEl (Rec j D) X = (x : X j) → CurriedEl D X
+CurriedEl (Rec i D) X = (x : X i) → CurriedEl D X
 CurriedEl (Arg A B) X = (a : A) → CurriedEl (B a) X
 CurriedEl (RecFun A B D) X = ((a : A) → X (B a)) → CurriedEl D X
 
