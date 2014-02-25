@@ -513,7 +513,8 @@ module NoLevitation where
         (xss : NilEl (Vec A m) n)
         (ihs : NilHyps (Vec A m) (Concat A m) n xss)
         → Vec A (mult n m)
-      nilBranch A m n q ih = subst (λ n → Vec A (mult n m)) q (nil A)
+      nilBranch A m n q ih = subst (λ n → Vec A (mult n m))
+        q (nil A)
 
       consBranch : (A : Set) (m n : ℕ tt)
         (xss : ConsEl (Vec A m) n)
@@ -525,7 +526,8 @@ module NoLevitation where
             q = proj₂ (proj₂ (proj₂ n',xs,xss,q))
             ih = proj₁ ih,tt
         in
-        subst (λ n → Vec A (mult n m)) q (append A m xs (mult n' m) ih)
+        subst (λ n → Vec A (mult n m))
+          q (append A m xs (mult n' m) ih)
 
       ConcatConvoy : (A : Set) (m n : ℕ tt) (t : VecT) → Set
       ConcatConvoy A m n t =
