@@ -413,6 +413,7 @@ Vec A n = μ (VecD A) n
 \end{verbatim}
 
 \subsection{Interpreting a Single Constructor}
+\label{sec:init:el}
 
 To introduce values of type {\tt Vec}, we use the
 {\tt init} constructor of {\tt μ}. The argument to {\tt init} is
@@ -659,6 +660,75 @@ need to supply a proof {\tt refl} of correct indexing.
 
 \section{Eliminating with Algebras}
 \label{sec:ind}
+
+The goal of this section is to {\it review} how to use the primitive
+elimination rule for datatypes built using descriptions. We use
+the vector concatenation function (which flattens a vector of
+homogenously-sized vectors) as our example, defined below using the
+specialized eliminator {\tt elimVec}.
+
+\begin{verbatim}
+concat : (A : Set) (m n : ℕ)
+  (xss : Vec (Vec A m) n) → Vec A (mult n m)
+concat A m = elimVec (Vec A m)
+  (λ n xss → Vec A (mult n m))
+  (nil A)
+  (λ n xs xss ih → append A m xs (mult n m) ih)
+\end{verbatim}
+
+This section develops the definitions necessary to understand how to
+write {\tt concat} by applying the primitive elimination rule for
+described types to a suitable algebra.
+
+\subsection{The Type of Primitive Induction}
+
+The type of the primitive elimination rule for datatypes built from
+descriptions is given below.
+In order to prove that some property {\tt P} holds for any value of a
+described type, you must supply an algebra argument {\tt α} showing
+that {\tt P} holds for any {\tt El D (μ D) i}. Whereas an eliminator
+has seperate branches for proofs about each constructor, {\tt ind}
+requires a single algebra argument that proves {\tt P} for any
+constructor.
+
+\begin{verbatim}
+ind : {I : Set} (D : Desc I)
+  (P : (i : I) → μ D i → Set)
+  (α : (i : I) (xs : El D (μ D) i)
+    (ihs : Hyps D (μ D) P i xs) → P i (init xs))
+  (i : I) (x : μ D i) → P i x
+\end{verbatim}
+
+In order to prove {\tt P} you get the following
+arguments:
+
+\begin{enumerate}
+\item{{\tt (i : I)}} - The index of the type being eliminated.
+\item{{\tt (xs : El D (μ D) i)}} - The constructors and arguments of the type
+  being eliminated.
+\item{{\tt (ihs : Hyps D (μ D) P i xs) → P i (init xs))}} - The inductive
+  hypotheses for all constructors.
+\end{enumerate}
+
+\citet{mcbride2010ornamental} gives the definition of {\tt ind}, but
+our work can be understood without knowing the definition.
+
+\subsection{Inductive Hypotheses for a Single Constructor}
+
+{\tt Hyps} is the type of inductive hypotheses for a described
+datatype. Its definition closely follows the definition of
+the interpretation function of descriptions {\tt El}
+(\refsec{init:el}).
+
+\begin{verbatim}
+Hyps : {I : Set} (D : Desc I) (X : ISet I)
+  (P : (i : I) → X i → Set)
+  (i : I) (xs : El D X i) → Set
+Hyps (End j) X P i q = ⊤
+Hyps (Rec j D) X P i (x , xs) =
+  P j x × Hyps D X P i xs
+Hyps (Arg A B) X P i (a , b) = Hyps (B a) X P i b
+\end{verbatim}
 
 \section{Generic Eliminators}
 \label{sec:elim}
@@ -1161,11 +1231,6 @@ need to supply a proof {\tt refl} of correct indexing.
 %% {\tt (A , B) → X}, where {\tt A × B} corresponds to
 %% {\tt El D (μ D) i} and {\tt X} corresponds to
 %% {\tt μ D i}.
-
-\section{Currying and Uncurrying}
-\label{sec:curry}
-
-\todo[inline]{compare everything to respective simple haskell functions}
 
 \section{Related Work}
 \label{sec:related-work}
