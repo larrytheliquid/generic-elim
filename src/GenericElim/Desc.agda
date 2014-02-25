@@ -433,6 +433,9 @@ module NoLevitation where
     consHyps : (A : Set) (P : (n : ℕ tt) → μ (VecD A) n → Set) (n : ℕ tt) (xs : consEl A n) → Set
     consHyps A P n xs = Hyps (consD A) (Vec A) P n xs
 
+    VecHyps : (A : Set) (P : (n : ℕ tt) → μ (VecD A) n → Set) (n : ℕ tt) (xs : VecEl A n) → Set
+    VecHyps A P n xs = Hyps (VecD A) (Vec A) P n xs
+
     nil : (A : Set) → Vec A zero
     nil A = init (nilT , refl)
 
@@ -502,28 +505,62 @@ module NoLevitation where
           (proj₁ t,c)
           (proj₂ t,c)
         )
-      
+
+      nilBranch : (A : Set) (m n : ℕ tt)
+        (xss : nilEl (Vec A m) n)
+        (ih : nilHyps (Vec A m) (λ n xss → Vec A (mult n m)) n xss)
+        → Vec A (mult n m)
+      nilBranch A m n q ih = subst (λ n → Vec A (mult n m)) q (nil A)
+
+      consBranch : (A : Set) (m n : ℕ tt)
+        (xss : consEl (Vec A m) n)
+        (ih : consHyps (Vec A m) (λ n xss → Vec A (mult n m)) n xss)
+        → Vec A (mult n m)
+      consBranch A m n n',xs,xss,q ih,tt =
+        let n' = proj₁ n',xs,xss,q
+            xs = proj₁ (proj₂ n',xs,xss,q)
+            q = proj₂ (proj₂ (proj₂ n',xs,xss,q))
+            ih = proj₁ ih,tt
+        in
+        subst (λ n → Vec A (mult n m)) q (append A m xs (mult n' m) ih)
+
+      concatConvoy : (A : Set) (m n : ℕ tt) (t : VecT) → Set
+      concatConvoy A m n t =
+        (xss : El (VecC (Vec A m) t) (Vec (Vec A m)) n)
+        (ihs : Hyps (VecD (Vec A m)) (Vec (Vec A m)) (λ n xss → Vec A (mult n m)) n (t , xss))
+        → Vec A (mult n m)
+
+      -- concatCase 
+
       concat : (A : Set) (m n : ℕ tt) (xss : Vec (Vec A m) n) → Vec A (mult n m)
       concat A m = ind (VecD (Vec A m)) (λ n xss → Vec A (mult n m))
-        (λ n t,c → case
-          (λ t → (c : El (VecC (Vec A m) t) (Vec (Vec A m)) n)
-                 (ih : Hyps (VecD (Vec A m)) (Vec (Vec A m)) (λ n xss → Vec A (mult n m)) n (t , c))
-                 → Vec A (mult n m)
-          )
-          ( (λ q ih → subst (λ n → Vec A (mult n m)) q (nil A))
-          , (λ n',xs,xss,q ih,tt →
-              let n' = proj₁ n',xs,xss,q
-                  xs = proj₁ (proj₂ n',xs,xss,q)
-                  q = proj₂ (proj₂ (proj₂ n',xs,xss,q))
-                  ih = proj₁ ih,tt
-              in
-              subst (λ n → Vec A (mult n m)) q (append A m xs (mult n' m) ih)
-            )
-          , tt
-          )
+        (λ n t,c → case (concatConvoy A m n)
+          (nilBranch A m n , consBranch A m n , tt)
           (proj₁ t,c)
           (proj₂ t,c)
         )
+
+      -- concat : (A : Set) (m n : ℕ tt) (xss : Vec (Vec A m) n) → Vec A (mult n m)
+      -- concat A m = ind (VecD (Vec A m)) (λ n xss → Vec A (mult n m))
+      --   (λ n t,c → case
+      --     (λ t → (c : El (VecC (Vec A m) t) (Vec (Vec A m)) n)
+      --            (ih : Hyps (VecD (Vec A m)) (Vec (Vec A m)) (λ n xss → Vec A (mult n m)) n (t , c))
+      --            → Vec A (mult n m)
+      --     )
+      --     ( (λ q ih → subst (λ n → Vec A (mult n m)) q (nil A))
+      --     , (λ n',xs,xss,q ih,tt →
+      --         let n' = proj₁ n',xs,xss,q
+      --             xs = proj₁ (proj₂ n',xs,xss,q)
+      --             q = proj₂ (proj₂ (proj₂ n',xs,xss,q))
+      --             ih = proj₁ ih,tt
+      --         in
+      --         subst (λ n → Vec A (mult n m)) q (append A m xs (mult n' m) ih)
+      --       )
+      --     , tt
+      --     )
+      --     (proj₁ t,c)
+      --     (proj₂ t,c)
+      --   )
   
 ----------------------------------------------------------------------
   

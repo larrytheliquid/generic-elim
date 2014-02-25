@@ -56,7 +56,7 @@
 \titlebanner{DRAFT}        % These are ignored unless
 %% \preprintfooter{short description of paper}   % 'preprint' option specified.
 
-\title{Generic Constructors \& Eliminators from Descriptions}
+\title{Generic Constructors and Eliminators from Descriptions}
 \subtitle{Dependently typed programming without the algebra}
 
 \authorinfo{Larry Diehl\and Tim Sheard}
@@ -568,7 +568,7 @@ For example, the applying {\tt UncurriedEl} to the description of the
 
 \begin{verbatim}
 UncurriedEl (consD A) (μ D) ⇝ ∀{n} →
-  Σ ℕ (λ m → Σ A (λ _ → Vec A m × (suc m ≡ n)))
+  Σ ℕ (λ m → A × Vec A m × (suc m ≡ n))
   →
   μ D n
 \end{verbatim}
@@ -632,7 +632,7 @@ intentions.
 
 \begin{verbatim}
 curryEl : {I : Set} (D : Desc I) (X : ISet I)
-  (cn : UncurriedEl D X) → CurriedEl D X
+  → UncurriedEl D X → CurriedEl D X
 curryEl (End i) X cn =
   cn refl
 curryEl (Rec i D) X cn =
@@ -684,9 +684,10 @@ described types to a suitable algebra.
 
 The type of the primitive elimination rule for datatypes built from
 descriptions is given below.
-In order to prove that some property {\tt P} holds for any value of a
-described type, you must supply an algebra argument {\tt α} showing
-that {\tt P} holds for any {\tt El D (μ D) i}. Whereas an eliminator
+The algebra {\tt α} is the important argument, as it is the proof that
+that some property {\tt P} holds for any value of a
+described type.
+Whereas an eliminator
 has seperate branches for proofs about each constructor, {\tt ind}
 requires a single algebra argument that proves {\tt P} for any
 constructor.
@@ -699,7 +700,7 @@ ind : {I : Set} (D : Desc I)
   (i : I) (x : μ D i) → P i x
 \end{verbatim}
 
-In order to prove {\tt P} you get the following
+In order to prove {\tt P i (init xs)} you get the following
 arguments:
 
 \begin{enumerate}
@@ -750,7 +751,7 @@ nilHyps : (A : Set)
   (n : ℕ) (xs : nilEl A n) → Set
 nilHyps A P n xs = Hyps (nilD A) (Vec A) P n xs
 
-nilHyps A P n xs ⇝ ⊤
+nilHyps A P zero tt ⇝ ⊤
 \end{verbatim}
 
 On the other hand, the {\tt cons} constructor of vectors requires an
@@ -769,9 +770,26 @@ consHyps A P (suc m) (x , xs) ⇝ P m x × ⊤
 
 Once again, multiple constructors are represented by a tagged
 sum (\refsec{background:multiple}). {\tt Hyps} for
-{\tt VecD} will require {\it either} the inductive hypotheses of
+{\tt VecD} requires {\it either} the inductive hypotheses of
 {\tt nil} or the inductive hypotheses of {\tt cons}, depending on
 which constructor {\tt Hyps} is applied to.
+
+\begin{verbatim}
+VecHyps : (A : Set)
+  (P : (n : ℕ) → μ (VecD A) n → Set)
+  (n : ℕ) (xs : VecEl A n) → Set
+VecHyps A P n xs = Hyps (VecD A) (Vec A) P n xs
+
+VecHyps A P n (nilT  , xs) ⇝ nilHyps  A P n xs 
+VecHyps A P n (consT , xs) ⇝ consHyps A P n xs 
+\end{verbatim}
+
+\subsection{Defining Branches}
+
+Rather than defining {\tt concat} directly, we first define the
+branches after case analysis has been performed on the vector. There
+are two branches of interest, one for {\tt nil} and another for
+{\tt cons}.
 
 \section{Generic Eliminators}
 \label{sec:elim}
