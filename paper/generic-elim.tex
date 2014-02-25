@@ -444,10 +444,10 @@ The {\tt nil} constructor of vectors has no arguments. Thus,
 the type is equal to the vector length zero.
 
 \begin{verbatim}
-nilType : (A : Set) (n : ℕ) → Set
-nilType A n = El (nilD A) (Vec A) n
+nilEl : (A : Set) (n : ℕ) → Set
+nilEl A n = El (nilD A) (Vec A) n
 
-nilType A n ⇝ zero ≡ n
+nilEl A n ⇝ zero ≡ n
 \end{verbatim}
 
 The {\tt cons} constructor of vectors has an index argument, an
@@ -456,10 +456,10 @@ argument, and finally requires a proof that the index in the type is
 equal to the successor of the index argument.
 
 \begin{verbatim}
-consType : (A : Set) (n : ℕ) → Set
-consType A n = El (consD A) (Vec A) n
+consEl : (A : Set) (n : ℕ) → Set
+consEl A n = El (consD A) (Vec A) n
 
-consType A n ⇝
+consEl A n ⇝
   Σ ℕ (λ m → Σ A (λ _ → Vec A m × (suc m ≡ n)))
 \end{verbatim}
 
@@ -468,14 +468,14 @@ consType A n ⇝
 Recall that multiple constructors are represented as a tagged sum
 using a dependent pair (\refsec{background:multiple}). Thus,
 {\tt El} for {\tt VecD} will be the tagged sum requiring
-{\tt nilType} or {\tt consType}.
+{\tt nilEl} or {\tt consEl}.
 
 \begin{verbatim}
-VecType : (A : Set) (n : ℕ) → Set
-VecType A n = El (VecD A) (Vec A) n
+VecEl : (A : Set) (n : ℕ) → Set
+VecEl A n = El (VecD A) (Vec A) n
 
-VecType A n ⇝ Σ VecT (case (λ _ → Set)
-  (nilType A n , consType A n , tt))
+VecEl A n ⇝ Σ VecT (case (λ _ → Set)
+  (nilEl A n , consEl A n , tt))
 \end{verbatim}
 \todo[inline]{Motive for case is wrong}
 
@@ -486,7 +486,7 @@ We are now ready define the constructors {\tt nil} and
 {\tt cons} using the initial algebra {\tt init}, which is the goal of
 this section.
 We have already seen
-{\tt VecType}, the type of the argument to {\tt init} for vectors.
+{\tt VecEl}, the type of the argument to {\tt init} for vectors.
 Thus a constructor is defined by applying {\tt init} to a tuple. The
 first argument is the tag choosing a particular constructor. Next comes
 the tuple of proper arguments for the constructor. The tuple
@@ -728,6 +728,29 @@ Hyps (End j) X P i q = ⊤
 Hyps (Rec j D) X P i (x , xs) =
   P j x × Hyps D X P i xs
 Hyps (Arg A B) X P i (a , b) = Hyps (B a) X P i b
+\end{verbatim}
+
+First, let's understand {\tt Hyps} by what it computes for the
+description of a single constructor like {\tt nil} or {\tt cons}.
+{\tt Hyps} ignores dependent arguments {\tt Arg} and moves on, looking
+for recursive arguments. When finding a recursive argument {\tt Rec}, it
+asks for the motive {\tt P} instantiated at the recursive argument.
+Finally, the tree of inductive hypotheses is terminated by the unit
+type {\tt ⊤} once the description ends in {\tt End}.
+
+The {\tt nil} constructor of vectors neither has dependent nor
+recursive arguments. Thus, {\tt Hyps} for {\tt nilD} is simply
+the unit type. Recall that {\tt nilEl} is the type that
+{\tt nil}'s description gets interpreted as. The definition of
+{\tt nilE} and related types can be found in \refsec{init:el}.
+
+\begin{verbatim}
+nilHyps : (A : Set)
+  (P : (n : ℕ) → μ (VecD A) n → Set)
+  (n : ℕ) (xs : nilEl A n) → Set
+nilHyps A P n xs = Hyps (nilD A) (Vec A) P n xs
+
+nilHyps A P n xs ⇝ ⊤
 \end{verbatim}
 
 \section{Generic Eliminators}

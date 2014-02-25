@@ -303,14 +303,14 @@ module NoLevitation where
     Vec : (A : Set) (n : ℕ tt) → Set
     Vec A n = μ (VecD A) n
 
-    nilType : (A : Set) (n : ℕ tt) → Set
-    nilType A n = El (nilD A) (Vec A) n
+    nilEl : (A : Set) (n : ℕ tt) → Set
+    nilEl A n = El (nilD A) (Vec A) n
 
-    consType : (A : Set) → ℕ tt → Set
-    consType A n = El (consD A) (Vec A) n
+    consEl : (A : Set) → ℕ tt → Set
+    consEl A n = El (consD A) (Vec A) n
 
-    VecType : (A : Set) → ℕ tt → Set
-    VecType A n = El (VecD A) (Vec A) n
+    VecEl : (A : Set) → ℕ tt → Set
+    VecEl A n = El (VecD A) (Vec A) n
 
     nil : (A : Set) → Vec A zero
     nil A = init (nilT , refl)
@@ -418,14 +418,17 @@ module NoLevitation where
     Vec : (A : Set) → ℕ tt → Set
     Vec A = μ (VecD A)
 
-    nilType : (A : Set) (n : ℕ tt) → Set
-    nilType A n = El (nilD A) (Vec A) n
+    nilEl : (A : Set) (n : ℕ tt) → Set
+    nilEl A n = El (nilD A) (Vec A) n
 
-    consType : (A : Set) → ℕ tt → Set
-    consType A n = El (consD A) (Vec A) n
+    consEl : (A : Set) → ℕ tt → Set
+    consEl A n = El (consD A) (Vec A) n
 
-    VecType : (A : Set) → ℕ tt → Set
-    VecType A n = El (VecD A) (Vec A) n
+    VecEl : (A : Set) → ℕ tt → Set
+    VecEl A n = El (VecD A) (Vec A) n
+
+    nilHyps : (A : Set) (P : (n : ℕ tt) → μ (VecD A) n → Set) (n : ℕ tt) (xs : nilEl A n) → Set
+    nilHyps A P n xs = Hyps (nilD A) (Vec A) P n xs
 
     nil : (A : Set) → Vec A zero
     nil A = init (nilT , refl)
