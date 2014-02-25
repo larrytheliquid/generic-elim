@@ -303,11 +303,11 @@ module NoLevitation where
     Vec : (A : Set) (n : ℕ tt) → Set
     Vec A n = μ (VecD A) n
 
-    nilEl : (A : Set) (n : ℕ tt) → Set
-    nilEl A n = El (nilD A) (Vec A) n
+    NilEl : (A : Set) (n : ℕ tt) → Set
+    NilEl A n = El (nilD A) (Vec A) n
 
-    consEl : (A : Set) → ℕ tt → Set
-    consEl A n = El (consD A) (Vec A) n
+    ConsEl : (A : Set) → ℕ tt → Set
+    ConsEl A n = El (consD A) (Vec A) n
 
     VecEl : (A : Set) → ℕ tt → Set
     VecEl A n = El (VecD A) (Vec A) n
@@ -418,20 +418,20 @@ module NoLevitation where
     Vec : (A : Set) → ℕ tt → Set
     Vec A = μ (VecD A)
 
-    nilEl : (A : Set) (n : ℕ tt) → Set
-    nilEl A n = El (nilD A) (Vec A) n
+    NilEl : (A : Set) (n : ℕ tt) → Set
+    NilEl A n = El (nilD A) (Vec A) n
 
-    consEl : (A : Set) → ℕ tt → Set
-    consEl A n = El (consD A) (Vec A) n
+    ConsEl : (A : Set) → ℕ tt → Set
+    ConsEl A n = El (consD A) (Vec A) n
 
     VecEl : (A : Set) → ℕ tt → Set
     VecEl A n = El (VecD A) (Vec A) n
 
-    nilHyps : (A : Set) (P : (n : ℕ tt) → μ (VecD A) n → Set) (n : ℕ tt) (xs : nilEl A n) → Set
-    nilHyps A P n xs = Hyps (nilD A) (Vec A) P n xs
+    NilHyps : (A : Set) (P : (n : ℕ tt) → μ (VecD A) n → Set) (n : ℕ tt) (xs : NilEl A n) → Set
+    NilHyps A P n xs = Hyps (nilD A) (Vec A) P n xs
 
-    consHyps : (A : Set) (P : (n : ℕ tt) → μ (VecD A) n → Set) (n : ℕ tt) (xs : consEl A n) → Set
-    consHyps A P n xs = Hyps (consD A) (Vec A) P n xs
+    ConsHyps : (A : Set) (P : (n : ℕ tt) → μ (VecD A) n → Set) (n : ℕ tt) (xs : ConsEl A n) → Set
+    ConsHyps A P n xs = Hyps (consD A) (Vec A) P n xs
 
     VecHyps : (A : Set) (P : (n : ℕ tt) → μ (VecD A) n → Set) (n : ℕ tt) (xs : VecEl A n) → Set
     VecHyps A P n xs = Hyps (VecD A) (Vec A) P n xs
@@ -506,15 +506,18 @@ module NoLevitation where
           (proj₂ t,c)
         )
 
+      Concat : (A : Set) (m n : ℕ tt) (xss : Vec (Vec A m) n) → Set
+      Concat A m n xss = Vec A (mult n m)
+
       nilBranch : (A : Set) (m n : ℕ tt)
-        (xss : nilEl (Vec A m) n)
-        (ih : nilHyps (Vec A m) (λ n xss → Vec A (mult n m)) n xss)
+        (xss : NilEl (Vec A m) n)
+        (ihs : NilHyps (Vec A m) (Concat A m) n xss)
         → Vec A (mult n m)
       nilBranch A m n q ih = subst (λ n → Vec A (mult n m)) q (nil A)
 
       consBranch : (A : Set) (m n : ℕ tt)
-        (xss : consEl (Vec A m) n)
-        (ih : consHyps (Vec A m) (λ n xss → Vec A (mult n m)) n xss)
+        (xss : ConsEl (Vec A m) n)
+        (ihs : ConsHyps (Vec A m) (Concat A m) n xss)
         → Vec A (mult n m)
       consBranch A m n n',xs,xss,q ih,tt =
         let n' = proj₁ n',xs,xss,q
@@ -524,21 +527,26 @@ module NoLevitation where
         in
         subst (λ n → Vec A (mult n m)) q (append A m xs (mult n' m) ih)
 
-      concatConvoy : (A : Set) (m n : ℕ tt) (t : VecT) → Set
-      concatConvoy A m n t =
+      ConcatConvoy : (A : Set) (m n : ℕ tt) (t : VecT) → Set
+      ConcatConvoy A m n t =
         (xss : El (VecC (Vec A m) t) (Vec (Vec A m)) n)
-        (ihs : Hyps (VecD (Vec A m)) (Vec (Vec A m)) (λ n xss → Vec A (mult n m)) n (t , xss))
+        (ihs : VecHyps (Vec A m) (Concat A m) n (t , xss))
         → Vec A (mult n m)
 
-      -- concatCase 
+      concatα : (A : Set) (m n : ℕ tt)
+        (xss : VecEl (Vec A m) n)
+        (ihs : VecHyps (Vec A m) (Concat A m) n xss)
+        → Vec A (mult n m)
+      concatα A m n xss = case (ConcatConvoy A m n)
+        (nilBranch A m n , consBranch A m n , tt)
+        (proj₁ xss)
+        (proj₂ xss)
 
-      concat : (A : Set) (m n : ℕ tt) (xss : Vec (Vec A m) n) → Vec A (mult n m)
-      concat A m = ind (VecD (Vec A m)) (λ n xss → Vec A (mult n m))
-        (λ n t,c → case (concatConvoy A m n)
-          (nilBranch A m n , consBranch A m n , tt)
-          (proj₁ t,c)
-          (proj₂ t,c)
-        )
+      concat : (A : Set) (m n : ℕ tt) (xss : Vec (Vec A m) n) → Concat A m n xss
+      concat A m = ind
+        (VecD (Vec A m))
+        (Concat A m)
+        (concatα A m)
 
       -- concat : (A : Set) (m n : ℕ tt) (xss : Vec (Vec A m) n) → Vec A (mult n m)
       -- concat A m = ind (VecD (Vec A m)) (λ n xss → Vec A (mult n m))
