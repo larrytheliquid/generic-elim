@@ -468,7 +468,7 @@ consEl A n ⇝
 Recall that multiple constructors are represented as a tagged sum
 using a dependent pair (\refsec{background:multiple}). Thus,
 {\tt El} for {\tt VecD} will be the tagged sum requiring
-{\tt nilEl} or {\tt consEl}.
+{\it either} {\tt nilEl} or {\tt consEl}.
 
 \begin{verbatim}
 VecEl : (A : Set) (n : ℕ) → Set
@@ -477,7 +477,7 @@ VecEl A n = El (VecD A) (Vec A) n
 VecEl A n ⇝ Σ VecT (case (λ _ → Set)
   (nilEl A n , consEl A n , tt))
 \end{verbatim}
-\todo[inline]{Motive for case is wrong}
+\todo[inline]{motive is wrong}
 
 \subsection{Defining Constructors}
 \label{sec:init:cons}
@@ -752,6 +752,26 @@ nilHyps A P n xs = Hyps (nilD A) (Vec A) P n xs
 
 nilHyps A P n xs ⇝ ⊤
 \end{verbatim}
+
+On the other hand, the {\tt cons} constructor of vectors requires an
+inductive hypothesis for its recursive argument.
+
+\begin{verbatim}
+consHyps : (A : Set)
+  (P : (n : ℕ) → μ (VecD A) n → Set)
+  (n : ℕ) (xs : consEl A n) → Set
+consHyps A P n xs = Hyps (consD A) (Vec A) P n xs
+
+consHyps A P (suc m) (x , xs) ⇝ P m x × ⊤
+\end{verbatim}
+
+\subsection{Inductive Hypotheses for Multiple Constructors}
+
+Once again, multiple constructors are represented by a tagged
+sum (\refsec{background:multiple}). {\tt Hyps} for
+{\tt VecD} will require {\it either} the inductive hypotheses of
+{\tt nil} or the inductive hypotheses of {\tt cons}, depending on
+which constructor {\tt Hyps} is applied to.
 
 \section{Generic Eliminators}
 \label{sec:elim}

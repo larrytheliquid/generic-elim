@@ -430,6 +430,9 @@ module NoLevitation where
     nilHyps : (A : Set) (P : (n : ℕ tt) → μ (VecD A) n → Set) (n : ℕ tt) (xs : nilEl A n) → Set
     nilHyps A P n xs = Hyps (nilD A) (Vec A) P n xs
 
+    consHyps : (A : Set) (P : (n : ℕ tt) → μ (VecD A) n → Set) (n : ℕ tt) (xs : consEl A n) → Set
+    consHyps A P n xs = Hyps (consD A) (Vec A) P n xs
+
     nil : (A : Set) → Vec A zero
     nil A = init (nilT , refl)
 
