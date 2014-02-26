@@ -906,8 +906,58 @@ consBranch A m n n',xs,xss,q ih,u =
     q (append A m xs (mult n' m) ih)
 \end{verbatim}
 
+Congratulations on making it through this section, you now know how to define dependently typed
+functions using the primitive elimination rule {\tt ind}!
+Getting such function definitions right was a grueling experience for
+the authors, and interactive theorem proving doesn't help much when
+dealing with types that are so heavily encoded. You can relax knowing
+that the next section defines a generic standard eliminator that we
+can use to program with described datatypes instead of this
+algebra-based approach.
+
 \section{Generic Eliminators}
 \label{sec:elim}
+
+The goal of this section is to {\it contribute} a novel generic
+eliminator for datatypes built from descriptions. This eliminator can
+be used to define {\tt concat} as follows.
+
+\begin{verbatim}
+concat : (A : Set) (m n : ℕ tt)
+  (xss : Vec (Vec A m) n) → Vec A (mult n m)
+concat A m = elim VecE (VecC (Vec A m))
+  (λ n xss → Vec A (mult n m))
+  (nil A)
+  (λ n xs xss ih → append A m xs (mult n m) ih)
+\end{verbatim}
+
+After partially applying {\tt elim} to an enumeration of constructor
+names, and a function from tags (indexing into each constructor name)
+to descriptions for each constructor, the resulting type is precisely
+the interface of standard eliminators in type theory! 
+
+The function {\tt concat} is defined in \refsec{ind} by applying the
+primitive elimination rule {\tt ind} to an algebra. However,
+functions defined in such a manner are verbose. Instead, now we
+can define functions using our generic eliminator that once again can
+be defined in terms of existing primitives without extending the
+metatheory. This amounts to:
+
+\begin{myparte}
+\label{parte:one}
+Performing case analysis to break up constructors into branches.
+\end{myparte}
+
+\begin{myparte}
+\label{parte:two}
+Currying constructor arguments in branches.
+\end{myparte}
+
+\begin{myparte}
+\label{parte:three}
+Inserting an implicit proof in each branch that the constructor has the correct index.
+\end{myparte}
+
 
 %% \section{Examples using Specialized Eliminators}
 %% \label{sec:background:elim}

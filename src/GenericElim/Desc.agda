@@ -577,12 +577,12 @@ module NoLevitation where
   
     module ElimUncurriedinator where
   
-      elimUncurriedℕ : (P : (ℕ tt) → Set)
+      elimℕ : (P : (ℕ tt) → Set)
         (pzero : P zero)
         (psuc : (m : ℕ tt) → P m → P (suc m))
         (n : ℕ tt)
         → P n
-      elimUncurriedℕ P pzero psuc = ind ℕD (λ u n → P n)
+      elimℕ P pzero psuc = ind ℕD (λ u n → P n)
         (λ u t,c → case
           (λ t → (c : El (ℕC t) ℕ u)
                  (ih : Hyps ℕD ℕ (λ u n → P n) u (t , c))
@@ -605,13 +605,13 @@ module NoLevitation where
         )
         tt
   
-      elimUncurriedVec : (A : Set) (P : (n : ℕ tt) → Vec A n → Set)
+      elimVec : (A : Set) (P : (n : ℕ tt) → Vec A n → Set)
         (pnil : P zero (nil A))
         (pcons : (n : ℕ tt) (a : A) (xs : Vec A n) → P n xs → P (suc n) (cons A n a xs))
         (n : ℕ tt)
         (xs : Vec A n)
         → P n xs
-      elimUncurriedVec A P pnil pcons = ind (VecD A) (λ n xs → P n xs)
+      elimVec A P pnil pcons = ind (VecD A) (λ n xs → P n xs)
         (λ n t,c → case
           (λ t → (c : El (VecC A t) (Vec A) n)
                  (ih : Hyps (VecD A) (Vec A) (λ n xs → P n xs) n (t , c))
@@ -642,22 +642,22 @@ module NoLevitation where
 ----------------------------------------------------------------------
   
       add : ℕ tt → ℕ tt → ℕ tt
-      add = elimUncurriedℕ (λ _ → ℕ tt → ℕ tt)
+      add = elimℕ (λ _ → ℕ tt → ℕ tt)
         (λ n → n)
         (λ m ih n → suc (ih n))
     
       mult : ℕ tt → ℕ tt → ℕ tt
-      mult = elimUncurriedℕ (λ _ → ℕ tt → ℕ tt)
+      mult = elimℕ (λ _ → ℕ tt → ℕ tt)
         (λ n → zero)
         (λ m ih n → add n (ih n))
     
       append : (A : Set) (m : ℕ tt) (xs : Vec A m) (n : ℕ tt) (ys : Vec A n) → Vec A (add m n)
-      append A = elimUncurriedVec A (λ m xs → (n : ℕ tt) (ys : Vec A n) → Vec A (add m n))
+      append A = elimVec A (λ m xs → (n : ℕ tt) (ys : Vec A n) → Vec A (add m n))
         (λ n ys → ys)
         (λ m x xs ih n ys → cons A (add m n) x (ih n ys))
     
       concat : (A : Set) (m n : ℕ tt) (xss : Vec (Vec A m) n) → Vec A (mult n m)
-      concat A m = elimUncurriedVec (Vec A m) (λ n xss → Vec A (mult n m))
+      concat A m = elimVec (Vec A m) (λ n xss → Vec A (mult n m))
         (nil A)
         (λ n xs xss ih → append A m xs (mult n m) ih)
   
@@ -683,7 +683,7 @@ module NoLevitation where
         (λ m x xs ih n ys → cons A (add m n) x (ih n ys))
   
       concat : (A : Set) (m n : ℕ tt) (xss : Vec (Vec A m) n) → Vec A (mult n m)
-      concat A m = elim VecE (VecC (Vec A m)) _
+      concat A m = elim VecE (VecC (Vec A m)) (λ n xss → Vec A (mult n m))
         (nil A)
         (λ n xs xss ih → append A m xs (mult n m) ih)
   
