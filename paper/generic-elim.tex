@@ -582,7 +582,8 @@ function from that product to some other type family. In contrast,
 arguments.
 
 \begin{verbatim}
-CurriedEl : {I : Set} (D : Desc I) (X : ISet I) → Set
+CurriedEl : {I : Set}
+  (D : Desc I) (X : ISet I) → Set
 CurriedEl (End i) X = X i
 CurriedEl (Rec i D) X = (x : X i) → CurriedEl D X
 CurriedEl (Arg A B) X = (a : A) → CurriedEl (B a) X
@@ -784,8 +785,98 @@ VecHyps A P n (nilT  , xs) ⇝ NilHyps  A P n xs
 VecHyps A P n (consT , xs) ⇝ ConsHyps A P n xs 
 \end{verbatim}
 
-\subsection{Defining {\tt concat} with an Algebra}
+\subsection{Defining Vector Concatenation with an Algebra}
 
+Now we shall define the vector concatenation by applying the primitive
+elimination rule for described types to an algebra. Below
+{\tt concat} is defined as {\tt ind} applied to the description of
+vectors, then the goal type as the motive, and finally the algebra
+{\tt concatα}.
+Note that we define the return type of
+{\tt concat} to be {\tt Concat}, allowing us to reuse the return type
+in later definitions.
+
+\begin{verbatim}
+Concat : (A : Set) (m n : ℕ)
+  (xss : Vec (Vec A m) n) → Set
+Concat A m n xss = Vec A (mult n m)
+
+concat : (A : Set) (m n : ℕ)
+  (xss : Vec (Vec A m) n) → Concat A m n xss
+concat A m = ind
+  (VecD (Vec A m))
+  (Concat A m)
+  (concatα A m)
+\end{verbatim}
+
+The algebra that defines {\tt concat} takes as arguments the index
+{\tt n}, the constructors {\tt xss}, and the inductive hypotheses
+{\tt ihs}. Recall that the type of vector constructors
+{\tt xss : VecEl (Vec A m) n} is a dependent pair. The domain of the
+pair is a vector tag {\tt VecT}, and the codomain is the type of
+arguments corresponding to the constructor represented by the tag. We
+eliminate the tag using {\tt case} (\refsec{background:case}), and
+then provide a branches for the {\tt nil} and {\tt cons} constructors.
+
+All definitions in this subsection are defined {\it without} dependent
+pattern matching to illustrate the exclusive use of our type theory's
+primitives ({\tt ind}, {\tt proj₁}, {\tt case}, etc). After we case
+analyze the constructor tag in the first projection of {\tt xss}, we
+need the {\it dependent} second projection to reduce to the arguments
+of the constructor. This can be done by employing the
+{\it convoy pattern}~\citep{TODO}, in which the special motive
+{\tt ConcatConvoy} is passed to {\tt case}.
+
+\begin{verbatim}
+concatα : (A : Set) (m n : ℕ)
+  (xss : VecEl (Vec A m) n)
+  (ihs : VecHyps (Vec A m) (Concat A m) n xss)
+  → Vec A (mult n m)
+concatα A m n xss = case (ConcatConvoy A m n)
+  (nilBranch A m n , consBranch A m n , tt)
+  (proj₁ xss)
+  (proj₂ xss)
+\end{verbatim}
+
+Again, rather than eliminating the pair {\tt xss}, we eliminate the
+tag in the first projection using {\tt case}. The motive supplied to
+case thus takes the first projection as an argument. The motive then
+asks for the type of the second projection (dependent on the argument
+supplied to the motive) as the argument {\tt xss}, in addition to the
+remaining argument {\tt ihs}, and then the motive ends with the goal type
+{\tt Vec A (mult n m)}.
+
+\begin{verbatim}
+ConcatConvoy : (A : Set) (m n : ℕ)
+  → VecT → Set
+ConcatConvoy A m n t =
+  (xss : El (VecC (Vec A m) t) (Vec (Vec A m)) n)
+  (ihs : VecHyps (Vec A m) (Concat A m) n (t , xss))
+  → Vec A (mult n m)
+\end{verbatim}
+
+The {\tt nil} branch within the algebra's case analysis receives as
+arguments the index {\tt n}, the single argument {\tt q}, and a value
+{\tt u} of type {\tt ⊤} as the inductive hypothesis. The argument
+{\tt q} is not a proper argument of the constructor, but instead the
+proof {\tt n ≡ zero}, stating that the index {\tt n} is equal to
+{\tt zero} for the {\tt nil} constructor. One might expect to simply
+define the {\tt nil} branch of {\tt concat} to return {\tt nil A}.
+However, the type of the goal is {\tt Vec A (mult n m)} while the type
+of {\tt nil A} is {\tt Vec A zero}. We can get the type of the goal to
+reduce to {\tt Vec A (mult zero m)}, and then to {\tt Vec A zero}, by
+applying our proof that {\tt n ≡ zero} to the equality coercion
+function {\tt subst}.
+
+\begin{verbatim}
+nilBranch : (A : Set) (m n : ℕ)
+  (xss : NilEl (Vec A m) n)
+  (ihs : NilHyps (Vec A m) (Concat A m) n xss)
+  → Vec A (mult n m)
+nilBranch A m n q u = subst
+  (λ n → Vec A (mult n m))
+  q (nil A)
+\end{verbatim}
 
 
 \section{Generic Eliminators}
