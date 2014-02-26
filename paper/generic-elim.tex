@@ -857,7 +857,7 @@ ConcatConvoy A m n t =
 
 The {\tt nil} branch within the algebra's case analysis receives as
 arguments the index {\tt n}, the single argument {\tt q}, and a value
-{\tt u} of type {\tt ⊤} as the inductive hypothesis. The argument
+{\tt u} of type unit as the inductive hypothesis. The argument
 {\tt q} is not a proper argument of the constructor, but instead the
 proof {\tt n ≡ zero}, stating that the index {\tt n} is equal to
 {\tt zero} for the {\tt nil} constructor. One might expect to simply
@@ -878,6 +878,33 @@ nilBranch A m n q u = subst
   q (nil A)
 \end{verbatim}
 
+Finally, the {\tt cons} branch is defined in much the same way. Note
+that in {\sc Agda} an identifier is treated as single name unless it
+contains a space. Thus, the argument {\tt n',xs,xss,q} below is a
+single variable whose name reminds us of the tuple of constructor
+arguments that it contains. Because we do not have access to pattern
+matching, we need to project out each argument. For legibility, we
+bind the names of the arguments below using a {\tt let} statement.
+Unlike {\tt nil}, {\tt cons} has proper arguments but its tuple also
+ends with a proof -- the proof that {\tt n ≡ suc n'}. The inductive
+hypothesis of {\tt concat} is contained in the first projection of the
+{\tt ih,u} argument, and the second projection is again a value of
+type unit.
+
+\begin{verbatim}
+consBranch : (A : Set) (m n : ℕ tt)
+  (xss : ConsEl (Vec A m) n)
+  (ihs : ConsHyps (Vec A m) (Concat A m) n xss)
+  → Vec A (mult n m)
+consBranch A m n n',xs,xss,q ih,u =
+  let n' = proj₁ n',xs,xss,q
+      xs = proj₁ (proj₂ n',xs,xss,q)
+      q = proj₂ (proj₂ (proj₂ n',xs,xss,q))
+      ih = proj₁ ih,u
+  in subst
+    (λ n → Vec A (mult n m))
+    q (append A m xs (mult n' m) ih)
+\end{verbatim}
 
 \section{Generic Eliminators}
 \label{sec:elim}

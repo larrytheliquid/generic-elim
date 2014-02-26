@@ -526,8 +526,7 @@ module NoLevitation where
             xs = proj₁ (proj₂ n',xs,xss,q)
             q = proj₂ (proj₂ (proj₂ n',xs,xss,q))
             ih = proj₁ ih,u
-        in
-        subst
+        in subst
           (λ n → Vec A (mult n m))
           q (append A m xs (mult n' m) ih)
 
