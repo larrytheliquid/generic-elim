@@ -244,7 +244,7 @@ data Desc (I : Set) : Set₁ where
   Arg : (A : Set) (B : A → Desc I) → Desc I
 \end{verbatim}
 
-\paragraph{Describing a Single Constructor}
+\paragraph{Description of a Single Constructor}
 
 For example, first recall the type of the
 constructor {\tt nil} of vectors.
@@ -282,7 +282,7 @@ consD A =
   Arg ℕ (λ n → Arg A (λ _ → Rec n (End (suc n))))
 \end{verbatim}
 
-\paragraph{Describing Multiple Constructors}
+\paragraph{Description of Multiple Constructors}
 \label{sec:background:multiple}
 
 The datatype {\tt Desc} can also be used to describe an entire
@@ -372,7 +372,7 @@ consT : VecT
 consT = there here
 \end{verbatim}
 
-\paragraph{Eliminating Tags}
+\paragraph{Elimination of Tags}
 
 A tag can be eliminated with a {\tt case} construct (this is referred to
 as {\tt switch} by \citet{Chapman:2010:GAL:1932681.1863547,dagand:phd}),
@@ -473,7 +473,7 @@ El (Rec j D) X i = X j × El D X i
 El (Arg A B) X i = Σ A (λ a → El (B a) X i)
 \end{verbatim}
 
-\paragraph{Interpreting a Single Constructor}
+\paragraph{Interpretation of a Single Constructor}
 
 The {\tt nil} constructor of vectors has no arguments. Thus,
 {\tt El} for {\tt nilD} will only require a proof that the index in
@@ -499,7 +499,7 @@ ConsEl A n ⇝
   Σ ℕ (λ m → A × Vec A m × (suc m ≡ n))
 \end{verbatim}
 
-\paragraph{Interpreting Multiple Constructors}
+\paragraph{Interpretation of Multiple Constructors}
 
 Recall that multiple constructors are represented as a tagged sum
 using a dependent pair (\refsec{background:multiple}). Thus,
@@ -515,7 +515,7 @@ VecEl A n ⇝ Σ VecT (case (λ _ → Set)
 \end{verbatim}
 \todo[inline]{motive is wrong}
 
-\subsection{Defining Constructors}
+\subsection{Definition of Constructors}
 \label{sec:init:cons}
 
 We are now ready define the constructors {\tt nil} and
@@ -600,7 +600,7 @@ argument requiring a proof of correct indexing $(j≡i)$, and
 A_1 × ... × A_n × (j ≡ i) → Z
 \]
 
-\paragraph{Interpreting a Single Constructor}
+\paragraph{Interpretation of a Single Constructor}
 
 For example, the applying {\tt UncurriedEl} to the description of the
 {\tt cons} constructor results in the following type.
@@ -827,7 +827,7 @@ VecHyps A P n (nilT  , xs) ⇝ NilHyps  A P n xs
 VecHyps A P n (consT , xs) ⇝ ConsHyps A P n xs 
 \end{verbatim}
 
-\subsection{Defining Vector Concatenation with an Algebra}
+\subsection{Definition of Vector Concatenation with an Algebra}
 
 Now we shall define the vector concatenation by applying the primitive
 elimination rule for described types to an algebra. Below
@@ -1011,7 +1011,7 @@ Currying constructor arguments in branches.
 Inserting an implicit proof in each branch that the constructor has the correct index.
 \end{myparte}
 
-\subsection{Uncurried Algebra}
+\subsection{The Uncurried Inductive Hypothesis Algebra Type}
 
 In order to implement
 \refparte{two} and \refparte{three} we must recognize the algebra
@@ -1050,6 +1050,8 @@ and {\tt X i} as the result type $Z$.
 \[
 I → A_1 × ... × A_n × (j ≡ i) → B_1 × ... × B_m × ⊤ → Z
 \]
+
+\paragraph{Inductive Hypothesis Algebra of a Single Constructor}
 
 For example, we can use {\tt UncurriedHyps} to define the type of
 {\tt consBranch} from \refsec{ind}.
