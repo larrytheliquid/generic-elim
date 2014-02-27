@@ -112,6 +112,12 @@ CurriedEl (Rec i D) X = (x : X i) → CurriedEl D X
 CurriedEl (Arg A B) X = (a : A) → CurriedEl (B a) X
 CurriedEl (RecFun A B D) X = ((a : A) → X (B a)) → CurriedEl D X
 
+CurriedEl' : {I : Set} (D : Desc I) (X : ISet I) (i : I) → Set
+CurriedEl' (End j) X i = j ≡ i → X i
+CurriedEl' (Rec j D) X i = (x : X j) → CurriedEl' D X i
+CurriedEl' (Arg A B) X i = (a : A) → CurriedEl' (B a) X i
+CurriedEl' (RecFun A B D) X i = ((a : A) → X (B a)) → CurriedEl' D X i
+
 curryEl : {I : Set} (D : Desc I) (X : ISet I)
   (cn : UncurriedEl D X) → CurriedEl D X
 curryEl (End i) X cn = cn refl
@@ -148,6 +154,19 @@ CurriedHyps (Arg A B) X P cn =
   (a : A) → CurriedHyps (B a) X P (λ xs → cn (a , xs))
 CurriedHyps (RecFun A B D) X P cn =
   (f : (a : A) → X (B a)) (ihf : (a : A) → P (B a) (f a)) → CurriedHyps D X P (λ xs → cn (f , xs))
+
+CurriedHyps' : {I : Set} (D : Desc I) (X : ISet I)
+  (P : (i : I) → X i → Set)
+  (i : I)
+  (cn : El D X i → X i)
+  → Set
+CurriedHyps' (End j) X P i cn = (q : j ≡ i) → P i (cn q)
+CurriedHyps' (Rec j D) X P i cn =
+  (x : X j) → P j x → CurriedHyps' D X P i (λ xs → cn (x , xs))
+CurriedHyps' (Arg A B) X P i cn =
+  (a : A) → CurriedHyps' (B a) X P i (λ xs → cn (a , xs))
+CurriedHyps' (RecFun A B D) X P i cn =
+  (f : (a : A) → X (B a)) (ihf : (a : A) → P (B a) (f a)) → CurriedHyps' D X P i (λ xs → cn (f , xs))
 
 curryHyps : {I : Set} (D : Desc I) (X : ISet I)
   (P : (i : I) → X i → Set)
@@ -517,6 +536,11 @@ module NoLevitation where
       ConsBranch : (A : Set) (m : ℕ tt)
         → Set
       ConsBranch A m = UncurriedHyps (consD (Vec A m)) (Vec (Vec A m)) (Concat A m)
+        (λ xs → init (consT , xs))
+
+      ConsBranch' : (A : Set) (m : ℕ tt)
+        → Set
+      ConsBranch' A m = CurriedHyps (consD (Vec A m)) (Vec (Vec A m)) (Concat A m)
         (λ xs → init (consT , xs))
 
       nilBranch : (A : Set) (m n : ℕ tt)

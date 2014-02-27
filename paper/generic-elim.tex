@@ -309,6 +309,8 @@ A datatype with multiple constructors is represented by an
 a function that returns a description for each constructor tag. Note
 that whereas we used {\tt Arg} for arguments of constructors before,
 now we are using {\tt Arg} to represent the sum of all constructors.
+By convention we use the suffix {\tt C} for the sum of constructors of
+a description, and a the suffix {\tt D} for descriptions.
 
 \begin{verbatim}
 VecC : (A : Set) → VecT → Desc ℕ
@@ -508,7 +510,7 @@ VecEl A n ⇝ Σ VecT (case (λ _ → Set)
 \end{verbatim}
 \todo[inline]{motive is wrong}
 
-\subsection{Definition of Constructors}
+\subsection{Definition of Constructors via the Initial Algebra}
 \label{sec:init:cons}
 
 We are now ready define the constructors {\tt nil} and
@@ -656,7 +658,7 @@ CurriedEl (consD A) (Vec A) ⇝
   (m : ℕ) → A → Vec A m → Vec A (suc m)
 \end{verbatim}
 
-\subsection{Curry Function}
+\subsection{Curry Interpretation Function}
 
 All we need now is a curry function that takes an
 {\tt UncurriedEl} and returns a {\tt CurriedEl}. The definition of
@@ -747,7 +749,7 @@ arguments:
 \citet{mcbride2010ornamental} gives the definition of {\tt ind}, but
 our work can be understood without knowing the definition.
 
-\subsection{The Inductive Hypothesis Type}
+\subsection{Inductive Hypothesis Type}
 
 {\tt Hyps} is the type of inductive hypotheses for a described
 datatype. Its definition closely follows the definition of
@@ -820,7 +822,7 @@ VecHyps A P n (nilT  , xs) ⇝ NilHyps  A P n xs
 VecHyps A P n (consT , xs) ⇝ ConsHyps A P n xs 
 \end{verbatim}
 
-\subsection{Definition of Vector Concatenation with an Algebra}
+\subsection{Definition of Vector Concatenation via an Algebra}
 
 Now we shall define the vector concatenation by applying the primitive
 elimination rule for described types to an algebra. Below
@@ -1064,24 +1066,98 @@ ConsBranch A m ⇝
 
 \subsection{Curried Inductive Hypothesis Algebra Type}
 
+Just like in \refsec{inj}, now we define the curried version of
+the inductive hypothesis algebra. Instead of having an index function
+argument {\tt I : Set}, followed by the two tuple arguments
+{\tt xs : El D X i} and {\tt ihs : Hyps D X P i xs}, we uncurry
+both tuple arguments.
 
+\begin{verbatim}
+CurriedHyps : {I : Set} (D : Desc I) (X : ISet I)
+  (P : (i : I) → X i → Set)
+  (cn : UncurriedEl D X)
+  → Set
+CurriedHyps (End i) X P cn =
+  P i (cn refl)
+CurriedHyps (Rec i D) X P cn =
+  (x : X i) → P i x
+  → CurriedHyps D X P (λ xs → cn (x , xs))
+CurriedHyps (Arg A B) X P cn =
+  (a : A)
+  → CurriedHyps (B a) X P (λ xs → cn (a , xs))
+\end{verbatim}
 
-%% \section{Generic Eliminators}
-%% \label{sec:elim}
+Notice that {\tt CurriedHyps} combines the
+definitions of {\tt El} and {\tt Hyps}. This can be seen in the
+{\tt Rec} branch, which asks for the {\tt (x : X i)} argument
+from {\tt El} and the {\tt P i x} argument from {\tt Hyps}. You can
+recognize {\tt CurriedHyps} as a curried function that demands
+index argument $I$, $n$ constructor arguments as function arguments
+$A_1 → ... → A_n$, $m$ inductive hypotheses as function arguments
+$B_1 → ... → B_m$, and has the result type $Z$.
 
-%% First let's recall the type of the algebra argument for {\tt ind}.
+\[
+I → A_1 → ... → A_n → B_1 → ... → B_m → Z
+\]
 
-%% \begin{verbatim}
-%% ∀ i
-%% (xs : El D (μ D) i)
-%% (ihs : Hyps D (μ D) P i xs)
-%% → P i (init xs))
-%% \end{verbatim}
+This definition obviously curries arguments, implementing
+\refparte{two}, but it also inserts an implicit proof of index
+correctness, implementing \refparte{three}. In \refsec{inj}, we used
+the same kind of trick to define {\tt CurriedEl} to have an implicit
+proof instead of asking for it explicitly as demonstrated
+by {\tt CurriedEl'}. By analogy, we could have defined a version of
+eliminators that required the user to receive and use an explicit
+index correctness proof argument as follows.
 
-%% You can think of this like an uncurried function of type
-%% {\tt (A × B) → (C × D) → X}. Here {\tt xs} corresponds to uncurried
-%% argument {\tt (A × B)}, {\tt ihs} corresponds to {\tt C × D}, and 
-%% {\tt P i (init xs)} corresponds to the return type {\tt X}.
+\begin{verbatim}
+CurriedHyps' : {I : Set} (D : Desc I) (X : ISet I)
+  (P : (i : I) → X i → Set)
+  (i : I)
+  (cn : El D X i → X i)
+  → Set
+CurriedHyps' (End j) X P i cn =
+  (q : j ≡ i) → P i (cn q)
+CurriedHyps' (Rec j D) X P i cn =
+  (x : X j) → P j x
+  → CurriedHyps' D X P i (λ xs → cn (x , xs))
+CurriedHyps' (Arg A B) X P i cn =
+  (a : A)
+  → CurriedHyps' (B a) X P i (λ xs → cn (a , xs))
+\end{verbatim}
+
+Notice that in
+{\tt Rec} case of {\tt CurriedHyps} the motive is applied to a proof
+of {\tt refl} implicitly, whereas in {\tt CurriedHyps} such a proof
+must be supplied as the explicit parameter {\tt q}.
+
+\paragraph{Curried Algebra of a Single Constructor}
+
+Below we apply {\tt CurriedHyps} to the description of the
+{\tt cons} constructor. This returns the type of the {\tt cons} branch
+in our eliminator-based definiton of {\tt concat} at the
+beginning of this section.
+
+\begin{verbatim}
+ConsBranch' : (A : Set) (m : ℕ tt)
+  → Set
+ConsBranch' A m = CurriedHyps
+  (consD (Vec A m))
+  (Vec (Vec A m)) (Concat A m)
+  (λ xs → init (consT , xs))
+
+ConsBranch' A m ⇝
+  (n : ℕ)
+  (xs : Vec A m)
+  (xss : Vec (Vec A m) n)
+  (ih : Vec A (mult n m))
+  → Vec A (add m (mult n m))
+\end{verbatim}
+
+This is precisely the expected type of the {\tt cons} branch of
+an {\tt elimVec}-based definition of {\tt concat}. Because the index
+proof is implicitly applied, the return type was able to definitionally
+reduce from {\tt Vec A (mult (suc n) m)}
+to {\tt Vec A (add m (mult n m))}.
 
 %% We can implement a function like {\tt ind} that takes a curried
 %% version of the algebra argument instead. The {\tt CurriedAlg} argument
@@ -1186,101 +1262,6 @@ ConsBranch A m ⇝
 %% Finally, we should point out that we gave separate definitions, each
 %% building upon the previous, for pedagogical reaons. Of course, {\tt elim}
 %% can be defined in one go by inlining the other definitions.
-
-%% \section{Introducing with Algebras}
-%% \label{sec:init}
-
-%% The opposite of eliminating values is introducing values.
-%% A value of a type built from a description is introduced using
-%% the initial algebra constructor {\tt init} of {\tt μ}. 
-
-%% \subsection{The Type of {\tt init}}
-
-%% Recall that the type of {\tt init} is {\tt El D (μ D) i → μ D i}.
-%% When eliminating a
-%% datatype with {\tt ind} you get {\tt El D (μ D) i} as
-%% an argument to implement the algebra. If you want to access an
-%% argument of some constructor contained in {\tt El D (μ D) i}, you
-%% must project it out of the product of arguments.
-%% When introducing a value you also use an algebra, the initial
-%% one! Thus, to construct a value you need to pass it a tuple of
-%% all arguments.
-
-%% \subsection{Examples using {\tt init}}
-
-%% Below are the specialized constructors
-%% {\tt nil} and {\tt cons} for vectors.
-
-%% \begin{verbatim}
-%% nil : (A : Set) → Vec A zero
-%% nil A = init          -- # 1
-%%   (here               -- # 2
-%%   , refl)             -- # 4
-
-%% cons : (n : ℕ) → A → Vec A n → Vec A (suc n)
-%% cons A n x xs = init  -- # 1
-%%   (there here         -- # 2
-%%   , n , x , xs        -- # 3
-%%   , refl)             -- # 4
-%% \end{verbatim}
-
-%% Definitions using the initial algebra {\tt init} are much simpler than
-%% definitions using {\tt ind}. To see this, just notice how much shorter
-%% the definition of {\tt nil} and {\tt cons} above are compared to the
-%% definitions of {\tt concat} and {\tt append} in \reffig{ind:concat}
-%% and \reffig{ind:append}. Nonetheless, definitions of constructors
-%% still can be broken up into 4 parts. The numbers of these parts are
-%% referenced in the example code above.
-
-%% \begin{myparti}[Introducing with {\tt init}]
-%% \label{parti:one}
-%% A definition begins by applying {\tt init} to a tuple of arguments.
-%% \end{myparti}
-
-%% \begin{myparti}[Choosing a tagged constructor]
-%% \label{parti:two}
-%% The first argument of the tuple is the tag that indexes into the
-%% enumeration of constructor names. This tag represents the constructor
-%% choice and  determines the type of subsequent elements of the tuple.
-%% \end{myparti}
-
-%% \begin{myparti}[Providing a tuple of arguments]
-%% \label{parti:three}
-%% The middle part of the tuple consists of all proper arguments of the
-%% constructor. Some constructors, such as {\tt nil}, may not have any
-%% proper arguments.
-%% \end{myparti}
-
-%% \begin{myparti}[Proving the constructor index correct]
-%% \label{parti:three}
-%% The final argument of the tuple is a proof that index of the codomain
-%% of the initial algebra matches the index specified in the return
-%% type of the constructor. This proof is merely the {\tt refl}
-%% constructor of the equality type. For example, this proof would fail
-%% if {\tt zero} was specified as the return type of {\tt cons}.
-%% \end{myparti}
-
-%% \section{Defining Generic Constructors}
-%% \label{sec:inj}
-
-%% In \refsec{init} we looked at examples of constructors defined
-%% with {\tt init}, and how each such definition can be broken up into 4
-%% parts. Now we will derive a generic constructor {\tt inj} that
-%% implements these 4 parts.
-
-%% \subsection{Curried {\tt init}}
-
-%% First let’s once more recall the type of the initial
-%% algebra {\tt init}.
-
-%% \begin{verbatim}
-%% El D (μ D) i → μ D i
-%% \end{verbatim}
-
-%% You can think of this like an uncurried function of type
-%% {\tt (A , B) → X}, where {\tt A × B} corresponds to
-%% {\tt El D (μ D) i} and {\tt X} corresponds to
-%% {\tt μ D i}.
 
 \section{Related Work}
 \label{sec:related-work}
