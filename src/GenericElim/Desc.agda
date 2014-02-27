@@ -527,10 +527,11 @@ module NoLevitation where
         (λ n → Vec A (mult n m))
         q (nil A)
 
-      consBranch : (A : Set) (m n : ℕ tt)
-        (xss : ConsEl (Vec A m) n)
-        (ihs : ConsHyps (Vec A m) (Concat A m) n xss)
-        → Vec A (mult n m)
+      consBranch : (A : Set) (m : ℕ tt)
+        → ConsBranch A m
+        -- (xss : ConsEl (Vec A m) n)
+        -- (ihs : ConsHyps (Vec A m) (Concat A m) n xss)
+        -- → Vec A (mult n m)
       consBranch A m n n',xs,xss,q ih,u =
         let n' = proj₁ n',xs,xss,q
             xs = proj₁ (proj₂ n',xs,xss,q)

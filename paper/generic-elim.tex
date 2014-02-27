@@ -216,7 +216,7 @@ For simplicity, in this section of the paper we use the encoding by
 
 \todo[inline]{cite dagand paper for actually translating data to desc}
 
-\subsection{The Type of Descriptions}
+\subsection{The Description Type}
 
 The datatype {\tt Desc} of descriptions is used to represent
 user-defined definitions of strictly-positive indexed
@@ -244,7 +244,7 @@ data Desc (I : Set) : Set₁ where
   Arg : (A : Set) (B : A → Desc I) → Desc I
 \end{verbatim}
 
-\subsubsection{Describing a Single Constructor}
+\paragraph{Describing a Single Constructor}
 
 For example, first recall the type of the
 constructor {\tt nil} of vectors.
@@ -282,7 +282,7 @@ consD A =
   Arg ℕ (λ n → Arg A (λ _ → Rec n (End (suc n))))
 \end{verbatim}
 
-\subsubsection{Describing Multiple Constructors}
+\paragraph{Describing Multiple Constructors}
 \label{sec:background:multiple}
 
 The datatype {\tt Desc} can also be used to describe an entire
@@ -372,6 +372,8 @@ consT : VecT
 consT = there here
 \end{verbatim}
 
+\paragraph{Eliminating Tags}
+
 A tag can be eliminated with a {\tt case} construct (this is referred to
 as {\tt switch} by \citet{Chapman:2010:GAL:1932681.1863547,dagand:phd}),
 producing a value of the motive type {\tt P} indexed by the tag.
@@ -429,7 +431,7 @@ extension, the constructors {\tt cons} and {\tt nil} are defined for
 us. When using descriptions to define {\tt Vec}, we can instead
 introduce values of type {\tt Vec} using its initial algebra.
 
-\subsection{The Type of Fixpoints}
+\subsection{The Fixpoint Type}
 
 A description is a first-class datatype declaration. To get back the
 type encoded by the description, you apply it to the fixpoint type
@@ -444,7 +446,7 @@ Vec : (A : Set) (n : ℕ) → Set
 Vec A n = μ (VecD A) n
 \end{verbatim}
 
-\subsection{Interpreting a Single Constructor}
+\subsection{The Interpretation of Descriptions Type}
 \label{sec:init:el}
 
 To introduce values of type {\tt Vec}, we use the
@@ -471,6 +473,8 @@ El (Rec j D) X i = X j × El D X i
 El (Arg A B) X i = Σ A (λ a → El (B a) X i)
 \end{verbatim}
 
+\paragraph{Interpreting a Single Constructor}
+
 The {\tt nil} constructor of vectors has no arguments. Thus,
 {\tt El} for {\tt nilD} will only require a proof that the index in
 the type is equal to the vector length zero.
@@ -495,7 +499,7 @@ ConsEl A n ⇝
   Σ ℕ (λ m → A × Vec A m × (suc m ≡ n))
 \end{verbatim}
 
-\subsection{Interpreting Multiple Constructors}
+\paragraph{Interpreting Multiple Constructors}
 
 Recall that multiple constructors are represented as a tagged sum
 using a dependent pair (\refsec{background:multiple}). Thus,
@@ -573,7 +577,7 @@ Defining {\tt inj} may not seem impressive by itself, but it acts as
 nice pedagogical step towards understanding how to define the generic
 eliminator {\tt elim} in \refsec{elim}.
 
-\subsection{Uncurried Algebra}
+\subsection{The Uncurried Interpretation Algebra Type}
 
 In order to implement \refparti{one}, we must first recognize the
 initial algebra as an uncurried function. Recall the type of the
@@ -596,6 +600,8 @@ argument requiring a proof of correct indexing $(j≡i)$, and
 A_1 × ... × A_n × (j ≡ i) → Z
 \]
 
+\paragraph{Interpreting a Single Constructor}
+
 For example, the applying {\tt UncurriedEl} to the description of the
 {\tt cons} constructor results in the following type.
 
@@ -604,7 +610,7 @@ UncurriedEl (consD A) (Vec A) ⇝
   ∀{n} → ConsEl A n → Vec A n
 \end{verbatim}
 
-\subsection{Curried Algebra}
+\subsection{The Curried Interpretation Algebra Type}
 
 Now let's define the curried version of the function. Recall that the
 type {\tt El} is a product of arguments, and {\tt UncurriedEl} is a
@@ -645,6 +651,8 @@ CurriedEl' (Rec j D) X i =
 CurriedEl' (Arg A B) X i =
   (a : A) → CurriedEl' (B a) X i
 \end{verbatim}
+
+\paragraph{Interpreting a Single Constructor}
 
 Finally, below is an example of applying {\tt CurriedEl} to the
 description of the {\tt cons} constructor. Notice that all arguments
@@ -746,7 +754,7 @@ arguments:
 \citet{mcbride2010ornamental} gives the definition of {\tt ind}, but
 our work can be understood without knowing the definition.
 
-\subsection{Inductive Hypotheses for a Single Constructor}
+\subsection{The Inductive Hypothesis Type}
 
 {\tt Hyps} is the type of inductive hypotheses for a described
 datatype. Its definition closely follows the definition of
@@ -770,6 +778,8 @@ for recursive arguments. When finding a recursive argument {\tt Rec}, it
 asks for the motive {\tt P} instantiated at the recursive argument.
 Finally, the tree of inductive hypotheses is terminated by the unit
 type {\tt ⊤} once the description ends in {\tt End}.
+
+\paragraph{Inductive Hypotheses of a Single Constructor}
 
 The {\tt nil} constructor of vectors neither has dependent nor
 recursive arguments. Thus, {\tt Hyps} for {\tt nilD} is simply
@@ -799,7 +809,7 @@ ConsHyps A P (suc m) (m , x , xs , refl) ⇝
   P m x × ⊤
 \end{verbatim}
 
-\subsection{Inductive Hypotheses for Multiple Constructors}
+\paragraph{Inductive Hypotheses of Multiple Constructors}
 
 Once again, multiple constructors are represented by a tagged
 sum (\refsec{background:multiple}). {\tt Hyps} for
@@ -841,6 +851,8 @@ concat A m = ind
   (concatα A m)
 \end{verbatim}
 
+\paragraph{The Algebra Argument}
+
 The algebra that defines {\tt concat} takes as arguments the index
 {\tt n}, the constructors {\tt xss}, and the inductive hypotheses
 {\tt ihs}. Recall that the type of vector constructors
@@ -849,15 +861,6 @@ pair is a vector tag {\tt VecT}, and the codomain is the type of
 arguments corresponding to the constructor represented by the tag. We
 eliminate the tag using {\tt case} (\refsec{background:case}), and
 then provide a branches for the {\tt nil} and {\tt cons} constructors.
-
-All definitions in this subsection are defined {\it without} dependent
-pattern matching to illustrate the exclusive use of our type theory's
-primitives ({\tt ind}, {\tt proj₁}, {\tt case}, etc). After we case
-analyze the constructor tag in the first projection of {\tt xss}, we
-need the {\it dependent} second projection to reduce to the arguments
-of the constructor. This can be done by employing the
-{\it convoy pattern}~\citep{TODO}, in which the special motive
-{\tt ConcatConvoy} is passed to {\tt case}.
 
 \begin{verbatim}
 concatα : (A : Set) (m n : ℕ)
@@ -869,6 +872,17 @@ concatα A m n xss = case (ConcatConvoy A m n)
   (proj₁ xss)
   (proj₂ xss)
 \end{verbatim}
+
+All definitions in this subsection are defined {\it without} dependent
+pattern matching to illustrate the exclusive use of our type theory's
+primitives ({\tt ind}, {\tt proj₁}, {\tt case}, etc). After we case
+analyze the constructor tag in the first projection of {\tt xss}, we
+need the {\it dependent} second projection to reduce to the arguments
+of the constructor. This can be done by employing the
+{\it convoy pattern}~\citep{TODO}, in which the special motive
+{\tt ConcatConvoy} is passed to {\tt case}.
+
+\paragraph{The Convoy Motive}
 
 Again, rather than eliminating the pair {\tt xss}, we eliminate the
 tag in the first projection using {\tt case}. The motive supplied to
@@ -886,6 +900,8 @@ ConcatConvoy A m n t =
   (ihs : VecHyps (Vec A m) (Concat A m) n (t , xss))
   → Vec A (mult n m)
 \end{verbatim}
+
+\paragraph{The Nil Branch}
 
 The {\tt nil} branch within the algebra's case analysis receives as
 arguments the index {\tt n}, the single argument {\tt q}, and a value
@@ -910,7 +926,9 @@ nilBranch A m n q u = subst
   q (nil A)
 \end{verbatim}
 
-Finally, the {\tt cons} branch is defined in much the same way. Note
+\paragraph{The Cons Branch}
+
+The {\tt cons} branch is defined in much the same way. Note
 that in {\sc Agda} an identifier is treated as single name unless it
 contains a space. Thus, the argument {\tt n',xs,xss,q} below is a
 single variable whose name reminds us of the tuple of constructor
@@ -937,6 +955,8 @@ consBranch A m n n',xs,xss,q ih,u =
     (λ n → Vec A (mult n m))
     q (append A m xs (mult n' m) ih)
 \end{verbatim}
+
+\subsection{You Made It!}
 
 Congratulations on making it through this section, you now know how to define dependently typed
 functions using the primitive elimination rule {\tt ind}!
