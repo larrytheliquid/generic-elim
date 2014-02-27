@@ -312,19 +312,12 @@ now we are using {\tt Arg} to represent the sum of all constructors.
 
 \begin{verbatim}
 VecC : (A : Set) → VecT → Desc ℕ
-VecC A nilT = End zero
-VecC A consT =
-  Arg ℕ (λ n → Arg A (λ _ → Rec n (End (suc n))))
+VecC A nilT  = nilD A
+VecC A consT = consD A
 
 VecD : (A : Set) → Desc ℕ
 VecD A = Arg VecT (VecC A)
 \end{verbatim}
-
-Notice that our previous description of the {\tt nil} constructor,
-{\tt nilD A}, is equal to the tagged description
-{\tt VecC A nilT}, and {\tt consD A}
-is equal to the tagged description
-{\tt VecC A consT}.
 
 \subsection{First-class Enumerations \& Tags}
 \label{sec:background:case}
@@ -654,7 +647,7 @@ CurriedEl' (Arg A B) X i =
 
 \paragraph{Curried Algebra of a Single Constructor}
 
-Finally, below is an example of applying {\tt CurriedEl} to the
+Below is an example of applying {\tt CurriedEl} to the
 description of the {\tt cons} constructor. Notice that all arguments
 are curried, and a proof of index correctness is not demanded.
 
@@ -987,8 +980,6 @@ concat A m = elim VecE (VecC (Vec A m))
   (λ n xs xss ih → append A m xs (mult n m) ih)
 \end{verbatim}
 
-
-
 The function {\tt concat} is defined in \refsec{ind} by applying the
 primitive elimination rule {\tt ind} to an algebra. However,
 functions defined in such a manner are verbose. Instead, now we
@@ -1024,7 +1015,7 @@ analogous to the generalization {\tt UncurriedEl} of the initial
 algebra type in \refsec{inj}. In fact, because we generalize
 {\tt UncurriedHyps} to be defined over arbitrary {\tt X} rather than
 fixpoint {\tt μ D}, we require the extra argument
-{\tt cn : UncurriedEl D X}, which you can think of as generic
+{\tt cn : UncurriedEl D X}, which you can think of as a
 constructor of {\tt X}.
 
 \begin{verbatim}
