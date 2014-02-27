@@ -216,7 +216,7 @@ For simplicity, in this section of the paper we use the encoding by
 
 \todo[inline]{cite dagand paper for actually translating data to desc}
 
-\subsection{The Description Type}
+\subsection{Description Type}
 
 The datatype {\tt Desc} of descriptions is used to represent
 user-defined definitions of strictly-positive indexed
@@ -424,7 +424,7 @@ extension, the constructors {\tt cons} and {\tt nil} are defined for
 us. When using descriptions to define {\tt Vec}, we can instead
 introduce values of type {\tt Vec} using its initial algebra.
 
-\subsection{The Fixpoint Type}
+\subsection{Fixpoint Type}
 
 A description is a first-class datatype declaration. To get back the
 type encoded by the description, you apply it to the fixpoint type
@@ -439,7 +439,7 @@ Vec : (A : Set) (n : ℕ) → Set
 Vec A n = μ (VecD A) n
 \end{verbatim}
 
-\subsection{The Interpretation of Descriptions Type}
+\subsection{Interpretation of Descriptions Type}
 \label{sec:init:el}
 
 To introduce values of type {\tt Vec}, we use the
@@ -570,7 +570,7 @@ Defining {\tt inj} may not seem impressive by itself, but it acts as
 nice pedagogical step towards understanding how to define the generic
 eliminator {\tt elim} in \refsec{elim}.
 
-\subsection{The Uncurried Interpretation Algebra Type}
+\subsection{Uncurried Interpretation Algebra Type}
 
 In order to implement \refparti{one}, we must first recognize the
 initial algebra as an uncurried function. Recall the type of the
@@ -603,7 +603,7 @@ UncurriedEl (consD A) (Vec A) ⇝
   ∀{n} → ConsEl A n → Vec A n
 \end{verbatim}
 
-\subsection{The Curried Interpretation Algebra Type}
+\subsection{Curried Interpretation Algebra Type}
 
 Now let's define the curried version of the function. Recall that the
 type {\tt El} is a product of arguments, and {\tt UncurriedEl} is a
@@ -674,7 +674,7 @@ curryEl (Arg A B) X cn =
   λ a → curryEl (B a) X (λ xs → cn (a , xs))
 \end{verbatim}
 
-\subsection{The Generic Constructor}
+\subsection{Generic Constructor}
 
 The moment has arrived, with the help of our {\tt curryEl} function we
 can easily define the generic constructor {\tt inj}.
@@ -713,7 +713,7 @@ This section develops the definitions necessary to understand how to
 write {\tt concat} by applying the primitive elimination rule for
 described types to a suitable algebra.
 
-\subsection{The Primitive Induction Principle}
+\subsection{Primitive Induction Principle}
 
 The type of the primitive elimination rule, {\tt ind}, for datatypes built from
 descriptions is given below.
@@ -1002,7 +1002,7 @@ Currying constructor arguments in branches.
 Inserting an implicit proof in each branch that the constructor has the correct index.
 \end{myparte}
 
-\subsection{The Uncurried Inductive Hypothesis Algebra Type}
+\subsection{Uncurried Inductive Hypothesis Algebra Type}
 
 In order to implement
 \refparte{two} and \refparte{three} we must recognize the algebra
@@ -1056,10 +1056,14 @@ ConsBranch A m = UncurriedHyps
   (λ xs → init (consT , xs))
 
 ConsBranch A m ⇝
-  (n : ℕ) (xss : ConsEl (Vec A m) n)
+  (n : ℕ)
+  (xss : ConsEl (Vec A m) n)
   (ihs : ConsHyps (Vec A m) (Concat A m) n xss)
   → Vec A (mult n m)
 \end{verbatim}
+
+\subsection{Curried Inductive Hypothesis Algebra Type}
+
 
 
 %% \section{Generic Eliminators}
