@@ -974,7 +974,7 @@ the interface of standard eliminators in type theory!  This eliminator can
 be used to define {\tt concat} as follows.
 
 \begin{verbatim}
-concat : (A : Set) (m n : ℕ tt)
+concat : (A : Set) (m n : ℕ)
   (xss : Vec (Vec A m) n) → Vec A (mult n m)
 concat A m = elim VecE (VecC (Vec A m))
   (λ n xss → Vec A (mult n m))
