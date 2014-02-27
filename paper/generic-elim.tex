@@ -1138,7 +1138,7 @@ in our eliminator-based definiton of {\tt concat} at the
 beginning of this section.
 
 \begin{verbatim}
-ConsElimBranch : (A : Set) (m : ℕ tt) → Set
+ConsElimBranch : (A : Set) (m : ℕ) → Set
 ConsElimBranch A m = CurriedHyps
   (consD (Vec A m))
   (Vec (Vec A m)) (Concat A m)
