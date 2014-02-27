@@ -98,7 +98,7 @@ over described types, as well as decreasing the number of constructs in the
 metatheory via levitation~\citep{Chapman:2010:GAL:1932681.1863547,dagand:phd}. 
 
 Any type represented as a description can
-be eliminated with the the single elimination rule for descriptions -- called {\tt ind} --
+be eliminated with the single elimination rule for descriptions -- called {\tt ind} --
 which resembles a catamorphism over the algebra that describes indexed type families.
 Making use of {\tt ind} can be tedious due to the large amount of low-level detail
 descriptions contain. Functions written with {\tt ind} are
@@ -108,8 +108,8 @@ induction principles) are shorter and more widely understood.
 
 In this paper we describe how to derive the infinite
 class of standard eliminators, as a function
-parameterized by a description.  In a sense we derive the datatype axioms 
-of languages like Coq, Agda within a simple and sound system.
+parameterized by a description.  In a sense we derive the standard
+eliminators of type theory within a simple and sound system.
 We retain the generic programming ability afforded by description based languages,
 but also gain the ease of use supported by standard eliminators.
 
@@ -123,7 +123,7 @@ translate dependent pattern matching into
 eliminators. Rather than reinventing these algorithms to translate to
 {\tt ind}, we can instead directly reuse them with our derived {\tt elim},
 and our simple and sound system can now support high-level features
-all describle within the theory.
+all describable within the theory.
 
 \section{Intuition about {\tt ind}}
 The function {\tt ind} is similar to the standard
@@ -244,7 +244,7 @@ data Desc (I : Set) : Set₁ where
   Arg : (A : Set) (B : A → Desc I) → Desc I
 \end{verbatim}
 
-\subsection{Describing a Single Constructor}
+\subsubsection{Describing a Single Constructor}
 
 For example, first recall the type of the
 constructor {\tt nil} of vectors.
@@ -282,7 +282,7 @@ consD A =
   Arg ℕ (λ n → Arg A (λ _ → Rec n (End (suc n))))
 \end{verbatim}
 
-\subsection{Describing Multiple Constructors}
+\subsubsection{Describing Multiple Constructors}
 \label{sec:background:multiple}
 
 The datatype {\tt Desc} can also be used to describe an entire
@@ -537,7 +537,12 @@ cons A n x xs = init (consT , n , x , xs , refl)
 \label{sec:inj}
 
 The goal of this section is to {\it contribute} a novel generic
-constructor for datatypes built from descriptions. This constructor
+constructor for datatypes built from descriptions.
+The constructors {\tt nil} and {\tt cons} are manually
+defined in \refsec{init} using the initial algebra
+{\tt init} as a primitive. Now we will define a generic constructor
+{\tt inj} that once and for all captures the pattern inherent in
+definitions of constructors.  This constructor
 may be used to define {\tt nil} and {\tt cons} as follows.
 
 \begin{verbatim}
@@ -549,11 +554,7 @@ cons : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n)
 cons A = inj (VecD A) consT
 \end{verbatim}
 
-The constructors {\tt nil} and {\tt cons} are manually
-defined in \refsec{init} using the initial algebra
-{\tt init} as a primitive. Now we will define a generic constructor
-{\tt inj} that once and for all captures the pattern inherent in
-definitions of constructors. Importantly, our generic constructor is
+Importantly, our generic constructor is
 defined in terms of the existing primitives and does not extend the
 metatheory.
 This amounts to:
@@ -950,7 +951,11 @@ algebra-based approach.
 \label{sec:elim}
 
 The goal of this section is to {\it contribute} a novel generic
-eliminator for datatypes built from descriptions. This eliminator can
+eliminator, {\tt elim}, for datatypes built from descriptions.
+After partially applying {\tt elim} to an enumeration of constructor
+names, and a function from tags (indexing into each constructor name)
+to descriptions for each constructor, the resulting type is precisely
+the interface of standard eliminators in type theory!  This eliminator can
 be used to define {\tt concat} as follows.
 
 \begin{verbatim}
@@ -962,10 +967,7 @@ concat A m = elim VecE (VecC (Vec A m))
   (λ n xs xss ih → append A m xs (mult n m) ih)
 \end{verbatim}
 
-After partially applying {\tt elim} to an enumeration of constructor
-names, and a function from tags (indexing into each constructor name)
-to descriptions for each constructor, the resulting type is precisely
-the interface of standard eliminators in type theory! 
+
 
 The function {\tt concat} is defined in \refsec{ind} by applying the
 primitive elimination rule {\tt ind} to an algebra. However,
