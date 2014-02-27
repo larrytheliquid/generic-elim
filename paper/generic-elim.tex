@@ -600,7 +600,7 @@ argument requiring a proof of correct indexing $(j≡i)$, and
 A_1 × ... × A_n × (j ≡ i) → Z
 \]
 
-\paragraph{Interpretation of a Single Constructor}
+\paragraph{Curried Interpretation of a Single Constructor}
 
 For example, the applying {\tt UncurriedEl} to the description of the
 {\tt cons} constructor results in the following type.
@@ -652,7 +652,7 @@ CurriedEl' (Arg A B) X i =
   (a : A) → CurriedEl' (B a) X i
 \end{verbatim}
 
-\paragraph{Interpreting a Single Constructor}
+\paragraph{Uncurried Interpretation of a Single Constructor}
 
 Finally, below is an example of applying {\tt CurriedEl} to the
 description of the {\tt cons} constructor. Notice that all arguments
@@ -720,9 +720,9 @@ This section develops the definitions necessary to understand how to
 write {\tt concat} by applying the primitive elimination rule for
 described types to a suitable algebra.
 
-\subsection{The Type of Primitive Induction}
+\subsection{The Primitive Induction Principle}
 
-The type of the primitive elimination rule for datatypes built from
+The type of the primitive elimination rule, {\tt ind}, for datatypes built from
 descriptions is given below.
 The algebra {\tt α} is the important argument, as it is the proof that
 that some property {\tt P} holds for any value of a
@@ -1051,7 +1051,7 @@ and {\tt X i} as the result type $Z$.
 I → A_1 × ... × A_n × (j ≡ i) → B_1 × ... × B_m × ⊤ → Z
 \]
 
-\paragraph{Inductive Hypothesis Algebra of a Single Constructor}
+\paragraph{Uncurried Inductive Hypotheses of a Single Constructor}
 
 For example, we can use {\tt UncurriedHyps} to define the type of
 {\tt consBranch} from \refsec{ind}.
