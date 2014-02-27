@@ -1057,11 +1057,14 @@ For example, we can use {\tt UncurriedHyps} to define the type of
 {\tt consBranch} from \refsec{ind}.
 
 \begin{verbatim}
-UncurriedHyps (consD (Vec A m))
+ConsBranch : (A : Set) (m : ℕ) → Set
+ConsBranch A m = UncurriedHyps
+  (consD (Vec A m))
   (Vec (Vec A m))
   (Concat A m)
   (λ xs → init (consT , xs))
-⇝
+
+ConsBranch A m ⇝
   (n : ℕ) (xss : ConsEl (Vec A m) n)
   (ihs : ConsHyps (Vec A m) (Concat A m) n xss)
   → Vec A (mult n m)
