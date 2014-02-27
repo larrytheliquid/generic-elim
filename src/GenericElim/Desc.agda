@@ -427,14 +427,23 @@ module NoLevitation where
     VecEl : (A : Set) → ℕ tt → Set
     VecEl A n = El (VecD A) (Vec A) n
 
-    NilHyps : (A : Set) (P : (n : ℕ tt) → μ (VecD A) n → Set) (n : ℕ tt) (xs : NilEl A n) → Set
+    NilHyps : (A : Set) (P : (n : ℕ tt) → Vec A n → Set) (n : ℕ tt) (xs : NilEl A n) → Set
     NilHyps A P n xs = Hyps (nilD A) (Vec A) P n xs
 
-    ConsHyps : (A : Set) (P : (n : ℕ tt) → μ (VecD A) n → Set) (n : ℕ tt) (xs : ConsEl A n) → Set
+    ConsHyps : (A : Set) (P : (n : ℕ tt) → Vec A n → Set) (n : ℕ tt) (xs : ConsEl A n) → Set
     ConsHyps A P n xs = Hyps (consD A) (Vec A) P n xs
 
-    VecHyps : (A : Set) (P : (n : ℕ tt) → μ (VecD A) n → Set) (n : ℕ tt) (xs : VecEl A n) → Set
+    VecHyps : (A : Set) (P : (n : ℕ tt) → Vec A n → Set) (n : ℕ tt) (xs : VecEl A n) → Set
     VecHyps A P n xs = Hyps (VecD A) (Vec A) P n xs
+
+    ConsUncurriedHyps : (A : Set)
+      (P : (n : ℕ tt) → Vec A n → Set)
+      (cn : UncurriedEl (consD A) (Vec A)) → Set
+    ConsUncurriedHyps A P cn = UncurriedHyps (consD A) (Vec A) P cn
+
+    ConsBranch : (A : Set) (m : ℕ tt)
+      → Set
+    ConsBranch = {!!}
 
     nil : (A : Set) → Vec A zero
     nil A = init (nilT , refl)
@@ -575,7 +584,7 @@ module NoLevitation where
   
 ----------------------------------------------------------------------
   
-    module ElimUncurriedinator where
+    module ElimUncurried where
   
       elimℕ : (P : (ℕ tt) → Set)
         (pzero : P zero)
@@ -663,7 +672,7 @@ module NoLevitation where
   
 ----------------------------------------------------------------------
   
-    module GenericElimUncurriedinator where
+    module GenericElimUncurried where
   
       add : ℕ tt → ℕ tt → ℕ tt
       add = elim ℕE ℕC _
