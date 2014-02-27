@@ -600,7 +600,7 @@ argument requiring a proof of correct indexing $(j≡i)$, and
 A_1 × ... × A_n × (j ≡ i) → Z
 \]
 
-\paragraph{Curried Interpretation of a Single Constructor}
+\paragraph{Uncurried Algebra of a Single Constructor}
 
 For example, the applying {\tt UncurriedEl} to the description of the
 {\tt cons} constructor results in the following type.
@@ -652,7 +652,7 @@ CurriedEl' (Arg A B) X i =
   (a : A) → CurriedEl' (B a) X i
 \end{verbatim}
 
-\paragraph{Uncurried Interpretation of a Single Constructor}
+\paragraph{Curried Algebra of a Single Constructor}
 
 Finally, below is an example of applying {\tt CurriedEl} to the
 description of the {\tt cons} constructor. Notice that all arguments
@@ -851,7 +851,7 @@ concat A m = ind
   (concatα A m)
 \end{verbatim}
 
-\paragraph{The Algebra Argument}
+\paragraph{Algebra Argument}
 
 The algebra that defines {\tt concat} takes as arguments the index
 {\tt n}, the constructors {\tt xss}, and the inductive hypotheses
@@ -882,7 +882,7 @@ of the constructor. This can be done by employing the
 {\it convoy pattern}~\citep{TODO}, in which the special motive
 {\tt ConcatConvoy} is passed to {\tt case}.
 
-\paragraph{The Convoy Motive}
+\paragraph{Convoy Motive}
 
 Again, rather than eliminating the pair {\tt xss}, we eliminate the
 tag in the first projection using {\tt case}. The motive supplied to
@@ -901,7 +901,7 @@ ConcatConvoy A m n t =
   → Vec A (mult n m)
 \end{verbatim}
 
-\paragraph{The Nil Branch}
+\paragraph{Nil Branch}
 
 The {\tt nil} branch within the algebra's case analysis receives as
 arguments the index {\tt n}, the single argument {\tt q}, and a value
@@ -926,7 +926,7 @@ nilBranch A m n q u = subst
   q (nil A)
 \end{verbatim}
 
-\paragraph{The Cons Branch}
+\paragraph{Cons Branch}
 
 The {\tt cons} branch is defined in much the same way. Note
 that in {\sc Agda} an identifier is treated as single name unless it
@@ -1051,7 +1051,7 @@ and {\tt X i} as the result type $Z$.
 I → A_1 × ... × A_n × (j ≡ i) → B_1 × ... × B_m × ⊤ → Z
 \]
 
-\paragraph{Uncurried Inductive Hypotheses of a Single Constructor}
+\paragraph{Uncurried Algebra of a Single Constructor}
 
 For example, we can use {\tt UncurriedHyps} to define the type of
 {\tt consBranch} from \refsec{ind}.
