@@ -441,10 +441,6 @@ module NoLevitation where
       (cn : UncurriedEl (consD A) (Vec A)) → Set
     ConsUncurriedHyps A P cn = UncurriedHyps (consD A) (Vec A) P cn
 
-    ConsBranch : (A : Set) (m : ℕ tt)
-      → Set
-    ConsBranch = {!!}
-
     nil : (A : Set) → Vec A zero
     nil A = init (nilT , refl)
 
@@ -517,6 +513,11 @@ module NoLevitation where
 
       Concat : (A : Set) (m n : ℕ tt) (xss : Vec (Vec A m) n) → Set
       Concat A m n xss = Vec A (mult n m)
+
+      ConsBranch : (A : Set) (m : ℕ tt)
+        → Set
+      ConsBranch A m = UncurriedHyps (consD (Vec A m)) (Vec (Vec A m)) (Concat A m)
+        (λ xs → init (consT , xs))
 
       nilBranch : (A : Set) (m n : ℕ tt)
         (xss : NilEl (Vec A m) n)

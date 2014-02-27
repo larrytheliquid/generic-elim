@@ -1004,6 +1004,7 @@ For example, we can use {\tt UncurriedHyps} to define the type of
 UncurriedHyps (consD (Vec A m))
   (Vec (Vec A m))
   (Concat A m)
+  (λ xs → init (consT , xs))
 ⇝
   (n : ℕ) (xss : ConsEl (Vec A m) n)
   (ihs : ConsHyps (Vec A m) (Concat A m) n xss)
