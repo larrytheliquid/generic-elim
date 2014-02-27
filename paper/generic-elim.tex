@@ -1138,14 +1138,13 @@ in our eliminator-based definiton of {\tt concat} at the
 beginning of this section.
 
 \begin{verbatim}
-ConsBranch' : (A : Set) (m : ℕ tt)
-  → Set
-ConsBranch' A m = CurriedHyps
+ConsElimBranch : (A : Set) (m : ℕ tt) → Set
+ConsElimBranch A m = CurriedHyps
   (consD (Vec A m))
   (Vec (Vec A m)) (Concat A m)
   (λ xs → init (consT , xs))
 
-ConsBranch' A m ⇝
+ConsElimBranch A m ⇝
   (n : ℕ)
   (xs : Vec A m)
   (xss : Vec (Vec A m) n)
@@ -1155,7 +1154,7 @@ ConsBranch' A m ⇝
 
 This is precisely the expected type of the {\tt cons} branch of
 an {\tt elimVec}-based definition of {\tt concat}. Because the index
-proof is implicitly applied, the return type was able to definitionally
+proof is implicitly applied, the return type can definitionally
 reduce from {\tt Vec A (mult (suc n) m)}
 to {\tt Vec A (add m (mult n m))}.
 

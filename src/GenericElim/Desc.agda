@@ -538,9 +538,9 @@ module NoLevitation where
       ConsBranch A m = UncurriedHyps (consD (Vec A m)) (Vec (Vec A m)) (Concat A m)
         (λ xs → init (consT , xs))
 
-      ConsBranch' : (A : Set) (m : ℕ tt)
+      ConsElimBranch : (A : Set) (m : ℕ tt)
         → Set
-      ConsBranch' A m = CurriedHyps (consD (Vec A m)) (Vec (Vec A m)) (Concat A m)
+      ConsElimBranch A m = CurriedHyps (consD (Vec A m)) (Vec (Vec A m)) (Concat A m)
         (λ xs → init (consT , xs))
 
       nilBranch : (A : Set) (m n : ℕ tt)
