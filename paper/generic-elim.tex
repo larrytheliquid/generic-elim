@@ -82,25 +82,57 @@ Generic programming; dependent types; descriptions; eliminators.
 
 \section{Introduction}
 \label{sec:intro}
+Dependently typed languages such as Coq, Agda, and  Idris introduce datatypes axiomatically.
+These systems derive a set of axioms that describe how to legally manipulate values of 
+a newly declared type.
+These axioms are often in terms of a {\it standard eliminator} (a dependently typed fold). 
+Higher level features, such as pattern matching, are described in terms
+of the standard eliminator.
 
+Recently, there has been quite a bit of work on defining datypes within the language
+theory (without axioms) using {\it descriptions}.
 Descriptions make datatype definitions first class values in a
 dependent type theory. This has several desirable consequences, such as the
 ability to perform generic programming~\citep{Chapman:2010:GAL:1932681.1863547,mcbride2010ornamental,dagand:phd}
 over described types, as well as decreasing the number of constructs in the
 metatheory via levitation~\citep{Chapman:2010:GAL:1932681.1863547,dagand:phd}. 
+
 Any type represented as a description can
-be eliminated with its elimination rule -- called {\tt ind} -- which resembles a fold (or catamorphism) but
-over indexed type families. Functions written with {\tt ind} are
+be eliminated with the the single elimination rule for descriptions -- called {\tt ind} --
+which resembles a catamorphism over the algebra that describes indexed type families.
+Making use of {\tt ind} can be tedious due to the large amount of low-level detail
+descriptions contain. Functions written with {\tt ind} are
 verbose but follow a recognizable pattern (\refsec{ind}). 
 On the other hand, functions written with standard {\it eliminators} (or
 induction principles) are shorter and more widely understood.
 
-Now let's look at the type of {\tt ind}. Think of it almost like a standard
-eliminator that has been parameterized over any description {\tt D} of a type. The
+In this paper we describe how to derive the infinite
+class of standard eliminators, as a function
+parameterized by a description.  In a sense we derive the datatype axioms 
+of languages like Coq, Agda within a simple and sound system.
+We retain the generic programming ability afforded by description based languages,
+but also gain the ease of use supported by standard eliminators.
+
+Furthermore, we gain the advantage that existing algorithms, already defined in
+terms of eliminators, can now be reused.
+For example, \citet{gimenez1995codifying} translates
+{\sc Coq}~\citeyearpar{coq08} {\tt Fix}-based definitions into eliminators,
+and \citet{Goguen06eliminatingdependent} and
+\citet{McBride:2000:EM:646540.759262}
+translate dependent pattern matching into
+eliminators. Rather than reinventing these algorithms to translate to
+{\tt ind}, we can instead directly reuse them with our derived {\tt elim},
+and our simple and sound system can now support high-level features
+all describle within the theory.
+
+\section{Intuition about {\tt ind}}
+The function {\tt ind} is similar to the standard
+eliminator over an algebra of descriptions {\tt D}. The
 motive {\tt P} is indexed over the type family {\tt μ I D i}, which is
 the datatype that description {\tt D} represents.
 Here {\tt I} is the type of the index of the type family being
 encoded, and {\tt i} is the value of the index whose type is {\tt I}.
+
 The key difference
 between {\tt ind} and a standard eliminator is that all branches for
 each constructor of the encoded type are packaged into a single branch
@@ -109,7 +141,6 @@ each constructor of the encoded type are packaged into a single branch
 arguments in {\tt xs}, along with all inductive
 hypotheses {\tt ihs} for any recursive constructor arguments.
 
-\newpage
 
 \begin{verbatim}
 ind : {I : Set} (D : Desc I)
@@ -159,15 +190,7 @@ Note that we are not generating specialized eliminators like
 datatype.
 Because this definition is internal to the
 existing type theory, no additional metatheory needs to be proven.
-Furthermore, there are several existing algorithms already defined in
-terms of eliminators that can now be reused.
-For example, \citet{gimenez1995codifying} translates
-{\sc Coq}~\citeyearpar{coq08} {\tt Fix}-based definitions into eliminators,
-and \citet{Goguen06eliminatingdependent} and
-\citet{McBride:2000:EM:646540.759262}
-translate dependent pattern matching into
-eliminators. Rather than reinventing these algorithms to translate to
-{\tt ind}, we can instead directly reuse them with our derived {\tt elim}.
+
 
 \section{Declaring Datatypes}
 \label{sec:background}
@@ -188,7 +211,7 @@ descriptions~\citep{Chapman:2010:GAL:1932681.1863547,mcbride2010ornamental,dagan
 lets us define datatypes within a closed type theory.
 There are
 several ways to define the datatype of descriptions {\tt Desc}. 
-For simplicity, in this paper we use the encoding by
+For simplicity, in this section of the paper we use the encoding by
 \citet{mcbride2010ornamental}.
 
 \todo[inline]{cite dagand paper for actually translating data to desc}
@@ -271,6 +294,15 @@ sums and dependent pairs whose domain is some finite enumeration.
 A ⊎ B ≅ Σ Bool (λ b → if b then A else B)
 \end{verbatim}
 
+This works fine for a dattype with two constructors (because {\tt Bool} is a two point domain),
+in general we will define an $n$-point domain for a datatype with $n$ constructors. By
+convention we name such types and their constructors ending in the suffix {\tt T}, for tag.
+
+\begin{verbatim}
+data VecT : Set where
+  nilT consT : VecT
+\end{verbatim}
+
 A datatype with multiple constructors is represented by an
 {\tt Arg} description whose first argument {\tt VecT} is a datatype of tags
 -- one for each constructor -- and whose second argument {\tt VecC} is
@@ -279,9 +311,6 @@ that whereas we used {\tt Arg} for arguments of constructors before,
 now we are using {\tt Arg} to represent the sum of all constructors.
 
 \begin{verbatim}
-data VecT : Set where
-  nilT consT : VecT
-
 VecC : (A : Set) → VecT → Desc ℕ
 VecC A nilT = End zero
 VecC A consT =
@@ -344,9 +373,10 @@ consT = there here
 \end{verbatim}
 
 A tag can be eliminated with a {\tt case} construct (this is referred to
-as {\tt switch} by \citet{Chapman:2010:GAL:1932681.1863547,dagand:phd}).
-In addition to the tag being elimnated, the case construct is given a
-list of branches.
+as {\tt switch} by \citet{Chapman:2010:GAL:1932681.1863547,dagand:phd}),
+producing a value of the motive type {\tt P} indexed by the tag.
+In addition to the tag being eliminated, the case construct is given a
+list of branches, one of which the tag will select.
 
 \begin{verbatim}
 case : {E : Enum} (P : Tag E → Set)
@@ -356,6 +386,8 @@ case P (c , cs) (there t) =
   case (λ t → P (there t)) cs t
 \end{verbatim}
 
+Think of the cases being a right-nested tuple. The type of this tuple
+is computed by the {\tt Set} returning function {\tt Branches}.
 There is a branch for each label in the enumeration, and the type of
 each branch depends on the tag representing the position of the label
 in the enumeration.
@@ -594,7 +626,7 @@ $A_1 → ... → A_n$, and has the result type $Z$.
 A_1 → ... → A_n → Z
 \]
 
-Signifcantly, {\tt CurriedEl} does not require a proof of correct
+Significantly, {\tt CurriedEl} does not require a proof of correct
 indexing $(j≡i)$. Thus, in addition to solving \refparti{one} by
 currying arguments, {\tt CurriedEl} also solves \refparti{two} by
 implicitly supplying the correctness proof. Compare this to the
