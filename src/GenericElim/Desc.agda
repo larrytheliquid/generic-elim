@@ -243,32 +243,37 @@ module NoLevitation where
   
   indCurried : {I : Set} (D : Desc I)
     (P : (i : I) → μ D i → Set)
-    (α : CurriedHyps D (μ D) P init)
+    (f : CurriedHyps D (μ D) P init)
     (i : I)
     (x : μ D i)
     → P i x
-  indCurried D P α i x = ind D P (uncurryHyps D (μ D) P init α) i x
+  indCurried D P f i x = ind D P (uncurryHyps D (μ D) P init f) i x
+
+  SumCurriedHyps : {I : Set} (E : Enum) (C : Tag E → Desc I)
+    → let D = Arg (Tag E) C in
+    (P : (i : I) → μ D i → Set)
+    → Tag E → Set
+  SumCurriedHyps E C P t =
+    let D = Arg (Tag E) C in
+    CurriedHyps (C t) (μ D) P (λ xs → init (t , xs))
   
   elimUncurried : {I : Set} (E : Enum) (C : Tag E → Desc I)
     → let D = Arg (Tag E) C in
     (P : (i : I) → μ D i → Set)
-    → UncurriedBranches E
-      (λ t → CurriedHyps (C t) (μ D) P (λ xs → init (t , xs)))
-      ((i : I) (x : μ D i) → P i x)
+    → Branches E (SumCurriedHyps E C P)
+    → (i : I) (x : μ D i) → P i x
   elimUncurried E C P cs i x =
     let D = Arg (Tag E) C in
     indCurried D P
-      (case
-        (λ t → CurriedHyps (C t) (μ D) P (λ xs → init (t , xs)))
-        cs)
+      (case (SumCurriedHyps E C P) cs)
       i x
   
   elim : {I : Set} (E : Enum) (C : Tag E → Desc I)
     → let D = Arg (Tag E) C in
     (P : (i : I) → μ D i → Set)
     → CurriedBranches E
-      (λ t → CurriedHyps (C t) (μ D) P (λ xs → init (t , xs)))
-      ((i : I) (x : μ D i) → P i x)
+        (SumCurriedHyps E C P)
+        ((i : I) (x : μ D i) → P i x)
   elim E C P = curryBranches (elimUncurried E C P)
 
   -- elim : {I : Set} (E : Enum) (C : Tag E → Desc I)
@@ -542,6 +547,10 @@ module NoLevitation where
         → Set
       ConsElimBranch A m = CurriedHyps (consD (Vec A m)) (Vec (Vec A m)) (Concat A m)
         (λ xs → init (consT , xs))
+
+      ElimBranch : (t : VecT) (A : Set) (m : ℕ tt)
+        → Set
+      ElimBranch t A m = SumCurriedHyps VecE (VecC (Vec A m)) (Concat A m) t
 
       nilBranch : (A : Set) (m n : ℕ tt)
         (xss : NilEl (Vec A m) n)

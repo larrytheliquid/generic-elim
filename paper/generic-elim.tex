@@ -1006,6 +1006,11 @@ Currying constructor arguments in branches.
 Inserting an implicit proof in each branch that the constructor has the correct index.
 \end{myparte}
 
+\begin{myparte}
+\label{parte:four}
+Currying the outer function taking a product of branches.
+\end{myparte}
+
 \subsection{Uncurried Inductive Hypothesis Algebra Type}
 
 In order to implement
@@ -1191,12 +1196,12 @@ uncurried one.
 \begin{verbatim}
 indCurried : {I : Set} (D : Desc I)
   (P : (i : I) → μ D i → Set)
-  (α : CurriedHyps D (μ D) P init)
+  (f : CurriedHyps D (μ D) P init)
   (i : I)
   (x : μ D i)
   → P i x
-indCurried D P α i x =
-  ind D P (uncurryHyps D (μ D) P init α) i x
+indCurried D P f i x =
+  ind D P (uncurryHyps D (μ D) P init f) i x
 \end{verbatim}
 
 In \refsec{inj} we wrote a currying function
@@ -1212,121 +1217,201 @@ Because
 Thus, we would have the expected eliminator interface when writing
 functions with {\tt indCurried} over singleton datatypes built from
 descriptions -- those that do not start with a sum of constructors and
-instead only have ``one constructor'' with arguments.
+instead only have ``single constructor'' with arguments.
 
-\subsection{Uncurried Eliminator}
+\subsection{Sum of Curried Inductive Hypotheses Type}
 
-\todo[inline]{dont read this yet; work in progress}
-In order to implement \refparte{one}, we need our eliminator to expect a
-description built as sum (constructors) of products (arguments), and
-implicitly perform case analysis over this sum. We specialize the
-elimination principle to sums of products by parameterizing not by a description,
+Soon we will implement \refparte{one} by defining a generic eliminator
+that performs case analysis over datatypes described as a
+sum (constructors) of products (arguments). We can demand such a
+datatype in sum-of-products form by parameterizing not by a description,
 but by an {\tt E : Enum} and a function {\tt C} from tags of that enumeration to
-descriptions representing the constructor choices. Recall from
+descriptions representing the constructor choices. Below is a function
+that computes the type of the curried inductive hypothesis algebra for
+some particular constructor of a datatype, where the particular
+constructor is specified by a tag.
+
+\begin{verbatim}
+SumCurriedHyps : {I : Set}
+  (E : Enum) (C : Tag E → Desc I)
+  → let D = Arg (Tag E) C in
+  (P : (i : I) → μ D i → Set)
+  → Tag E → Set
+SumCurriedHyps E C P t =
+  let D = Arg (Tag E) C in
+  CurriedHyps (C t) (μ D) P (λ xs → init (t , xs))
+\end{verbatim}
+
+
+Recall from
 \refsec{background} that we defined datatypes like {\tt Vec} in such
 pieces anyway, namely {\tt VecE} for the enumeration and {\tt VecC}
 for the function from tags to constructor descriptions.
 We can use these two
 pieces to build a description starting with {\tt Arg}, as seen in the
-{\tt let} bindings below.
+{\tt let} bindings above.
+
+\paragraph{Sum of Curried Algebras}
+
+For example, we can use 
+\linebreak {\tt SumCurriedHyps} 
+to define a version of
+{\tt ConsElimBranch} that works for any constructor of {\tt Vec} as
+specified by a tag.
+
+\begin{verbatim}
+ElimBranch : (t : VecT)
+  (A : Set) (m : ℕ) → Set
+ElimBranch t A m = SumCurriedHyps VecE
+  (VecC (Vec A m)) (Concat A m) t
+
+ElimBranch consT A m ⇝ ConsElimBranch A m
+\end{verbatim}
+
+\subsection{Uncurried Eliminator}
+
+Now we can implement \refparte{one} by specializing an elimination
+principle to sums-of-products style datatypes, again by parameterizing
+our function by an enumeration and function from enumeration tags to
+descriptions for each constructor.
 
 \begin{verbatim}
 elimUncurried : {I : Set} 
   (E : Enum) (C : Tag E → Desc I)
   → let D = Arg (Tag E) C in
   (P : (i : I) → μ D i → Set)
-  → UncurriedBranches E
-  (λ t → CurriedHyps (C t) (μ D) P (λ xs → init (t , xs)))
-  ((i : I) (x : μ D i) → P i x)
+  → Branches E (SumCurriedHyps E C P)
+  → (i : I) (x : μ D i) → P i x
 elimUncurried E C P cs i x =
   let D = Arg (Tag E) C in
   indCurried D P
-    (case (λ t →
-      CurriedHyps (C t) (μ D) P (λ xs → init (t , xs)))
-      cs)
+    (case (SumCurriedHyps E C P) cs)
     i x
 \end{verbatim}
 
+While {\tt indCurried} takes a single curried algebra function
+({\tt CurriedHyps D (μ D) P init}), {\tt elimUncurried} takes a
+product ({\tt Branches E (SumCurriedHyps E C P)})
+of curried algebra functions, one for each constructor. The
+implementation of {\tt elimUncurried} uses {\tt indCurried} to perform
+induction, then in the body of the induction uses {\tt case} to
+eliminate the branches. Recall that when we defined {\tt concat} in
+\refsec{ind} with the primitive {\tt ind}, we first performed the
+induction using {\tt ind} and then performed case analysis on the sum
+of constructors. Our new function {\tt elimUncurried} internalizes
+exactly this pattern.
 
-%% \subsection{Uncurried {\tt elim}}
+\subsection{Uncurried Branches Type}
 
-%% To implement \refparte{two} we need to break up a sum of
-%% constructors into branches, one for each constructor. Recall that the
-%% shape of datatypes built out of descrptions that we would like to
-%% eliminate is a sum of products. To capture this, our new induction
-%% principle is specialied to descriptions representing a sum of
-%% products. This is achieved by parameterizing not by any description,
-%% but by an {\tt E : Enum} and a function {\tt C} from tags of that enumeration to
-%% descriptions representing the constructor choices. We can use these
-%% pieces to build a description starting with {\tt Arg}, as seen in the
-%% {\tt let} construct below. Finally, \refparte{two} is implemented
-%% by performing {\tt case} analysis in the body of {\tt ind}.
+The {\tt elimUncurried} function is nearly what we expect from a
+standard eliminator. However, it still takes all branches of the
+eliminator as a product of arguments. We would like to curry this
+product, thus implementing \refparte{four}.
+To do this we need a curried and uncurried
+version of a function whose domain is {\tt Branches}
+from \refsec{background}. Recall that {\tt Branches} is merely a
+dependent product of arguments, one for each element in an
+enumeration. Below is a type synonym for a non-dependent function from
+{\tt Branches} to some result type.
 
-%% \begin{verbatim}
-%% elimUncurried : {I : Set} (E : Enum) (C : Tag E → Desc I)
-%%   → let D = Arg (Tag E) C in
-%%   (P : (i : I) → μ D i → Set)
-%%   → UncurriedBranches E
-%%   (λ t → CurriedAlg (C t) (μ D) P (λ xs → init (t , xs)))
-%%   ((i : I) (x : μ D i) → P i x)
-%% elimUncurried E C P cs i x =
-%%   let D = Arg (Tag E) C in
-%%   indCurried D P
-%%     (case (λ t →
-%%       CurriedAlg (C t) (μ D) P (λ xs → init (t , xs)))
-%%       cs)
-%%     i x
-%% \end{verbatim}
+\begin{verbatim}
+UncurriedBranches : (E : Enum)
+  (P : Tag E → Set) (X : Set) → Set
+UncurriedBranches E P X = Branches E P → X
+\end{verbatim}
 
-%% Here, {\tt UncurriedBranches} is just a type synonym for a function
-%% from {\tt Branches E P} to some result type {\tt X}.
-%% It's definition can
-%% be found in \refsec{curry}. 
-%% Above {\tt P} is
-%% the {\tt CurriedAlg} argument, and {\tt X} is
-%% {\tt (i : I) (x : μ D i) → P i x}.
+It is easy to recognize {\tt UncurriedBranches} as a standard
+uncurried function. Think of {\tt Branches E P} as a product of
+$n$ arguments $A_1 × ... × A_n$, 
+and {\tt X} as the result type $Z$.
+\[
+A_1 × ... × A_n → Z
+\]
 
-%% \subsection{Curried {\tt elim}}
+\subsection{Curried Branches Type}
 
-%% Although we have technically implemented all four parts of our
-%% pattern, the induction principle {\tt elimUncurried} isn't quite what
-%% we want. The ``uncurried'' part of the name of the function refers to
-%% the {\tt Branches} argument.
-%% {\tt UncurriedBranches} is analogous to the function
-%% {\tt A × B → X}. Just like we did in {\tt indCurried}, we can define
-%% our final generic eliminator {\tt elim} by returning
-%% {\tt CurriedBranches} instead of {\tt UncurriedBranches}.
-%% \linebreak
-%% Here {\tt CurriedBranches} is analogous to {\tt A → B → X}.
+Defining a curried version of a function taking branches is
+straightforward. Unlike {\tt CurriedEl} and {\tt CurriedHyps},
+{\tt CurriedBranches} does not insert an implicit proof of index
+correctness anywhere, so it really is just a standard curried
+function.
 
-%% \begin{verbatim}
-%%   elim : {I : Set} (E : Enum) (C : Tag E → Desc I)
-%%     → let D = Arg (Tag E) C in
-%%     (P : (i : I) → μ D i → Set)
-%%     → CurriedBranches E
-%%     (λ t → CurriedAlg (C t) (μ D) P
-%%       (λ xs → init (t , xs)))
-%%     ((i : I) (x : μ D i) → P i x)
-%%   elim E C P = curryBranches (elimUncurried E C P)
-%% \end{verbatim}
+\begin{verbatim}
+CurriedBranches : (E : Enum)
+  (P : Tag E → Set) (X : Set) → Set
+CurriedBranches [] P X =
+  X
+CurriedBranches (l ∷ E) P X =
+  P here → CurriedBranches E (λ t → P (there t)) X
+\end{verbatim}
 
-%% Why do we need to do this? Recall that eliminators take a sequence of
-%% branch arguments, one for each constructor. The type of
-%% {\tt elimUncurried} is almost like a generic eliminator, except it
-%% takes all branch arguments as a tuple (because that's what {\tt case}
-%% takes), rather than taking a sequence of curried arguments. Thus, by
-%% currying these branches we arrive at our final desired definition of
-%% {\tt elim}.
+The only thing of interest in this definition is incrementing the tag
+in the motive with {\tt there} in recursive calls, because the motive
+is dependent on the smaller enumeration {\tt E} in the recursive call.
 
-%% The interface to using {\tt elim} is very simple. You simply replace
-%% specialized eliminators with {\tt elim} applied to the tag and cases
-%% that define a description. For example, the eliminator-based definitions of
-%% {\tt concat} and {\tt append} in \refsec{background:elim} can
-%% be defined by replacing {\tt elimVec} with {\tt elim VecT VecC}.
+It is also easy to recognize {\tt CurriedBranches} as a standard
+curried function, dependent $n$ curried argument $A_1 × ... × A_n$ and
+returning $Z$.
+\[
+A_1 → ... → A_n → Z
+\]
 
-%% Finally, we should point out that we gave separate definitions, each
-%% building upon the previous, for pedagogical reaons. Of course, {\tt elim}
-%% can be defined in one go by inlining the other definitions.
+\subsection{Curry Branches Function}
+
+Shortly, we will need a function that {\it curries} a function that
+takes branches. Again, this function is not surprising and can be
+understood from its type.
+
+\begin{verbatim}
+curryBranches :
+  {E : Enum} {P : Tag E → Set} {X : Set}
+  → UncurriedBranches E P X → CurriedBranches E P X
+curryBranches {[]} f =
+  f tt
+curryBranches {l ∷ E} f =
+  λ c → curryBranches (λ cs → f (c , cs))
+\end{verbatim}
+
+\subsection{Generic Eliminator}
+
+At long last, we have come to the grand moment, the definition of the
+generic eliminator {\tt elim}! With a final flick of the wrist, we
+apply {\tt curryBranches} to the result of {\tt elimUncurried}.
+
+\begin{verbatim}
+elim : {I : Set} (E : Enum) (C : Tag E → Desc I)
+  → let D = Arg (Tag E) C in
+  (P : (i : I) → μ D i → Set)
+  → CurriedBranches E
+      (SumCurriedHyps E C P)
+      ((i : I) (x : μ D i) → P i x)
+elim E C P = curryBranches (elimUncurried E C P)
+\end{verbatim}
+
+Note that the return type of {\tt elim} is specified with
+{\tt CurriedBranches}. To see the curry/uncurry resemblence with
+{\tt elimUncurried}, recognize that the return type of
+{\tt elimUncurried} can equivalently be written with
+{\tt UncurriedBranches}.
+
+\begin{verbatim}
+  ...
+  → UncurriedBranches E
+    (SumCurriedHyps E C P)
+    ((i : I) (x : μ D i) → P i x)
+⇝
+  ...
+  → Branches E (SumCurriedHyps E C P)
+  → (i : I) (x : μ D i) → P i x
+\end{verbatim}
+
+In \refsec{ind} we had to do a lot of work to define simple dependently
+typed functions like {\tt concat} using the algebra-based primitive
+elimination rule {\tt ind}. In this section we did just as much work,
+if not more, to define the generic eliminator {\tt elim}. However,
+this need only be done once and now defining any concrete function
+like {\tt concat} can be done very tersely using {\tt elim}, just as
+the example at the beginning of this section demonstrates.
 
 \section{Related Work}
 \label{sec:related-work}
