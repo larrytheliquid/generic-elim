@@ -89,9 +89,10 @@ Dependently typed languages such as
 introduce datatypes axiomatically.
 These systems derive a set of axioms that describe how to legally manipulate values of 
 a newly declared type.
-These axioms are often in terms of a {\it standard eliminator} (a dependently typed fold). 
-Higher level features, such as pattern matching, are described in terms
-of the standard eliminator.
+In \citet{martin1975intuitionistic} type theory, declaring datatypes
+results in axioms for
+type constructors, value constructors, and eliminators (induction
+principles as dependently typed folds).
 
 Recently, there has been quite a bit of work on defining datypes within the language
 theory (without axioms) using {\it descriptions}.
@@ -101,17 +102,22 @@ ability to perform generic programming~\citep{Chapman:2010:GAL:1932681.1863547,m
 over described types, as well as decreasing the number of constructs in the
 metatheory via levitation~\citep{Chapman:2010:GAL:1932681.1863547,dagand:phd}. 
 
-Any type represented as a description can
-be eliminated with the single elimination rule for descriptions -- called {\tt ind} --
-which resembles a catamorphism over the algebra that describes indexed type families.
-Making use of {\tt ind} can be tedious due to the large amount of low-level detail
-descriptions contain. Functions written with {\tt ind} are
+Any type represented as a description can be
+introduced with a single introduction rule -- called {\tt init} --
+which is the initial algebra for the description.
+Any type represented as a description can be
+eliminated with a single elimination rule -- called {\tt ind} --
+which is the dependently typed version of a catamorphism and as such can be
+applied to some algebra.
+Eliminating values by defining an appropriate algebra 
+can be tedious due to the large amount of low-level detail
+description-based datatypes contain. Functions written with {\tt ind} are
 verbose but follow a recognizable pattern (\refsec{ind}). 
-On the other hand, functions written with standard {\it eliminators} (or
-induction principles) are shorter and more widely understood.
+On the other hand, functions written with standard {\it eliminators}
+are shorter and more widely understood.
 
 In this paper we describe how to derive the infinite
-class of standard eliminators, as a function
+class of standard eliminators, as a function -- called {\tt elim} --
 parameterized by a description.  In a sense we derive the standard
 eliminators of type theory within a simple and sound system.
 We retain the generic programming ability afforded by description based languages,
@@ -126,8 +132,7 @@ and \citet{Goguen06eliminatingdependent} and
 translate dependent pattern matching into
 eliminators. Rather than reinventing these algorithms to translate to
 {\tt ind}, we can instead directly reuse them with our derived {\tt elim},
-and our simple and sound system can now support high-level features
-all describable within the theory.
+and our simple and sound system can now support high-level features.
 
 \section{Intuition about {\tt ind}}
 The function {\tt ind} is similar to the standard
@@ -1526,6 +1531,10 @@ to what we have described. The difference is that, in our work, this
 conversion is {\it internalized}, as we define eliminators in terms of
 {\tt ind} within the existing type theory, rather than prove an
 equivalence to eliminators defined at the level of the metatheory.
+
+\subsection{Algebras Defined with Curry}
+
+\todo[inline]{mcbride ornament examples}
 
 \acks
 
