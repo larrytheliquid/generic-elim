@@ -82,7 +82,7 @@ Generic programming; dependent types; descriptions; eliminators.
 
 \section{Introduction}
 \label{sec:intro}
-Dependently typed languages such as Coq, Agda, and  Idris introduce datatypes axiomatically.
+Dependently typed languages such as {\sc Coq}, {\sc Agda}, and  {\sc Idris} introduce datatypes axiomatically.
 These systems derive a set of axioms that describe how to legally manipulate values of 
 a newly declared type.
 These axioms are often in terms of a {\it standard eliminator} (a dependently typed fold). 
@@ -1416,14 +1416,49 @@ the example at the beginning of this section demonstrates.
 \section{Related Work}
 \label{sec:related-work}
 
-\citet{dagand:phd} gives an alternative {\tt Desc} definition, which
-allows datatypes to be defined as computations over their indices.
-In this paper a sum of datatypes, representing multiple construtors,
-is encoded as a dependent pair whose first index is a list of choices
-of constructor names. An alternative way to encode datatypes is to
-support sum types directly in descriptions and use those rather than
-their isomorphic dependent pair equivalents. Foveran~\citep{foveran} is
-an example of a language that encoded sum types directly.
+Our work focuses on internalizing the definition of constructors and
+eliminators in terms of existing primitives that use algebras. 
+
+\subsection{Translating to Eliminators}
+
+There is a lot of related work on defining things
+{\it in terms of eliminators} that can be reused now that we have
+derived a generic eliminator from primitives.
+Dependent pattern matching is a much more attractive interface to
+dependently typed programming than eliminators, just as eliminators
+are a more attractive interface than algebra-based primitives.
+Thankfully, \citet{Goguen06eliminatingdependent} and
+\citet{McBride:2000:EM:646540.759262} have already shown how to
+translate definitions given by dependent pattern matching to
+eliminators.
+Similarly, {\sc Coq} allows users to define recursive functions in a
+more attractive way using {\tt Fix}. To justify the termination of
+{\tt Fix}-based definitions, \citet{gimenez1995codifying} translates
+them into eliminators. 
+
+\subsection{Generating Specialized Eliminators}
+
+Although proof assistants like {\sc Coq} support a higher-level
+notation like {\tt Fix} for function definitions, the induction
+principle (the eliminator) is also a useful interface and is used a
+lot in tactics. For this reason, {\sc Coq} generates the definition
+of the induction principle in terms of its primitive {\tt Fix}
+whenever a user declares a datatype. The difference between our work
+and what {\sc Coq} does it that {\sc Coq} generates
+specialized eliminator definitions at the level of the metatheory,
+while we define a single generic eliminator within the object
+language.
+
+
+
+%% \citet{dagand:phd} gives an alternative {\tt Desc} definition, which
+%% allows datatypes to be defined as computations over their indices.
+%% In this paper a sum of datatypes, representing multiple construtors,
+%% is encoded as a dependent pair whose first index is a list of choices
+%% of constructor names. An alternative way to encode datatypes is to
+%% support sum types directly in descriptions and use those rather than
+%% their isomorphic dependent pair equivalents. Foveran~\citep{foveran} is
+%% an example of a language that encoded sum types directly.
 
 \todo[inline]{cite generic/generic-algebras.pdf}
 
