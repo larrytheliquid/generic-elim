@@ -82,7 +82,11 @@ Generic programming; dependent types; descriptions; eliminators.
 
 \section{Introduction}
 \label{sec:intro}
-Dependently typed languages such as {\sc Coq}, {\sc Agda}, and  {\sc Idris} introduce datatypes axiomatically.
+Dependently typed languages such as
+{\sc Coq}~\citep{coq08},
+{\sc Agda}~\citep{norell2007towards}, and 
+{\sc Idris}~\citep{brady2011idris} 
+introduce datatypes axiomatically.
 These systems derive a set of axioms that describe how to legally manipulate values of 
 a newly declared type.
 These axioms are often in terms of a {\it standard eliminator} (a dependently typed fold). 
@@ -116,7 +120,7 @@ but also gain the ease of use supported by standard eliminators.
 Furthermore, we gain the advantage that existing algorithms, already defined in
 terms of eliminators, can now be reused.
 For example, \citet{gimenez1995codifying} translates
-{\sc Coq}~\citeyearpar{coq08} {\tt Fix}-based definitions into eliminators,
+{\sc Coq} {\tt Fix}-based definitions into eliminators,
 and \citet{Goguen06eliminatingdependent} and
 \citet{McBride:2000:EM:646540.759262}
 translate dependent pattern matching into
@@ -213,8 +217,6 @@ There are
 several ways to define the datatype of descriptions {\tt Desc}. 
 For simplicity, in this section of the paper we use the encoding by
 \citet{mcbride2010ornamental}.
-
-\todo[inline]{cite dagand paper for actually translating data to desc}
 
 \subsection{Description Type}
 
@@ -508,7 +510,6 @@ VecEl A n = El (VecD A) (Vec A) n
 VecEl A n ⇝ Σ VecT (case (λ _ → Set)
   (NilEl A n , ConsEl A n , tt))
 \end{verbatim}
-\todo[inline]{motive is wrong}
 
 \subsection{Definition of Constructors via the Initial Algebra}
 \label{sec:init:cons}
@@ -876,7 +877,7 @@ primitives ({\tt ind}, {\tt proj₁}, {\tt case}, etc). After we case
 analyze the constructor tag in the first projection of {\tt xss}, we
 need the {\it dependent} second projection to reduce to the arguments
 of the constructor. This can be done by employing the
-{\it convoy pattern}~\citep{TODO}, in which the special motive
+{\it convoy pattern}~\citep{chlipala2011certified}, in which the special motive
 {\tt ConcatConvoy} is passed to {\tt case}.
 
 \paragraph{Convoy Motive}
@@ -993,17 +994,17 @@ metatheory. This amounts to:
 
 \begin{myparte}
 \label{parte:one}
-Performing case analysis to break up constructors into branches.
-\end{myparte}
-
-\begin{myparte}
-\label{parte:two}
 Currying constructor arguments in branches.
 \end{myparte}
 
 \begin{myparte}
-\label{parte:three}
+\label{parte:two}
 Inserting an implicit proof in each branch that the constructor has the correct index.
+\end{myparte}
+
+\begin{myparte}
+\label{parte:three}
+Performing case analysis to break up constructors into branches.
 \end{myparte}
 
 \begin{myparte}
@@ -1011,10 +1012,16 @@ Inserting an implicit proof in each branch that the constructor has the correct 
 Currying the outer function taking a product of branches.
 \end{myparte}
 
+In this section we will first focus on single-constructor
+datatype descriptions, implementing \refparte{one} and \refparte{two}.
+Multi-constructor descriptions represented as sum types are
+discussed in \refsec{elim:sum}, and from that point on we focus on
+implementing \refparte{three} and \refparte{four}.
+
 \subsection{Uncurried Inductive Hypothesis Algebra Type}
 
 In order to implement
-\refparte{two} and \refparte{three} we must recognize the algebra
+\refparte{one} and \refparte{two} we must recognize the algebra
 argument to {\tt ind} as an uncurried function.
 Below we define {\tt UncurriedHyps} to be a generalized type synonym
 for the type of the algebra argument {\tt α} to {\tt ind}, where we
@@ -1108,8 +1115,8 @@ I → A_1 → ... → A_n → B_1 → ... → B_m → Z
 \]
 
 This definition obviously curries arguments, implementing
-\refparte{two}, but it also inserts an implicit proof of index
-correctness, implementing \refparte{three}. In \refsec{inj}, we used
+\refparte{one}, but it also inserts an implicit proof of index
+correctness, implementing \refparte{two}. In \refsec{inj}, we used
 the same kind of trick to define {\tt CurriedEl} to have an implicit
 proof instead of asking for it explicitly as demonstrated
 by {\tt CurriedEl'}. By analogy, we could have defined a version of
@@ -1213,15 +1220,16 @@ and pass to the primitive elimination rule {\tt ind}.
 
 Because
 {\tt indCurried} takes {\tt CurriedHyps} as an algebra, it implements
-\refparte{two} and \refparte{three}.
+\refparte{one} and \refparte{two}.
 Thus, we would have the expected eliminator interface when writing
 functions with {\tt indCurried} over singleton datatypes built from
 descriptions -- those that do not start with a sum of constructors and
 instead only have ``single constructor'' with arguments.
 
 \subsection{Sum of Curried Inductive Hypotheses Type}
+\label{sec:elim:sum}
 
-Soon we will implement \refparte{one} by defining a generic eliminator
+Soon we will implement \refparte{three} by defining a generic eliminator
 that performs case analysis over datatypes described as a
 sum (constructors) of products (arguments). We can demand such a
 datatype in sum-of-products form by parameterizing not by a description,
@@ -1270,7 +1278,7 @@ ElimBranch consT A m ⇝ ConsElimBranch A m
 
 \subsection{Uncurried Eliminator}
 
-Now we can implement \refparte{one} by specializing an elimination
+Now we can implement \refparte{three} by specializing an elimination
 principle to sums-of-products style datatypes, again by parameterizing
 our function by an enumeration and function from enumeration tags to
 descriptions for each constructor.
@@ -1519,12 +1527,11 @@ conversion is {\it internalized}, as we define eliminators in terms of
 {\tt ind} within the existing type theory, rather than prove an
 equivalence to eliminators defined at the level of the metatheory.
 
-\todo[inline]{cite generic/generic-algebras.pdf}
-
 \acks
 
-\todo[inline]{thank reviewers + nathan for terminology + mention nsf grant
-This work was supported by NSF/CISE/CCF \#1320934}
+We would like to thank Nathan Collins for discussing some of this
+development with us and helping us settle on some terminology. This
+work was supported by NSF/CISE/CCF grant \#1320934.
 
 \bibliographystyle{abbrvnat}
 \bibliography{generic-elim}
