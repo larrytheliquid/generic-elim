@@ -658,7 +658,7 @@ CurriedEl (consD A) (Vec A) ⇝
   (m : ℕ) → A → Vec A m → Vec A (suc m)
 \end{verbatim}
 
-\subsection{Curry Interpretation Function}
+\subsection{Curry Interpretation Algebra Function}
 
 All we need now is a curry function that takes an
 {\tt UncurriedEl} and returns a {\tt CurriedEl}. The definition of
@@ -1160,29 +1160,93 @@ proof is implicitly applied, the return type can definitionally
 reduce from {\tt Vec A (mult (suc n) m)}
 to {\tt Vec A (add m (mult n m))}.
 
-%% We can implement a function like {\tt ind} that takes a curried
-%% version of the algebra argument instead. The {\tt CurriedAlg} argument
-%% (defined in \refsec{curry}) represents the curried function
-%% {\tt A → B → C → D → X}.
+\subsection{Uncurry Inductive Hypothesis Algebra Function}
 
-%% \begin{verbatim}
-%% indCurried : {I : Set} (D : Desc I)
-%%   (P : (i : I) → μ D i → Set)
-%%   (α : CurriedAlg D (μ D) P init)
-%%   (i : I)
-%%   (x : μ D i)
-%%   → P i x
-%% indCurried D P α i x =
-%%   ind D P (uncurryAlg D (μ D) P init α) i x
-%% \end{verbatim}
+Shortly, we will be need a function that {\it uncurries} the inductive
+hypothesis algebra. Once again, the definition is unremarkable and the
+type explains it all.
 
-%% The {\tt indCurried} functions implements 3 of the 4 parts of our
-%% pattern. It starts off the definition with {\tt ind}
-%% (\refparte{one}) and it implicitly projects arguments and inductive
-%% hypotheses by using a curried {\tt α} argument
-%% (\refparte{three}). Although it isn't obvious here, we will see
-%% in \refsec{curry} that {\tt CurriedAlg} also implicitly
-%% coerces constructor indices (\refparte{four}).
+\begin{verbatim}
+uncurryHyps : {I : Set} (D : Desc I) (X : ISet I)
+  (P : (i : I) → X i → Set)
+  (cn : UncurriedEl D X)
+  → CurriedHyps D X P cn → UncurriedHyps D X P cn
+uncurryHyps (End .i) X P cn pf i refl tt =
+  pf
+uncurryHyps (Rec j D) X P cn pf i (x , xs) (ih , ihs) =
+  uncurryHyps D X P
+    (λ ys → cn (x , ys)) (pf x ih) i xs ihs
+uncurryHyps (Arg A B) X P cn pf i (a , xs) ihs =
+  uncurryHyps (B a) X P
+    (λ ys → cn (a , ys)) (pf a) i xs ihs
+\end{verbatim}
+
+\subsection{Curried Induction Principle}
+
+Below we define
+the function {\tt indCurried}. It is like the primitive {\tt ind},
+except it takes a curried inductive hypothesis algebra instead of an
+uncurried one. 
+
+\begin{verbatim}
+indCurried : {I : Set} (D : Desc I)
+  (P : (i : I) → μ D i → Set)
+  (α : CurriedHyps D (μ D) P init)
+  (i : I)
+  (x : μ D i)
+  → P i x
+indCurried D P α i x =
+  ind D P (uncurryHyps D (μ D) P init α) i x
+\end{verbatim}
+
+In \refsec{inj} we wrote a currying function
+{\tt curryEl}. When introducing values, we have the uncurried initial
+algebra {\tt init} and need to curry it to get generic constructors.
+When eliminating using {\tt indCurried},
+the user supplies a curried algebra that we uncurry
+and pass to the primitive elimination rule {\tt ind}.
+
+Because
+{\tt indCurried} takes {\tt CurriedHyps} as an algebra, it implements
+\refparte{two} and \refparte{three}.
+Thus, we would have the expected eliminator interface when writing
+functions with {\tt indCurried} over singleton datatypes built from
+descriptions -- those that do not start with a sum of constructors and
+instead only have ``one constructor'' with arguments.
+
+\subsection{Uncurried Eliminator}
+
+\todo[inline]{dont read this yet; work in progress}
+In order to implement \refparte{one}, we need our eliminator to expect a
+description built as sum (constructors) of products (arguments), and
+implicitly perform case analysis over this sum. We specialize the
+elimination principle to sums of products by parameterizing not by a description,
+but by an {\tt E : Enum} and a function {\tt C} from tags of that enumeration to
+descriptions representing the constructor choices. Recall from
+\refsec{background} that we defined datatypes like {\tt Vec} in such
+pieces anyway, namely {\tt VecE} for the enumeration and {\tt VecC}
+for the function from tags to constructor descriptions.
+We can use these two
+pieces to build a description starting with {\tt Arg}, as seen in the
+{\tt let} bindings below.
+
+\begin{verbatim}
+elimUncurried : {I : Set} 
+  (E : Enum) (C : Tag E → Desc I)
+  → let D = Arg (Tag E) C in
+  (P : (i : I) → μ D i → Set)
+  → UncurriedBranches E
+  (λ t → CurriedHyps (C t) (μ D) P (λ xs → init (t , xs)))
+  ((i : I) (x : μ D i) → P i x)
+elimUncurried E C P cs i x =
+  let D = Arg (Tag E) C in
+  indCurried D P
+    (case (λ t →
+      CurriedHyps (C t) (μ D) P (λ xs → init (t , xs)))
+      cs)
+    i x
+\end{verbatim}
+
 
 %% \subsection{Uncurried {\tt elim}}
 
