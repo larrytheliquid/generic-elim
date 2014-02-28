@@ -1449,16 +1449,76 @@ specialized eliminator definitions at the level of the metatheory,
 while we define a single generic eliminator within the object
 language.
 
+\subsection{Generic Programming using Descriptions}
 
+There has been a lot of work on performing generic programming over
+datatypes defined using descriptions. In some sense, this is the
+purpose of the description technology. For example,
+\citet{Chapman:2010:GAL:1932681.1863547} define a generic catamorphism
+(a non-dependent {\tt ind}), and a generic free monad construction.
+Ornaments \citep{mcbride2010ornamental} allow you to new
+description-based datatypes in terms of their relationship with
+existing datatypes, and freely convert between the two. Free
+conversion between data means that you can reuse functions defined
+over old types when defining new, more specifically indexed, dependent
+types, solving a major reuse issue with dependently typed programming.
+\citet{dagand:phd} implements a generic ``deriving'' mechanism,
+similar in purpose to deriving in {\sc Haskell}, that derives
+functions such as decidable equality over a class of datatypes that
+support such functions. \citet{dagand:phd} also generically defines
+constructions~\citep{mcbride2006few}, such as case
+analysis and injectivity of constructors, that are used when
+elaborating dependent pattern matching to eliminators. There
+case analysis is defined to be just like the primitive elimination
+rule {\tt ind}, but where the inductive hypotheses are not supplied
+(i.e. you still use an uncurried {\it algebra} that gets {\tt El} as
+an argument, but not {\tt Hyps}). By combining our work on generic
+eliminators with Dagand's work on generic datatype properties like
+injectivity of constructors, we now have all the ingredients necessary to
+elaborate dependent pattern matching to description-based eliminators.
 
-%% \citet{dagand:phd} gives an alternative {\tt Desc} definition, which
-%% allows datatypes to be defined as computations over their indices.
-%% In this paper a sum of datatypes, representing multiple construtors,
-%% is encoded as a dependent pair whose first index is a list of choices
-%% of constructor names. An alternative way to encode datatypes is to
-%% support sum types directly in descriptions and use those rather than
-%% their isomorphic dependent pair equivalents. Foveran~\citep{foveran} is
-%% an example of a language that encoded sum types directly.
+\citet{dagand2012transporting} also has done work on using ornaments
+to define new functions based on old ones such that there
+relationship is freely captured, extending the idea of defining new
+datatypes from old ones such that there relationship is freely
+captured. This work uses an alternative, more expressive, description
+type that makes it possible to define datatypes as computations over
+their index rather than using the equality type to constrain what the
+indices must be. We have not extended the present work to
+computational descriptions, but this should be possible in the same
+way that \citet{dagand:phd} defines generic operations over
+computational descriptions that are restricted to a universe of
+``tagged descriptions'' representing sum-of-products style datatypes.
+
+An alternative way to encode datatypes is to
+support sum types directly in descriptions and use those rather than
+their isomorphic dependent pair equivalents. Foveran~\citep{foveran} is
+an example of a language that encoded sum types directly. Our work
+could be extended to use descriptions that support primitive sum
+types. A function like {\tt elim} would still need to be paramterized
+by an {\tt Enum}-like collection of all constructors, such that the
+primitive sum description could be computed from the {\tt Enum} in the
+same way that we use the enumeration to build an {\tt Arg}
+description.
+
+\subsection{Metatheory of Descriptions}
+
+\citet{dagand:phd} defines an elaboration procedure to translate
+{\tt data} declaration syntax to descriptions. As part of the
+metatheory of this work, Dagand defines and proves soundness as the statement
+that any high level datatype declaration elaborates to a well-typed
+term in the kernel type theory. Dagand defines and proves completeness as the
+extensional equivalence between {\sc Coq}'s {\tt Fix}-based
+definitions and {\tt ind}-based definitions. This is done at the level
+of the metatheory of {\sc Coq}'s {\tt Fix}-based definitions, which
+\citet{gimenez1995codifying} defines in terms of underlying
+eliminators. Although Dagand does not describe the proof in all of its
+low-level ``symbol-pushing'' detail, converting from
+eliminator-based definitions to {\tt ind}-based should be very similar
+to what our work is doing. The difference is that in our work this
+conversion is {\it internalized}, as we define eliminators in terms of
+{\tt ind} within the existing type theory, rather than prove an
+equivalence to eliminators defined at the level of metatheory.
 
 \todo[inline]{cite generic/generic-algebras.pdf}
 
