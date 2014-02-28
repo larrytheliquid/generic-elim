@@ -1440,11 +1440,11 @@ them into eliminators.
 
 Although proof assistants like {\sc Coq} support a higher-level
 notation like {\tt Fix} for function definitions, the induction
-principle (the eliminator) is also a useful interface and is used a
-lot in tactics. For this reason, {\sc Coq} generates the definition
+principle (the eliminator) is also a useful interface and is used in 
+many tactics. For this reason, {\sc Coq} generates the definition
 of the induction principle in terms of its primitive {\tt Fix}
 whenever a user declares a datatype. The difference between our work
-and what {\sc Coq} does it that {\sc Coq} generates
+and what {\sc Coq} does,  is that {\sc Coq} generates
 specialized eliminator definitions at the level of the metatheory,
 while we define a single generic eliminator within the object
 language.
@@ -1452,14 +1452,14 @@ language.
 \subsection{Generic Programming using Descriptions}
 
 There has been a lot of work on performing generic programming over
-datatypes defined using descriptions. In some sense, this is the
+datatypes defined using descriptions. In some sense, this was the original
 purpose of the description technology. For example,
 \citet{Chapman:2010:GAL:1932681.1863547} define a generic catamorphism
 (a non-dependent {\tt ind}), and a generic free monad construction.
-Ornaments \citep{mcbride2010ornamental} allow you to new
+Ornaments \citep{mcbride2010ornamental} supports the definition of new
 description-based datatypes in terms of their relationship with
-existing datatypes, and freely convert between the two. Free
-conversion between data means that you can reuse functions defined
+existing datatypes, and supports the conversion between the two. Free
+conversion between data means that one can reuse functions defined
 over old types when defining new, more specifically indexed, dependent
 types, solving a major reuse issue with dependently typed programming.
 \citet{dagand:phd} implements a generic ``deriving'' mechanism,
@@ -1477,11 +1477,10 @@ eliminators with Dagand's work on generic datatype properties like
 injectivity of constructors, we now have all the ingredients necessary to
 elaborate dependent pattern matching to description-based eliminators.
 
-\citet{dagand2012transporting} also has done work on using ornaments
-to define new functions based on old ones such that there
-relationship is freely captured, extending the idea of defining new
-datatypes from old ones such that there relationship is freely
-captured. This work uses an alternative, more expressive, description
+\citet{dagand2012transporting} decribe using ornaments
+to define new functions from old ones, such that the
+relationship between the two is freely captured.
+This work uses an alternative, more expressive, description
 type that makes it possible to define datatypes as computations over
 their index rather than using the equality type to constrain what the
 indices must be. We have not extended the present work to
@@ -1505,7 +1504,7 @@ description.
 
 \citet{dagand:phd} defines an elaboration procedure to translate
 {\tt data} declaration syntax to descriptions. As part of the
-metatheory of this work, Dagand defines and proves soundness as the statement
+metatheory of this work, Dagand defines and proves a soundness theorem
 that any high level datatype declaration elaborates to a well-typed
 term in the kernel type theory. Dagand defines and proves completeness as the
 extensional equivalence between {\sc Coq}'s {\tt Fix}-based
@@ -1514,11 +1513,11 @@ of the metatheory of {\sc Coq}'s {\tt Fix}-based definitions, which
 \citet{gimenez1995codifying} defines in terms of underlying
 eliminators. Although Dagand does not describe the proof in all of its
 low-level ``symbol-pushing'' detail, converting from
-eliminator-based definitions to {\tt ind}-based should be very similar
-to what our work is doing. The difference is that in our work this
+eliminator-based definitions, to {\tt ind}-based definitions is very similar
+to what we have described. The difference is that, in our work, this
 conversion is {\it internalized}, as we define eliminators in terms of
 {\tt ind} within the existing type theory, rather than prove an
-equivalence to eliminators defined at the level of metatheory.
+equivalence to eliminators defined at the level of the metatheory.
 
 \todo[inline]{cite generic/generic-algebras.pdf}
 
