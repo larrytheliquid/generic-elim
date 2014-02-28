@@ -736,11 +736,11 @@ ind : {I : Set} (D : Desc I)
 \end{verbatim}
 
 In order to prove {\tt P i (init xs)} you get the following
-arguments:
+arguments of \verb+α+:
 
 \begin{enumerate}
 \item{{\tt (i : I)}} - The index of the type being eliminated.
-\item{{\tt (xs : El D (μ D) i)}} - The constructors and arguments of the type
+\item{{\tt (xs : El D (μ D) i)}} - The constructors (and their arguments) of the type
   being eliminated.
 \item{{\tt (ihs : Hyps D (μ D) P i xs) → P i (init xs))}} - The inductive
   hypotheses for all constructors.
@@ -751,10 +751,12 @@ our work can be understood without knowing the definition.
 
 \subsection{Inductive Hypothesis Type}
 
-{\tt Hyps} is the type of inductive hypotheses for a described
+{\tt Hyps} computes the type of inductive hypotheses for a described
 datatype. Its definition closely follows the definition of
 the interpretation function of descriptions {\tt El}
-(\refsec{init:el}).
+(\refsec{init:el}). They both compute over a description, {\tt D}, and in
+fact {\tt Hyps} expects one of its arguments, {\tt xs}, to have the type
+computed by {\tt El}.
 
 \begin{verbatim}
 Hyps : {I : Set} (D : Desc I) (X : ISet I)
@@ -770,13 +772,13 @@ First, let's understand {\tt Hyps} by what it computes for the
 description of a single constructor like {\tt nil} or {\tt cons}.
 {\tt Hyps} ignores dependent arguments {\tt Arg} and moves on, looking
 for recursive arguments. When finding a recursive argument {\tt Rec}, it
-asks for the motive {\tt P} instantiated at the recursive argument.
+asks for the motive {\tt P} instantiated at the recursive argument index, {\tt j}, and value, {\tt x}.
 Finally, the tree of inductive hypotheses is terminated by the unit
 type {\tt ⊤} once the description ends in {\tt End}.
 
 \paragraph{Inductive Hypotheses of a Single Constructor}
 
-The {\tt nil} constructor of vectors neither has dependent nor
+The {\tt nil} constructor of vectors has neither dependent nor
 recursive arguments. Thus, {\tt Hyps} for {\tt nilD} is simply
 the unit type. Recall that {\tt NilEl} is the type that
 {\tt nil}'s description gets interpreted as. The definition of
@@ -925,15 +927,15 @@ nilBranch A m n q u = subst
 
 The {\tt cons} branch is defined in much the same way. Note
 that in {\sc Agda} an identifier is treated as single name unless it
-contains a space. Thus, the argument {\tt n',xs,xss,q} below is a
+contains a space. Thus, the argument {\tt n2-xs-xss-q} below is a
 single variable whose name reminds us of the tuple of constructor
 arguments that it contains. Because we do not have access to pattern
 matching, we need to project out each argument. For legibility, we
 bind the names of the arguments below using a {\tt let} statement.
 Unlike {\tt nil}, {\tt cons} has proper arguments but its tuple also
-ends with a proof -- the proof that {\tt n ≡ suc n'}. The inductive
+ends with a proof -- the proof that {\tt n ≡ suc n2}. The inductive
 hypothesis of {\tt concat} is contained in the first projection of the
-{\tt ih,u} argument, and the second projection is again a value of
+{\tt ih-u} argument, and the second projection is again a value of
 type unit.
 
 \begin{verbatim}
@@ -941,14 +943,14 @@ consBranch : (A : Set) (m n : ℕ)
   (xss : ConsEl (Vec A m) n)
   (ihs : ConsHyps (Vec A m) (Concat A m) n xss)
   → Vec A (mult n m)
-consBranch A m n n',xs,xss,q ih,u =
-  let n' = proj₁ n',xs,xss,q
-      xs = proj₁ (proj₂ n',xs,xss,q)
-      q = proj₂ (proj₂ (proj₂ n',xs,xss,q))
-      ih = proj₁ ih,u
+consBranch A m n n2-xs-xss-q ih-u =
+  let n2 = proj₁ n2-xs-xss-q
+      xs = proj₁ (proj₂ n2-xs-xss-q)
+      q = proj₂ (proj₂ (proj₂ n2-xs-xss-q))
+      ih = proj₁ ih-u
   in subst
     (λ n → Vec A (mult n m))
-    q (append A m xs (mult n' m) ih)
+    q (append A m xs (mult n2 m) ih)
 \end{verbatim}
 
 \subsection{You Made It!}
@@ -958,8 +960,8 @@ functions using the primitive elimination rule {\tt ind}!
 Getting such function definitions right was a grueling experience for
 the authors, and interactive theorem proving doesn't help much when
 dealing with types that are so heavily encoded. You can relax knowing
-that the next section defines a generic standard eliminator that we
-can use to program with described datatypes instead of this
+that the next section defines a generic standard eliminator that supports
+programming with described datatypes, instead of using this
 algebra-based approach.
 
 \section{Generic Eliminators}
