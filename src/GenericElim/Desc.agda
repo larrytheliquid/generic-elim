@@ -44,12 +44,12 @@ CurriedBranches [] P X = X
 CurriedBranches (l ∷ E) P X = P here → CurriedBranches E (λ t → P (there t)) X
 
 curryBranches : {E : Enum} {P : Tag E → Set} {X : Set}
-  (f : UncurriedBranches E P X) → CurriedBranches E P X
+  → UncurriedBranches E P X → CurriedBranches E P X
 curryBranches {[]} f = f tt
 curryBranches {l ∷ E} f = λ c → curryBranches (λ cs → f (c , cs))
 
 uncurryBranches : {E : Enum} {P : Tag E → Set} {X : Set}
-  (f : CurriedBranches E P X) → UncurriedBranches E P X
+  → CurriedBranches E P X → UncurriedBranches E P X
 uncurryBranches {[]} x tt = x
 uncurryBranches {l ∷ E} f (c , cs) = uncurryBranches (f c) cs
 
@@ -119,14 +119,14 @@ CurriedEl' (Arg A B) X i = (a : A) → CurriedEl' (B a) X i
 CurriedEl' (RecFun A B D) X i = ((a : A) → X (B a)) → CurriedEl' D X i
 
 curryEl : {I : Set} (D : Desc I) (X : ISet I)
-  (cn : UncurriedEl D X) → CurriedEl D X
+  → UncurriedEl D X → CurriedEl D X
 curryEl (End i) X cn = cn refl
 curryEl (Rec i D) X cn = λ x → curryEl D X (λ xs → cn (x , xs))
 curryEl (Arg A B) X cn = λ a → curryEl (B a) X (λ xs → cn (a , xs))
 curryEl (RecFun A B D) X cn = λ f → curryEl D X (λ xs → cn (f , xs))
 
 uncurryEl : {I : Set} (D : Desc I) (X : ISet I)
-  (cn : CurriedEl D X) → UncurriedEl D X
+  → CurriedEl D X → UncurriedEl D X
 uncurryEl (End i) X cn refl = cn
 uncurryEl (Rec i D) X cn (x , xs) = uncurryEl D X (cn x) xs
 uncurryEl (Arg A B) X cn (a , xs) = uncurryEl (B a) X (cn a) xs
@@ -171,7 +171,7 @@ CurriedHyps' (RecFun A B D) X P i cn =
 curryHyps : {I : Set} (D : Desc I) (X : ISet I)
   (P : (i : I) → X i → Set)
   (cn : UncurriedEl D X)
-  (pf : UncurriedHyps D X P cn)
+  → UncurriedHyps D X P cn
   → CurriedHyps D X P cn
 curryHyps (End i) X P cn pf =
   pf i refl tt
@@ -185,7 +185,7 @@ curryHyps (RecFun A B D) X P cn pf =
 uncurryHyps : {I : Set} (D : Desc I) (X : ISet I)
   (P : (i : I) → X i → Set)
   (cn : UncurriedEl D X)
-  (pf : CurriedHyps D X P cn)
+  → CurriedHyps D X P cn
   → UncurriedHyps D X P cn
 uncurryHyps (End .i) X P cn pf i refl tt =
   pf
@@ -276,8 +276,8 @@ module NoLevitation where
         ((i : I) (x : μ D i) → P i x)
   elim E C P = curryBranches (elimUncurried E C P)
 
-  Soundness : Set
-  Soundness = {I : Set} (E : Enum) (C : Tag E → Desc I)
+  SoundnessElim : Set
+  SoundnessElim = {I : Set} (E : Enum) (C : Tag E → Desc I)
     → let D = Arg (Tag E) C in
     (P : (i : I) → μ D i → Set)
     (cs : Branches E (SumCurriedHyps E C P))
@@ -285,15 +285,37 @@ module NoLevitation where
     → ∃ λ α
     → elimUncurried E C P cs i x ≡ ind D P α i x
 
-  Completeness : Set
-  Completeness = {I : Set} (E : Enum) (C : Tag E → Desc I)
+  soundElim : SoundnessElim
+  soundElim E C P cs i x =
+    let D = Arg (Tag E) C in
+    (uncurryHyps D (μ D) P init (case (SumCurriedHyps E C P) cs)) , refl
+
+  CompletenessElim : Set
+  CompletenessElim = {I : Set} (E : Enum) (C : Tag E → Desc I)
     → let D = Arg (Tag E) C in
     (P : (i : I) → μ D i → Set)
     (α : UncurriedHyps D (μ D) P init)
     (i : I) (x : μ D i)
     → ∃ λ cs
     → ind D P α i x ≡ elimUncurried E C P cs i x
-  
+
+  postulate
+    toBranches : {I : Set} (E : Enum) (C : Tag E → Desc I)
+      → let D = Arg (Tag E) C in
+      (P : (i : I) → μ D i → Set)
+      (α : UncurriedHyps D (μ D) P init)
+      → Σ (Branches E (SumCurriedHyps E C P))
+      λ cs → case (SumCurriedHyps E C P) cs ≡ curryHyps D (μ D) P init α
+
+    idUncurryCurryHyps : {I : Set} (D : Desc I) (X : ISet I)
+      (P : (i : I) → X i → Set)
+      (cn : UncurriedEl D X)
+      (α : UncurriedHyps D X P cn)
+      → α ≡ uncurryHyps D X P cn (curryHyps D X P cn α)
+
+  -- completeElim : CompletenessElim
+  -- completeElim E C P α i x = ?
+
 ----------------------------------------------------------------------
   
   module Sugared where
