@@ -276,17 +276,23 @@ module NoLevitation where
         ((i : I) (x : μ D i) → P i x)
   elim E C P = curryBranches (elimUncurried E C P)
 
-  -- elim : {I : Set} (E : Enum) (C : Tag E → Desc I)
-  --   → let D = Arg (Tag E) C in
-  --   (P : (i : I) → μ D i → Set)
-  --   → CurriedBranches E
-  --     (λ t → CurriedHyps (C t) (μ D) P (λ xs → init (t , xs)))
-  --     ((i : I) (x : μ D i) → P i x)
-  -- elim E C P = curryBranches λ cs i x →
-  --   let D = Arg (Tag E) C in
-  --   indCurried D P
-  --     (case (λ t → CurriedHyps (C t) (μ D) P (λ xs → init (t , xs))) cs)
-  --     i x
+  Soundness : Set
+  Soundness = {I : Set} (E : Enum) (C : Tag E → Desc I)
+    → let D = Arg (Tag E) C in
+    (P : (i : I) → μ D i → Set)
+    (cs : Branches E (SumCurriedHyps E C P))
+    (i : I) (x : μ D i)
+    → ∃ λ α
+    → elimUncurried E C P cs i x ≡ ind D P α i x
+
+  Completeness : Set
+  Completeness = {I : Set} (E : Enum) (C : Tag E → Desc I)
+    → let D = Arg (Tag E) C in
+    (P : (i : I) → μ D i → Set)
+    (α : UncurriedHyps D (μ D) P init)
+    (i : I) (x : μ D i)
+    → ∃ λ cs
+    → ind D P α i x ≡ elimUncurried E C P cs i x
   
 ----------------------------------------------------------------------
   
