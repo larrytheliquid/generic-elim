@@ -1568,11 +1568,41 @@ equivalence to eliminators defined at the level of the metatheory.
 
 \subsection{Algebras Defined with Curry}
 
-\todo[inline]{mcbride ornament examples}
+Throughout this paper we have emphasized the verbosity of functions
+defined in terms of the primitive elimination rule {\tt ind}.
+\citet{mcbride2010ornamental} gives examples of functions defined more
+tersely in terms of {\tt ind} by sprinkling in uses of the {\tt curry}
+function. We believe that while this makes functions easier to
+read, they are still difficult to write, even when defining them
+interactively due to pervasive definitional expansion of encoded
+constructions. Additionally, even if programmers define functions this
+way, we still cannot reuse algorithms defined by translation into
+eliminators.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+Closed dependently typed languages that define datatypes from
+descriptions offer tremendous generic programming capabilities. 
+We feel that the verbosity and unfamiliarity involved with 
+introducing (using the {\tt init} primitive)
+and eliminating (using the {\tt ind} primitive)
+values of described datatypes has hindered the adoption of such
+potentially useful technology. We hope that our generic
+constructor ({\tt inj}) and generic eliminator ({\tt elim}) can
+alleviate this adoption problem by presenting more familiar and terse
+programming constructs. Even better, we hope that now description-based
+languages can be implemented to expose higher-level
+constructs, such as dependent dependent pattern matching, by
+translating into well-known type theoretic primitives.
 
 \acks
 
-We would like to thank Nathan Collins for discussing some of this
+We are indebted to everyone involved with the
+{\sc Epigram}~\citep{mcbride2005epigram} language project, from which
+descriptions sprung, and more broadly everyone involved with defining
+descriptions.
+We would also like to thank Nathan Collins for discussing some of this
 development with us and helping us settle on some terminology. This
 work was supported by NSF/CISE/CCF grant \#1320934.
 
