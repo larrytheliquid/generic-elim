@@ -57,10 +57,11 @@
 %% \preprintfooter{short description of paper}   % 'preprint' option specified.
 
 \title{Generic Constructors and Eliminators from Descriptions}
-\subtitle{Dependently typed programming without the algebra}
+\subtitle{Dependently Typed Programming without the Algebra}
 
 \authorinfo{Larry Diehl\and Tim Sheard}
            {Portland State University}
+           {\{ldiehl,sheard\}@cs.pdx.edu}
 
 \maketitle
 
@@ -87,41 +88,106 @@ Dependently typed languages such as
 {\sc Agda}~\citep{norell2007towards}, and 
 {\sc Idris}~\citep{brady2011idris} 
 introduce datatypes axiomatically.
-These systems derive a set of axioms that describe how to legally manipulate values of 
-a newly declared type.
-In \citet{martin1975intuitionistic} type theory, declaring datatypes
-results in axioms for
-type constructors, value constructors, and eliminators (induction
-principles as dependently typed folds).
+These systems extend an {\it open} type theory with new axioms that
+describe how to legally manipulate values of a newly declared type.
 
-Recently, there has been quite a bit of work on defining datypes within the language
+%% In \citet{martin1975intuitionistic} type theory, declaring datatypes
+%% results in axioms for
+%% type constructors, value constructors, and eliminators (induction
+%% principles as dependently typed folds).
+
+Recently, there has been quite a bit of work on defining datatypes
+within a {\it closed}
 theory (without axioms) using {\it descriptions}.
 Descriptions make datatype definitions first class values in a
 dependent type theory. This has several desirable consequences, such as the
 ability to perform generic programming~\citep{Chapman:2010:GAL:1932681.1863547,mcbride2010ornamental,dagand:phd}
 over described types, as well as decreasing the number of constructs in the
-metatheory via levitation~\citep{Chapman:2010:GAL:1932681.1863547,dagand:phd}. 
+metatheory via
+levitation~\citep{Chapman:2010:GAL:1932681.1863547,dagand:phd}. 
 
-Any type represented as a description can be
-introduced with a single introduction rule -- called {\tt init} --
-which is the initial algebra for the description.
-Any type represented as a description can be
-eliminated with a single elimination rule -- called {\tt ind} --
-which is the dependently typed version of a catamorphism and as such can be
-applied to some algebra.
-Eliminating values by defining an appropriate algebra 
-can be tedious due to the large amount of low-level detail
-description-based datatypes contain. Functions written with {\tt ind} are
-verbose but follow a recognizable pattern (\refsec{ind}). 
-On the other hand, functions written with standard {\it eliminators}
-are shorter and more widely understood.
+For example, we might declare the type of vectors, length indexed
+lists, in an open dependently typed language based on
+\citet{martin1975intuitionistic} type theory.
+Declaring vectors ({\tt Vec})
+adds two constructors ({\tt nil} and {\tt cons}) and one
+eliminator ({\tt elimVec}) as axioms to the language.
 
-In this paper we describe how to derive the infinite
-class of standard eliminators, as a function -- called {\tt elim} --
-parameterized by a description.  In a sense we derive the standard
+\begin{verbatim}
+nil : (A : Set) → Vec A zero
+cons : (A : Set) (n : ℕ) (a : A)
+  (xs : Vec A n) → Vec A (suc n)
+
+elimVec : (A : Set) (P : (n : ℕ) → Vec A n → Set)
+  (pnil : P zero nil)
+  (pcons : (n : ℕ) (a : A) (xs : Vec A n)
+    → P n xs → P (suc n) (cons n a xs))
+  (n : ℕ) (xs : Vec A n) → P n xs
+\end{verbatim}
+
+In contrast, declaring a datatype like {\tt Vec} in a closed type
+theory using descriptions does {\tt not} add constructors and an
+eliminator as specialized axioms to the language. Instead, values of
+datatypes built from descriptions can be introduced with a single
+primitive, the initial algebra ({\tt init}), and can be eliminated with
+a single primitive, a dependently typed version of catamorphism
+({\tt ind}), which takes an algebra ({\tt α}) as its argument.
+
+\begin{verbatim}
+init : {I : Set} {D : Desc I} {i : I}
+  → El D (μ D) i → μ D i
+
+ind : {I : Set} (D : Desc I)
+  (P : (i : I) → μ D i → Set)
+  (α : (i : I) (xs : El D (μ D) i)
+    (ihs : Hyps D (μ D) P i xs) → P i (init xs))
+  (i : I) (x : μ D i) → P i x
+\end{verbatim}
+
+Without trying to understand these type signatures at the moment,
+recognize that:
+
+\begin{itemize}
+\item{}
+Both types are parameterized by a description, allowing them to be used with any
+datatype defined by a description.
+\item{}
+Both types refer to the type {\tt El D}, which interprets a
+description as a pattern functor and is used to define the datatypes with an
+initial algebra-style semantics.
+\end{itemize}
+
+Two unfortunate side effects of introducing and eliminating described
+datatypes using algebras based on pattern functors are:
+
+\begin{enumerate}
+\item{}
+Users need to understand how {\tt El D} gets interpreted as a type in
+the language in order to program with values of said types, exposing
+the low-level encoding.
+\item{}
+Function definitions defined with {\tt ind} are particularly verbose,
+due to the low-level encoding, but the functions follow a common pattern.
+\end{enumerate}
+
+Rather than making users learn a new and cumbersome interface to
+program in a description-based language, the {\bf major contribution} of
+this paper is a generic constructor ({\tt inj}) and a generic
+eliminator ({\tt elim}). The type of {\tt inj} applied to a
+description of a datatype, and a tag specifying constructor, is exactly the
+expected type signature of a constructor defined axiomatically in an
+{\it open} language. Similarly, the type signature of {\tt elim} applied to
+a description of a type is exactly the expected type signature
+of an eliminator defined axiomatically in an {\it open} language.
+Moreover, {\tt inj} and {\tt elim} are themselves examples of generic
+programming, defined in terms of {\tt init} and {\tt ind} within a
+{\it closed} language.
+
+In a sense we derive the standard constructors and
 eliminators of type theory within a simple and sound system.
 We retain the generic programming ability afforded by description based languages,
-but also gain the ease of use supported by standard eliminators.
+but also gain the ease of use supported by standard constructors and
+eliminators.
 
 Furthermore, we gain the advantage that existing algorithms, already defined in
 terms of eliminators, can now be reused.
@@ -134,71 +200,38 @@ eliminators. Rather than reinventing these algorithms to translate to
 {\tt ind}, we can instead directly reuse them with our derived {\tt elim},
 and our simple and sound system can now support high-level features.
 
-\section{Intuition about {\tt ind}}
-The function {\tt ind} is similar to the standard
-eliminator over an algebra of descriptions {\tt D}. The
-motive {\tt P} is indexed over the type family {\tt μ I D i}, which is
-the datatype that description {\tt D} represents.
-Here {\tt I} is the type of the index of the type family being
-encoded, and {\tt i} is the value of the index whose type is {\tt I}.
+\paragraph{}
+The remainder of this paper proceeds as follows:
 
-The key difference
-between {\tt ind} and a standard eliminator is that all branches for
-each constructor of the encoded type are packaged into a single branch
-{\tt α}. In order to prove that {\tt P} holds for any
-{\tt μ I D i}, you get all constructors and all of their
-arguments in {\tt xs}, along with all inductive
-hypotheses {\tt ihs} for any recursive constructor arguments.
+\begin{itemize}
+\item{\bf{\refsec{background}}}
+{\it Reviews} how to define datatypes using descriptions.
+
+\item{\bf{\refsec{init}}}
+{\it Reviews} how to introduce values of described types using the
+primitive initial algebra {\tt init}.
+
+\item{\bf{\refsec{inj}}}
+{\it Contributes} the novel generic constructor {\tt inj}. To this
+end, we highlight each {\bf Part$_I$} involved in defining a specialized
+constructor in terms of {\tt init}.
+
+\item{\bf{\refsec{ind}}}
+{\it Reviews} how to eliminate values of described types using the
+primitive dependent catamorphism {\tt ind}. We also demonstrate
+the verbosity of {\tt ind}-based definitions.
+
+\item{\bf{\refsec{elim}}}
+{\it Contributes} the novel generic eliminator {\tt elim}. To this
+end, we highlight each {\bf Part$_E$} involved in defining a specialized
+eliminator in terms of {\tt ind}.
+
+\item{\bf{\refsec{related-work}}}
+{\it Discusses} related work.
 
 
-\begin{verbatim}
-ind : {I : Set} (D : Desc I)
-  (P : (i : I) → μ D i → Set)
-  (α : Hyps D X P ⇒ P ∘ init)
-  (i : I) (x : μ D i) → P i x
-\end{verbatim}
+\end{itemize}
 
-Function definitions written with {\tt ind} are verbose
-because they need to unpack all of the data supplied by {\tt α}.
-Worse still, there are several ways to define the datatype of
-descriptions {\tt Desc}, and several ways to encode datatypes once a
-particular definition of {\tt Desc} has been chosen. This means that a
-user wishing to program with datatypes encoded by descriptions must be
-aware of how the encodings get interpreted so that they may
-appropriately unpack data when writing functions with {\tt ind}.
-
-For example, if we partially apply {\tt ind} to a description of a
-vector of booleans {\tt ind ℕ (VecD Bool)} then the type of the
-resulting expression depends both on how we defined {\tt Desc} and how
-we encoded vectors as a description {\tt VecD}.
-
-Rather than making the user learn our data format and suffer the
-consequences of unpacking encoded data, our {\bf primary contribution} is
-the definition of a {\it generic} eliminator {\tt elim}!
-It assumes a particular way of encoding
-datatypes via descriptions, and partial application of such a
-description to {\tt elim} results in the expected type of eliminator.
-For example, partial application of our previous example to
-{\tt elim} results in the following type.
-
-\begin{verbatim}
-elim ℕ (VecD Bool) :
-  (P : (n : ℕ) → Vec Bool n → Set)
-  (pnil : P zero nil)
-  (pcons : (n : ℕ) (x : Bool) (xs : Vec Bool n)
-    → P n xs → P (suc n) (cons n x xs))
-  (n : ℕ) (xs : Vec Bool n) → P n xs
-\end{verbatim}
-
-Our {\tt elim} function can be defined in terms of
-{\tt ind}, making it another example of generic programming made
-possible by descriptions.
-Note that we are not generating specialized eliminators like
-{\tt elimVec} à la {\sc Coq}, but instead have a single generic
-{\tt elim} function that can be applied to any description of a
-datatype.
-Because this definition is internal to the
-existing type theory, no additional metatheory needs to be proven.
 
 
 \section{Declaring Datatypes}
@@ -1410,8 +1443,8 @@ Note that the return type of {\tt elim} is specified with
 \begin{verbatim}
   ...
   → UncurriedBranches E
-    (SumCurriedHyps E C P)
-    ((i : I) (x : μ D i) → P i x)
+      (SumCurriedHyps E C P)
+      ((i : I) (x : μ D i) → P i x)
 ⇝
   ...
   → Branches E (SumCurriedHyps E C P)
@@ -1469,14 +1502,15 @@ datatypes defined using descriptions. In some sense, this was the original
 purpose of the description technology. For example,
 \citet{Chapman:2010:GAL:1932681.1863547} define a generic catamorphism
 (a non-dependent {\tt ind}), and a generic free monad construction.
-Ornaments \citep{mcbride2010ornamental} supports the definition of new
+Ornaments \citep{mcbride2010ornamental} support the definition of new
 description-based datatypes in terms of their relationship with
-existing datatypes, and supports the conversion between the two. Free
+existing datatypes, and support the conversion between the two. Free
 conversion between data means that one can reuse functions defined
 over old types when defining new, more specifically indexed, dependent
 types, solving a major reuse issue with dependently typed programming.
 \citet{dagand:phd} implements a generic ``deriving'' mechanism,
-similar in purpose to deriving in {\sc Haskell}, that derives
+similar in purpose to {\tt deriving} in
+{\sc Haskell}~\citep{jones2003haskell}, that derives
 functions such as decidable equality over a class of datatypes that
 support such functions. \citet{dagand:phd} also generically defines
 constructions~\citep{mcbride2006few}, such as case
