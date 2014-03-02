@@ -249,13 +249,22 @@ module NoLevitation where
     → P i x
   indCurried D P f i x = ind D P (uncurryHyps D (μ D) P init f) i x
 
+  Summer : {I : Set} (E : Enum) (C : Tag E → Desc I)
+    → let D = Arg (Tag E) C in
+    (X  : ISet I) (cn : UncurriedEl D X)
+    (P : (i : I) → X i → Set)
+    → Tag E → Set
+  Summer E C X cn P t =
+    let D = Arg (Tag E) C in
+    CurriedHyps (C t) X P (λ xs → cn (t , xs))
+
   SumCurriedHyps : {I : Set} (E : Enum) (C : Tag E → Desc I)
     → let D = Arg (Tag E) C in
     (P : (i : I) → μ D i → Set)
     → Tag E → Set
   SumCurriedHyps E C P t =
     let D = Arg (Tag E) C in
-    CurriedHyps (C t) (μ D) P (λ xs → init (t , xs))
+    Summer E C (μ D) init P t
   
   elimUncurried : {I : Set} (E : Enum) (C : Tag E → Desc I)
     → let D = Arg (Tag E) C in
@@ -275,40 +284,6 @@ module NoLevitation where
         (SumCurriedHyps E C P)
         ((i : I) (x : μ D i) → P i x)
   elim E C P = curryBranches (elimUncurried E C P)
-
-----------------------------------------------------------------------
-
-  -- SoundnessInj : Set
-  -- SoundnessInj =  {I : Set} (D : Desc I) {i : I}
-  --   (xs : UncurriedEl D (μ D))
-  --   → (xs ≡ init {i = i})
-  --   → Σ (CurriedEl D (μ D) i)
-  --   λ ys → ys ≡ inj D
-
-  -- soundnessInj : SoundnessInj
-  -- soundnessInj D xs q = curryEl D (μ D) xs , cong (curryEl D (μ D)) {!q!}
-
-
-  -- SoundnessInj : Set
-  -- SoundnessInj =  {I : Set} (D : Desc I)
-  --   → UncurriedEl D (μ D)
-  --   → CurriedEl D (μ D)
-
-  -- soundnessInj : SoundnessInj
-  -- soundnessInj D = curryEl D (μ D)
-
-  -- CompletenessInj : Set
-  -- CompletenessInj =  {I : Set} (D : Desc I)
-  --   → UncurriedEl D (μ D)
-  --   → CurriedEl D (μ D)
-
-  -- SoundnessInj : Set
-  -- SoundnessInj =  {I : Set} (E : Enum) (C : Tag E → Desc I)
-  --   → let D = Arg (Tag E) C in
-  --   (i : I) (t : Tag E)
-  --   (xs : El (C t) (μ D) i)
-  --   → ∃ λ ys
-  --   → inj D t xs ≡ init (t , ys)
 
 ----------------------------------------------------------------------
 
@@ -335,22 +310,69 @@ module NoLevitation where
     → ∃ λ cs
     → ind D P α i x ≡ elimUncurried E C P cs i x
 
-  postulate
-    toBranches : {I : Set} (E : Enum) (C : Tag E → Desc I)
-      → let D = Arg (Tag E) C in
-      (P : (i : I) → μ D i → Set)
-      (α : UncurriedHyps D (μ D) P init)
-      → Σ (Branches E (SumCurriedHyps E C P))
-      λ cs → case (SumCurriedHyps E C P) cs ≡ curryHyps D (μ D) P init α
+  postulate undefinedForRecFun : {A : Set} → A
 
-    idUncurryCurryHyps : {I : Set} (D : Desc I) (X : ISet I)
-      (P : (i : I) → X i → Set)
-      (cn : UncurriedEl D X)
-      (α : UncurriedHyps D X P cn)
-      → α ≡ uncurryHyps D X P cn (curryHyps D X P cn α)
+  uncurryHypsIdent : {I : Set} (D : Desc I) (X : ISet I)
+    (P : (i : I) → X i → Set)
+    (cn : UncurriedEl D X)
+    (α : UncurriedHyps D X P cn)
+    (i : I) (xs : El D X i) (ihs : Hyps D X P i xs)
+    → α i xs ihs ≡ uncurryHyps D X P cn (curryHyps D X P cn α) i xs ihs
+  uncurryHypsIdent (End .i) X P cn α i refl tt = refl
+  uncurryHypsIdent (Rec j D) X P cn α i (x , xs) (p , ps) =
+    uncurryHypsIdent D X P (λ xs → cn (x , xs)) (λ k ys rs → α k (x , ys) (p , rs)) i xs ps
+  uncurryHypsIdent (Arg A B) X P cn α i (a , xs) ps =
+    uncurryHypsIdent (B a) X P (λ xs → cn (a , xs)) (λ j ys → α j (a , ys)) i xs ps
+  uncurryHypsIdent (RecFun A B D) X P cn α i xs ihs = undefinedForRecFun
 
-  -- complete : Completeness
-  -- complete E C P α i x = ?
+  toBranches : {I : Set} (E : Enum) (C : Tag E → Desc I)
+    → let D = Arg (Tag E) C in
+    (X  : ISet I) (cn : UncurriedEl D X)
+    (P : (i : I) → X i → Set)
+    (α : UncurriedHyps D X P cn)
+    → Branches E (Summer E C X cn P)
+  toBranches [] C X cn P α = tt
+  toBranches (l ∷ E) C X cn P α =
+      curryHyps (C here) X P (λ xs → cn (here , xs)) (λ i xs → α i (here , xs))
+    , toBranches E (λ t → C (there t)) X (λ xs → cn (there (proj₁ xs) , proj₂ xs)) P (λ i xs ih → α i (there (proj₁ xs) , proj₂ xs) ih)
+
+  ToBranches : {I : Set} {E : Enum} (C : Tag E → Desc I)
+    → let D = Arg (Tag E) C in
+    (X  : ISet I) (cn : UncurriedEl D X)
+    (P : (i : I) → X i → Set)
+    (α : UncurriedHyps D X P cn)
+    (t : Tag E)
+    → let β = toBranches E C X cn P α in
+    case (Summer E C X cn P) β t ≡ curryHyps D X P cn α t
+  ToBranches C X cn P α here = refl
+  ToBranches C X cn P α (there t)
+    with ToBranches (λ t → C (there t)) X (λ xs → cn (there (proj₁ xs) , proj₂ xs)) P (λ i xs ih → α i (there (proj₁ xs) , proj₂ xs) ih) t
+  ... | ih rewrite ih = refl
+
+  complete' : {I : Set} (E : Enum) (C : Tag E → Desc I)
+    → let D = Arg (Tag E) C in
+    (P : (i : I) → μ D i → Set)
+    (α : UncurriedHyps D (μ D) P init)
+    (i : I) (x : μ D i)
+    → let cs = toBranches E C (μ D) init P α in
+    ind D P α i x ≡ elimUncurried E C P cs i x
+  complete' E C P α i (init (t , xs))
+    with let D = Arg (Tag E) C in ToBranches C (μ D) init P α t
+  ... | p
+    with let D = Arg (Tag E) C in uncurryHypsIdent D (μ D) P init α i (t , xs) (hyps D P 
+      α
+      D i (t , xs))
+  ... | q
+    with let D = Arg (Tag E) C in uncurryHypsIdent D (μ D) P init α i (t , xs) (hyps D P 
+      (λ j ys qs → uncurryHyps (C (proj₁ ys)) (μ D) P (λ zs → init (proj₁ ys , zs)) (case (λ u → CurriedHyps (C u) (μ D) P (λ us → init (u , us))) (toBranches E C (μ D) init P α) (proj₁ ys)) j (proj₂ ys) qs) 
+      D i (t , xs))
+  ... | r rewrite q = {!refl!}
+
+  complete : Completeness
+  complete E C P α i x =
+    let D = Arg (Tag E) C in
+      toBranches E C (μ D) init P α
+    , complete' E C P α i x
 
 ----------------------------------------------------------------------
   
