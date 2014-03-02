@@ -1548,11 +1548,14 @@ Soundness = {I : Set}
 ({\tt β}) --
 each containing curried arguments and implicit proofs of index
 correctness -- can equivalently expressed by {\tt ind} applied to a
-suitable algebra ({\tt α}). Below we shall state and prove soundness informally
-as a theorem, omitting all but the key arguments for legibility.
+suitable algebra ({\tt α}). 
+In \reffig{soundness} we state and prove soundness informally
+as a theorem, omitting all but the key function arguments for legibility.
 
-\begin{mythm}[Soundness of {\tt elim}]
-\label{thm:soundness}
+\begin{figure*}
+\caption{Soundness of {\tt elim}}
+\label{fig:soundness}
+\begin{mythm}
 \begin{align*}
 \forall \beta. ~ \exists \alpha.
 ~ \textrm{ind} ~ \alpha = \textrm{elimUncurried} ~ \beta
@@ -1562,10 +1565,84 @@ as a theorem, omitting all but the key arguments for legibility.
 \begin{proof}
 \begin{align*}
 \textrm{ind} ~ \alpha &= \textrm{elimUncurried} ~ \beta& && \\
-&=\textrm{indCurried} ~ ( \textrm{case} ~ \beta ) && \text{(by def {\tt elimUncurried})} \\
-&= \textrm{ind} ~ ( \textrm{uncurryHyps} ~ ( \textrm{case} ~ \beta ) ) && \text{(by def {\tt indCurried})} \\
-\alpha &:= \textrm{uncurryHyps} ~ ( \textrm{case} ~ \beta )
+\textrm{ind} ~ \alpha &=\textrm{indCurried} ~ ( \textrm{case} ~ \beta ) && \text{(by def {\tt elimUncurried})} \\
+\textrm{ind} ~ \alpha &= \textrm{ind} ~ ( \textrm{uncurryHyps} ~ ( \textrm{case} ~ \beta ) ) && \text{(by def {\tt indCurried})} \\
+\textrm{ind} ~ ( \textrm{uncurryHyps} ~ ( \textrm{case} ~ \beta ) ) &= \textrm{ind} ~ ( \textrm{uncurryHyps} ~ ( \textrm{case} ~ \beta ) ) && (\text{solve} ~ \alpha := \textrm{uncurryHyps} ~ ( \textrm{case} ~ \beta ))
 \end{align*}
+\end{proof}
+\end{figure*}
+
+\subsection{Completeness}
+
+Formally, the type of completeness of {\tt elimUncurried} with respect to
+{\tt ind} is defined below.
+
+\begin{verbatim}
+Completeness : Set
+Completeness = {I : Set} 
+  (E : Enum) (C : Tag E → Desc I)
+  → let D = Arg (Tag E) C in
+  (P : (i : I) → μ D i → Set)
+  (α : UncurriedHyps D (μ D) P init)
+  (i : I) (x : μ D i)
+  → ∃ λ β
+  → ind D P α i x ≡ elimUncurried E C P β i x
+\end{verbatim}
+
+{\tt Completeness} is the converse of {\tt Soundess}.
+It states that any function defined by
+{\tt ind} applied to a suitable algebra ({\tt α}), can equivalently be
+expressed by {\tt elimUncurried} applied to a tuple of constructor branches
+({\tt β}). In \reffig{completeness} we
+state and prove completeness informally
+as a theorem, once again omitting all but the key function arguments.
+
+\begin{figure*}
+\caption{Completeness of {\tt elim}}
+\label{fig:completeness}
+\begin{mythm}
+\begin{align*}
+\forall \alpha. ~ \exists \beta.
+~ \textrm{ind} ~ \alpha = \textrm{elimUncurried} ~ \beta
+\end{align*}
+\end{mythm}
+
+\begin{proof}
+\begin{align*}
+\textrm{ind} ~ \alpha &= \textrm{elimUncurried} ~ \beta& && \\
+\textrm{ind} ~ \alpha &=\textrm{indCurried} ~ ( \textrm{case} ~ \beta ) && \text{(by def {\tt elimUncurried})} \notag\\
+\textrm{ind} ~ \alpha &= \textrm{ind} ~ ( \textrm{uncurryHyps} ~ ( \textrm{case} ~ \beta ) ) && \text{(by def {\tt indCurried})} \notag\\
+\textrm{ind} ~ \alpha &= \textrm{ind} ~ ( \textrm{uncurryHyps} ~ ( \textrm{case} ~ ( \textrm{toBranches} ~ \alpha ) ) ) && (\text{solve} ~ \beta := \textrm{toBranches} ~ \alpha) \\
+\textrm{ind} ~ \alpha &= \textrm{ind} ~ ( \textrm{uncurryHyps} ~ ( \textrm{curryHyps} ~ \alpha ) ) && \text{(by lemma {\it ToBranches})} \\
+\textrm{ind} ~ \alpha &= \textrm{ind} ~ \alpha && \text{(by lemma {\it CurryHypsIdent})}
+\end{align*}
+\end{proof}
+\end{figure*}
+
+The proof of completeness in \reffig{completeness} uses the following
+two lemmas. It also uses the definition of the function
+{\tt toBranches}, which can be found in the accompanying source
+code. The {\tt toBranches} function just translates an
+{\tt UncurriedHyps} algebra to {\tt Branches E (SumCurriedHyps E C P)}.
+
+\begin{mylem}[ToBranches]
+\begin{align*}
+\textrm{case} \circ \textrm{toBranches} = \textrm{curryHyps}
+\end{align*}
+\end{mylem}
+
+\begin{proof}
+By induction on the description argument.
+\end{proof}
+
+\begin{mylem}[CurryHypsIdent]
+\begin{align*}
+\textrm{uncurryHyps} \circ \textrm{curryHyps} = \textrm{id}
+\end{align*}
+\end{mylem}
+
+\begin{proof}
+By induction on the description argument.
 \end{proof}
 
 
