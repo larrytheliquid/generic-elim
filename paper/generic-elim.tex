@@ -72,14 +72,28 @@
 \maketitle
 
 \begin{abstract}
-Sed pellentesque massa purus, ac aliquam ipsum auctor in. Mauris et
-libero risus. In scelerisque neque vel odio tempus, commodo gravida
-purus faucibus. Aliquam pharetra mauris consequat, gravida justo sed,
-facilisis elit. Nullam enim ipsum, varius ut condimentum eget, tempor
-id eros. Aenean id eros vestibulum, hendrerit dui eget, tincidunt
-elit. Ut nec dignissim lectus, a bibendum turpis. Vivamus tincidunt
-consequat ante. Suspendisse congue convallis ipsum vitae egestas. Ut
-interdum elit id nunc aliquam lobortis.
+Dependently typed languages with an ``open'' type theory describe
+the introduction of new datatypes using an axiomatic approach.
+Each new datatype introduces axioms that describe the constructors
+of the datatype, and an elimination axiom (which we call
+the {\it standard eliminator}) for consuming such types. In a ``closed''
+type theory datatype introduction is described within the type theory.
+
+We introduce a closed type theory, specified as an Agda program,
+that internalizes datatype introduction by the use of descriptions.
+Descriptions make datatype definitions first class values, but, until now,
+have been less than satisfactory because of the complexity of writing
+programs that consume datatypes introduced by descriptions. In this
+work we derive the standard elimintors, by defining a function
+parameterized by a description. This approach retains the benefits of
+a description based system -- generic propgramming -- but supports
+the ease of use of the standard eliminators of ``open'' type systems.
+We also gain the advantage that existing algorithms
+(e.g. \citet{gimenez1995codifying} for translating
+{\sc Coq} {\tt Fix}-based definitions, and
+\citet{Goguen06eliminatingdependent} for
+translating dependent pattern matching) can be reused.
+
 \end{abstract}
 
 \category{D.3}{Software}{Programming Languages}.
