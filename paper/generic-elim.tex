@@ -38,6 +38,12 @@
 
 \usepackage[labelfont=bf]{caption}
 
+\newtheorem*{mythm}{Theorem}
+\newtheorem*{mylem}{Lemma}
+
+\newcommand{\refthm}[1]{Theorem \ref{thm:#1}}
+\newcommand{\reflem}[1]{Lemma \ref{lem:#1}}
+
 \newtheorem{mydef}{Definition}
 \newtheorem{myparte}{Part$_E$}
 \newtheorem{myparti}{Part$_I$}
@@ -225,6 +231,11 @@ the verbosity of {\tt ind}-based definitions.
 {\it Contributes} the novel generic eliminator {\tt elim}. To this
 end, we highlight each {\bf Part$_E$} involved in defining a specialized
 eliminator in terms of {\tt ind}.
+
+\item{\bf{\refsec{correctness}}}
+{\it Proves} the correctness property that {\tt ind} and {\tt elim}
+are extensionally equivalent functions. For technical reasons, we actually prove that
+{\tt ind} is equivalent to the helper function {\tt elimUncurried} instead.
 
 \item{\bf{\refsec{related-work}}}
 {\it Discusses} related work.
@@ -1435,6 +1446,7 @@ elim E C P = curryBranches (elimUncurried E C P)
 \end{verbatim}
 
 Note that the return type of {\tt elim} is specified with
+\linebreak
 {\tt CurriedBranches}. To see the curry/uncurry resemblence with
 {\tt elimUncurried}, recognize that the return type of
 {\tt elimUncurried} can equivalently be written with
@@ -1458,6 +1470,91 @@ if not more, to define the generic eliminator {\tt elim}. However,
 this need only be done once and now defining any concrete function
 like {\tt concat} can be done very tersely using {\tt elim}, just as
 the example at the beginning of this section demonstrates.
+
+\section{Correctness}
+\label{sec:correctness}
+
+The goal of this section is to {\it prove} that the primitive
+elimination rule {\tt ind} is extensionally equivalent to our
+generic eliminator {\tt elim}. This amounts to proving:
+
+\paragraph{Soundness}
+
+\begin{align*}
+&\forall a_1 ... a_n. ~ \exists \alpha. \\
+&\textrm{ind} ~ (\textrm{Arg} ~ (\textrm{Tag} ~ E) ~ C) ~ P ~ \alpha ~ i ~ x =
+\textrm{elim} ~ E ~ C ~ P ~ a_1 ~ ... ~ a_n ~ i ~ x
+\end{align*}
+
+\paragraph{Completeness}
+
+\begin{align*}
+&\forall \alpha. ~ \exists a_1 ... a_n. \\
+&\textrm{ind} ~ (\textrm{Arg} ~ (\textrm{Tag} ~ E) ~ C) ~ P ~ \alpha ~ i ~ x =
+\textrm{elim} ~ E ~ C ~ P ~ a_1 ~ ... ~ a_n ~ i ~ x
+\end{align*}
+
+However, the return type of {\tt elim} is a {\tt CurriedBranches} type,
+which computes to a type taking $n$ function arguments, 
+one for each constructor branch,
+and ending with the motive.
+
+\[
+A_1 → ... → A_n → (i : I) ~ (x : \mu ~ D ~ i) → P ~ i ~ x
+\]
+\linebreak
+We only get this expanded type if {\tt elim} is applied to a concrete
+description, otherwise {\tt CurriedBranches} will not unfold. Because
+of this techninal annoyance, we will prove the equivalence between
+{\tt ind} and the helper function {\tt elimUncurried} instead, which
+takes all branches of the eliminator as a single tuple argument.
+
+\subsection{Soundness}
+
+Formally, the type of soundness of {\tt elimUncurried} with respect to
+{\tt ind} is defined below.
+Note that the existential type ({\tt ∃}) is
+shorthand for a dependent pair type ({\tt Σ}) whose domain type is
+inferred.
+
+\begin{verbatim}
+Soundness : Set
+Soundness = {I : Set}
+  (E : Enum) (C : Tag E → Desc I)
+  → let D = Arg (Tag E) C in
+  (P : (i : I) → μ D i → Set)
+  (β : Branches E (SumCurriedHyps E C P))
+  (i : I) (x : μ D i)
+  → ∃ λ α
+  → ind D P α i x ≡ elimUncurried E C P β i x
+\end{verbatim}
+
+{\tt Soundness} states that any function defined by
+{\tt elimUncurried} applied to a tuple of constructor branches
+({\tt β}) --
+each containing curried arguments and implicit proofs of index
+correctness -- can equivalently expressed by {\tt ind} applied to a
+suitable algebra ({\tt α}). Below we shall state and prove soundness informally
+as a theorem, omitting all but the key arguments for legibility.
+
+\begin{mythm}[Soundness of {\tt elim}]
+\label{thm:soundness}
+\begin{align*}
+\forall \beta. ~ \exists \alpha.
+~ \textrm{ind} ~ \alpha = \textrm{elimUncurried} ~ \beta
+\end{align*}
+\end{mythm}
+
+\begin{proof}
+\begin{align*}
+\textrm{ind} ~ \alpha &= \textrm{elimUncurried} ~ \beta& && \\
+&=\textrm{indCurried} ~ ( \textrm{case} ~ \beta ) && \text{(by def {\tt elimUncurried})} \\
+&= \textrm{ind} ~ ( \textrm{uncurryHyps} ~ ( \textrm{case} ~ \beta ) ) && \text{(by def {\tt indCurried})} \\
+\alpha &:= \textrm{uncurryHyps} ~ ( \textrm{case} ~ \beta )
+\end{align*}
+\end{proof}
+
+
 
 \section{Related Work}
 \label{sec:related-work}

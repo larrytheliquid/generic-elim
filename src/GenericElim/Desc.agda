@@ -276,8 +276,44 @@ module NoLevitation where
         ((i : I) (x : μ D i) → P i x)
   elim E C P = curryBranches (elimUncurried E C P)
 
-  SoundnessElim : Set
-  SoundnessElim = {I : Set} (E : Enum) (C : Tag E → Desc I)
+----------------------------------------------------------------------
+
+  -- SoundnessInj : Set
+  -- SoundnessInj =  {I : Set} (D : Desc I) {i : I}
+  --   (xs : UncurriedEl D (μ D))
+  --   → (xs ≡ init {i = i})
+  --   → Σ (CurriedEl D (μ D) i)
+  --   λ ys → ys ≡ inj D
+
+  -- soundnessInj : SoundnessInj
+  -- soundnessInj D xs q = curryEl D (μ D) xs , cong (curryEl D (μ D)) {!q!}
+
+
+  -- SoundnessInj : Set
+  -- SoundnessInj =  {I : Set} (D : Desc I)
+  --   → UncurriedEl D (μ D)
+  --   → CurriedEl D (μ D)
+
+  -- soundnessInj : SoundnessInj
+  -- soundnessInj D = curryEl D (μ D)
+
+  -- CompletenessInj : Set
+  -- CompletenessInj =  {I : Set} (D : Desc I)
+  --   → UncurriedEl D (μ D)
+  --   → CurriedEl D (μ D)
+
+  -- SoundnessInj : Set
+  -- SoundnessInj =  {I : Set} (E : Enum) (C : Tag E → Desc I)
+  --   → let D = Arg (Tag E) C in
+  --   (i : I) (t : Tag E)
+  --   (xs : El (C t) (μ D) i)
+  --   → ∃ λ ys
+  --   → inj D t xs ≡ init (t , ys)
+
+----------------------------------------------------------------------
+
+  Soundness : Set
+  Soundness = {I : Set} (E : Enum) (C : Tag E → Desc I)
     → let D = Arg (Tag E) C in
     (P : (i : I) → μ D i → Set)
     (cs : Branches E (SumCurriedHyps E C P))
@@ -285,13 +321,13 @@ module NoLevitation where
     → ∃ λ α
     → elimUncurried E C P cs i x ≡ ind D P α i x
 
-  soundElim : SoundnessElim
-  soundElim E C P cs i x =
+  sound : Soundness
+  sound E C P cs i x =
     let D = Arg (Tag E) C in
     (uncurryHyps D (μ D) P init (case (SumCurriedHyps E C P) cs)) , refl
 
-  CompletenessElim : Set
-  CompletenessElim = {I : Set} (E : Enum) (C : Tag E → Desc I)
+  Completeness : Set
+  Completeness = {I : Set} (E : Enum) (C : Tag E → Desc I)
     → let D = Arg (Tag E) C in
     (P : (i : I) → μ D i → Set)
     (α : UncurriedHyps D (μ D) P init)
@@ -313,8 +349,8 @@ module NoLevitation where
       (α : UncurriedHyps D X P cn)
       → α ≡ uncurryHyps D X P cn (curryHyps D X P cn α)
 
-  -- completeElim : CompletenessElim
-  -- completeElim E C P α i x = ?
+  -- complete : Completeness
+  -- complete E C P α i x = ?
 
 ----------------------------------------------------------------------
   
