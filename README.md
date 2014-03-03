@@ -36,4 +36,4 @@ Stratified version of code using universe levels
 Notes
 -----
 
-The code is released under the [MIT licensed](code/LICENSE)
+The code is released under an [MIT license](code/LICENSE)
