@@ -33,3 +33,7 @@ Stratified version of code using universe levels
 
 * [`GenericElim.DescL`](src/GenericElim/DescL.agda)
 
+Notes
+-----
+
+The code is released under the [MIT licensed](code/LICENSE)
