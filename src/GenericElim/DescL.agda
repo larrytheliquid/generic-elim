@@ -1,11 +1,11 @@
-{-# OPTIONS --type-in-type #-}
 open import Data.Unit
 open import Data.Product hiding ( curry ; uncurry )
 open import Data.List hiding ( concat )
 open import Data.String
 open import Relation.Binary.PropositionalEquality
 open import Function
-module GenericElim.Desc where
+open import Level hiding ( zero ) renaming ( suc to up )
+module GenericElim.DescL where
 
 ----------------------------------------------------------------------
 
@@ -19,32 +19,32 @@ data Tag : Enum → Set where
   here : ∀{l E} → Tag (l ∷ E)
   there : ∀{l E} → Tag E → Tag (l ∷ E)
 
-Branches : (E : Enum) (P : Tag E → Set) → Set
-Branches [] P = ⊤
+Branches : ∀{ℓ} (E : Enum) (P : Tag E → Set ℓ) → Set ℓ
+Branches [] P = Lift ⊤
 Branches (l ∷ E) P = P here × Branches E (λ t → P (there t))
 
-case : {E : Enum} (P : Tag E → Set) (cs : Branches E P) (t : Tag E) → P t
+case : ∀{ℓ} {E : Enum} (P : Tag E → Set ℓ) (cs : Branches E P) (t : Tag E) → P t
 case P (c , cs) here = c
 case P (c , cs) (there t) = case (λ t → P (there t)) cs t
 
-UncurriedBranches : (E : Enum) (P : Tag E → Set) (X : Set)
-  → Set
+UncurriedBranches : ∀{ℓ} (E : Enum) (P : Tag E → Set ℓ) (X : Set ℓ)
+  → Set ℓ
 UncurriedBranches E P X = Branches E P → X
 
-CurriedBranches : (E : Enum) (P : Tag E → Set) (X : Set)
-  → Set
+CurriedBranches : ∀{ℓ} (E : Enum) (P : Tag E → Set ℓ) (X : Set ℓ)
+  → Set ℓ
 CurriedBranches [] P X = X
 CurriedBranches (l ∷ E) P X = P here → CurriedBranches E (λ t → P (there t)) X
 
-curryBranches : {E : Enum} {P : Tag E → Set} {X : Set}
+curryBranches : ∀{ℓ} {E : Enum} {P : Tag E → Set ℓ} {X : Set ℓ}
   → UncurriedBranches E P X → CurriedBranches E P X
-curryBranches {[]} f = f tt
-curryBranches {l ∷ E} f = λ c → curryBranches (λ cs → f (c , cs))
+curryBranches {E = []} f = f (lift tt)
+curryBranches {E = l ∷ E} f = λ c → curryBranches (λ cs → f (c , cs))
 
-uncurryBranches : {E : Enum} {P : Tag E → Set} {X : Set}
+uncurryBranches : ∀{ℓ} {E : Enum} {P : Tag E → Set ℓ} {X : Set ℓ}
   → CurriedBranches E P X → UncurriedBranches E P X
-uncurryBranches {[]} x tt = x
-uncurryBranches {l ∷ E} f (c , cs) = uncurryBranches (f c) cs
+uncurryBranches {E = []} x (lift tt) = x
+uncurryBranches {E = l ∷ E} f (c , cs) = uncurryBranches (f c) cs
 
 ----------------------------------------------------------------------
 
@@ -68,7 +68,7 @@ Hyps (Arg A B) X P i (a , b) = Hyps (B a) X P i b
 
 ----------------------------------------------------------------------
 
-BranchesD : (I : Set) (E : Enum) → Set
+BranchesD : (I : Set) (E : Enum) → Set₁
 BranchesD I E = Branches E (λ _ → Desc I)
 
 caseD : {I : Set} {E : Enum} (cs : BranchesD I E) (t : Tag E) → Desc I
@@ -286,7 +286,7 @@ toBranches : {I : Set} (E : Enum) (C : Tag E → Desc I)
   (P : (i : I) → X i → Set)
   (α : UncurriedHyps D X P cn)
   → Branches E (Summer E C X cn P)
-toBranches [] C X cn P α = tt
+toBranches [] C X cn P α = lift tt
 toBranches (l ∷ E) C X cn P α =
     curryHyps (C here) X P (λ xs → cn (here , xs)) (λ i xs → α i (here , xs))
   , toBranches E (λ t → C (there t)) X
@@ -371,7 +371,7 @@ consT = there here
 ℕC = caseD $
     End tt
   , Rec tt (End tt)
-  , tt
+  , lift tt
 
 ℕD : Desc ⊤
 ℕD = Arg ℕT ℕC
@@ -389,7 +389,7 @@ VecC : (A : Set) → VecT → Desc (ℕ tt)
 VecC A = caseD $
     End zero
   , Arg (ℕ tt) (λ n → Arg A λ _ → Rec n (End (suc n)))
-  , tt
+  , lift tt
 
 nilD : (A : Set) → Desc (ℕ tt)
 nilD A = End zero
@@ -451,7 +451,7 @@ module Induction where
       )
       ( (λ q ih n → n)
       , (λ m,q ih,tt n → suc (proj₁ ih,tt n))
-      , tt
+      , lift tt
       )
       (proj₁ t,c)
       (proj₂ t,c)
@@ -467,7 +467,7 @@ module Induction where
       )
       ( (λ q ih n → zero)
       , (λ m,q ih,tt n → add n (proj₁ ih,tt n))
-      , tt
+      , lift tt
       )
       (proj₁ t,c)
       (proj₂ t,c)
@@ -490,7 +490,7 @@ module Induction where
           in
           subst (λ m → Vec A (add m n)) q (cons A (add m' n) x (ih n ys))
         )
-      , tt
+      , lift tt
       )
       (proj₁ t,c)
       (proj₂ t,c)
@@ -542,7 +542,7 @@ module Induction where
     (ihs : VecHyps (Vec A m) (Concat A m) n xss)
     → Vec A (mult n m)
   concatα A m n xss = case (ConcatConvoy A m n)
-    (nilBranch A m n , consBranch A m n , tt)
+    (nilBranch A m n , consBranch A m n , lift tt)
     (proj₁ xss)
     (proj₂ xss)
 
@@ -554,7 +554,7 @@ module Induction where
 
 ----------------------------------------------------------------------
 
-module GenericElim where
+module GenericElimUncurried where
 
   add : ℕ tt → ℕ tt → ℕ tt
   add = elim ℕE ℕC _
