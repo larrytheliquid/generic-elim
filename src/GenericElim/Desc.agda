@@ -59,7 +59,6 @@ data Desc (I : Set) : Set₁ where
   End : (i : I) → Desc I
   Rec : (i : I) (D : Desc I) → Desc I
   Arg : (A : Set) (B : A → Desc I) → Desc I
-  RecFun : (A : Set) (B : A → I) (D : Desc I) → Desc I
 
 ISet : Set → Set₁
 ISet I = I → Set
@@ -68,13 +67,11 @@ El : {I : Set} (D : Desc I) → ISet I → ISet I
 El (End j) X i = j ≡ i
 El (Rec j D) X i = X j × El D X i
 El (Arg A B) X i = Σ A (λ a → El (B a) X i)
-El (RecFun A B D) X i = ((a : A) → X (B a)) × El D X i
 
 Hyps : {I : Set} (D : Desc I) (X : ISet I) (P : (i : I) → X i → Set) (i : I) (xs : El D X i) → Set
 Hyps (End j) X P i q = ⊤
 Hyps (Rec j D) X P i (x , xs) = P j x × Hyps D X P i xs
 Hyps (Arg A B) X P i (a , b) = Hyps (B a) X P i b
-Hyps (RecFun A B D) X P i (f , xs) = ((a : A) → P (B a) (f a)) × Hyps D X P i xs
 
 ----------------------------------------------------------------------
 
@@ -104,27 +101,23 @@ CurriedEl : {I : Set} (D : Desc I) (X : ISet I) → Set
 CurriedEl (End i) X = X i
 CurriedEl (Rec i D) X = (x : X i) → CurriedEl D X
 CurriedEl (Arg A B) X = (a : A) → CurriedEl (B a) X
-CurriedEl (RecFun A B D) X = ((a : A) → X (B a)) → CurriedEl D X
 
 CurriedEl' : {I : Set} (D : Desc I) (X : ISet I) (i : I) → Set
 CurriedEl' (End j) X i = j ≡ i → X i
 CurriedEl' (Rec j D) X i = (x : X j) → CurriedEl' D X i
 CurriedEl' (Arg A B) X i = (a : A) → CurriedEl' (B a) X i
-CurriedEl' (RecFun A B D) X i = ((a : A) → X (B a)) → CurriedEl' D X i
 
 curryEl : {I : Set} (D : Desc I) (X : ISet I)
   → UncurriedEl D X → CurriedEl D X
 curryEl (End i) X cn = cn refl
 curryEl (Rec i D) X cn = λ x → curryEl D X (λ xs → cn (x , xs))
 curryEl (Arg A B) X cn = λ a → curryEl (B a) X (λ xs → cn (a , xs))
-curryEl (RecFun A B D) X cn = λ f → curryEl D X (λ xs → cn (f , xs))
 
 uncurryEl : {I : Set} (D : Desc I) (X : ISet I)
   → CurriedEl D X → UncurriedEl D X
 uncurryEl (End i) X cn refl = cn
 uncurryEl (Rec i D) X cn (x , xs) = uncurryEl D X (cn x) xs
 uncurryEl (Arg A B) X cn (a , xs) = uncurryEl (B a) X (cn a) xs
-uncurryEl (RecFun A B D) X cn (f , xs) = uncurryEl D X (cn f) xs
 
 ----------------------------------------------------------------------
 
@@ -145,8 +138,6 @@ CurriedHyps (Rec i D) X P cn =
   (x : X i) → P i x → CurriedHyps D X P (λ xs → cn (x , xs))
 CurriedHyps (Arg A B) X P cn =
   (a : A) → CurriedHyps (B a) X P (λ xs → cn (a , xs))
-CurriedHyps (RecFun A B D) X P cn =
-  (f : (a : A) → X (B a)) (ihf : (a : A) → P (B a) (f a)) → CurriedHyps D X P (λ xs → cn (f , xs))
 
 CurriedHyps' : {I : Set} (D : Desc I) (X : ISet I)
   (P : (i : I) → X i → Set)
@@ -158,8 +149,6 @@ CurriedHyps' (Rec j D) X P i cn =
   (x : X j) → P j x → CurriedHyps' D X P i (λ xs → cn (x , xs))
 CurriedHyps' (Arg A B) X P i cn =
   (a : A) → CurriedHyps' (B a) X P i (λ xs → cn (a , xs))
-CurriedHyps' (RecFun A B D) X P i cn =
-  (f : (a : A) → X (B a)) (ihf : (a : A) → P (B a) (f a)) → CurriedHyps' D X P i (λ xs → cn (f , xs))
 
 curryHyps : {I : Set} (D : Desc I) (X : ISet I)
   (P : (i : I) → X i → Set)
@@ -172,8 +161,6 @@ curryHyps (Rec i D) X P cn pf =
   λ x ih → curryHyps D X P (λ xs → cn (x , xs)) (λ i xs ihs → pf i (x , xs) (ih , ihs))
 curryHyps (Arg A B) X P cn pf =
   λ a → curryHyps (B a) X P (λ xs → cn (a , xs)) (λ i xs ihs → pf i (a , xs) ihs)
-curryHyps (RecFun A B D) X P cn pf =
-  λ f ihf → curryHyps D X P (λ xs → cn (f , xs)) (λ i xs ihs → pf i (f , xs) (ihf , ihs))
 
 uncurryHyps : {I : Set} (D : Desc I) (X : ISet I)
   (P : (i : I) → X i → Set)
@@ -186,8 +173,6 @@ uncurryHyps (Rec j D) X P cn pf i (x , xs) (ih , ihs) =
   uncurryHyps D X P (λ ys → cn (x , ys)) (pf x ih) i xs ihs
 uncurryHyps (Arg A B) X P cn pf i (a , xs) ihs =
   uncurryHyps (B a) X P (λ ys → cn (a , ys)) (pf a) i xs ihs
-uncurryHyps (RecFun A B D) X P cn pf i (f , xs) (ihf , ihs) =
-  uncurryHyps D X P (λ ys → cn (f , ys)) (pf f ihf) i xs ihs
 
 ----------------------------------------------------------------------
 
@@ -223,7 +208,6 @@ ind D P α i (init xs) = α i xs (hyps D P α D i xs)
 hyps D P α (End j) i q = tt
 hyps D P α (Rec j A) i (x , xs) = ind D P α j x , hyps D P α A i xs
 hyps D P α (Arg A B) i (a , b) = hyps D P α (B a) i b
-hyps D P α (RecFun A B E) i (f , xs) = (λ a → ind D P α (B a) (f a)) , hyps D P α E i xs
 
 ----------------------------------------------------------------------
 
@@ -296,8 +280,6 @@ Completeness = {I : Set} (E : Enum) (C : Tag E → Desc I)
   → ∃ λ cs
   → ind D P α i x ≡ elimUncurried E C P cs i x
 
-postulate undefinedForRecFun : {A : Set} → A
-
 uncurryHypsIdent : {I : Set} (D : Desc I) (X : ISet I)
   (P : (i : I) → X i → Set)
   (cn : UncurriedEl D X)
@@ -309,7 +291,6 @@ uncurryHypsIdent (Rec j D) X P cn α i (x , xs) (p , ps) =
   uncurryHypsIdent D X P (λ xs → cn (x , xs)) (λ k ys rs → α k (x , ys) (p , rs)) i xs ps
 uncurryHypsIdent (Arg A B) X P cn α i (a , xs) ps =
   uncurryHypsIdent (B a) X P (λ xs → cn (a , xs)) (λ j ys → α j (a , ys)) i xs ps
-uncurryHypsIdent (RecFun A B D) X P cn α i xs ihs = undefinedForRecFun
 
 postulate
   ext3 : {A : Set} {B : A → Set} {C : (a : A) → B a → Set} {Z : (a : A) (b : B a) → C a b → Set}
