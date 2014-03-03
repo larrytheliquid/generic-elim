@@ -48,54 +48,54 @@ uncurryBranches {E = l ∷ E} f (c , cs) = uncurryBranches (f c) cs
 
 ----------------------------------------------------------------------
 
-data Desc (I : Set) : Set₁ where
+data Desc {ℓ} (I : Set ℓ) : Set (up ℓ) where
   End : (i : I) → Desc I
   Rec : (i : I) (D : Desc I) → Desc I
   Arg : (A : Set) (B : A → Desc I) → Desc I
 
-ISet : Set → Set₁
-ISet I = I → Set
+ISet : ∀{ℓ} → Set ℓ → Set (up ℓ)
+ISet {ℓ} I = I → Set ℓ
 
-El : {I : Set} (D : Desc I) → ISet I → ISet I
+El : ∀{ℓ} {I : Set ℓ} (D : Desc I) → ISet I → ISet I
 El (End j) X i = j ≡ i
 El (Rec j D) X i = X j × El D X i
 El (Arg A B) X i = Σ A (λ a → El (B a) X i)
 
-Hyps : {I : Set} (D : Desc I) (X : ISet I) (P : (i : I) → X i → Set) (i : I) (xs : El D X i) → Set
-Hyps (End j) X P i q = ⊤
+Hyps : ∀{ℓ} {I : Set ℓ} (D : Desc I) (X : ISet I) (P : (i : I) → X i → Set ℓ) (i : I) (xs : El D X i) → Set ℓ
+Hyps (End j) X P i q = Lift ⊤
 Hyps (Rec j D) X P i (x , xs) = P j x × Hyps D X P i xs
 Hyps (Arg A B) X P i (a , b) = Hyps (B a) X P i b
 
 ----------------------------------------------------------------------
 
-BranchesD : (I : Set) (E : Enum) → Set₁
+BranchesD : ∀{ℓ} (I : Set ℓ) (E : Enum) → Set (up ℓ)
 BranchesD I E = Branches E (λ _ → Desc I)
 
-caseD : {I : Set} {E : Enum} (cs : BranchesD I E) (t : Tag E) → Desc I
+caseD : ∀{ℓ} {I : Set ℓ} {E : Enum} (cs : BranchesD I E) (t : Tag E) → Desc I
 caseD = case (λ _ → Desc _)
 
 ----------------------------------------------------------------------
 
-UncurriedEl : {I : Set} (D : Desc I) (X : ISet I) → Set
+UncurriedEl : ∀{ℓ} {I : Set ℓ} (D : Desc I) (X : ISet I) → Set ℓ
 UncurriedEl D X = ∀{i} → El D X i → X i
 
-CurriedEl : {I : Set} (D : Desc I) (X : ISet I) → Set
+CurriedEl : ∀{ℓ} {I : Set ℓ} (D : Desc I) (X : ISet I) → Set ℓ
 CurriedEl (End i) X = X i
 CurriedEl (Rec i D) X = (x : X i) → CurriedEl D X
 CurriedEl (Arg A B) X = (a : A) → CurriedEl (B a) X
 
-CurriedEl' : {I : Set} (D : Desc I) (X : ISet I) (i : I) → Set
+CurriedEl' : ∀{ℓ} {I : Set ℓ} (D : Desc I) (X : ISet I) (i : I) → Set ℓ
 CurriedEl' (End j) X i = j ≡ i → X i
 CurriedEl' (Rec j D) X i = (x : X j) → CurriedEl' D X i
 CurriedEl' (Arg A B) X i = (a : A) → CurriedEl' (B a) X i
 
-curryEl : {I : Set} (D : Desc I) (X : ISet I)
+curryEl : ∀{ℓ} {I : Set ℓ} (D : Desc I) (X : ISet I)
   → UncurriedEl D X → CurriedEl D X
 curryEl (End i) X cn = cn refl
 curryEl (Rec i D) X cn = λ x → curryEl D X (λ xs → cn (x , xs))
 curryEl (Arg A B) X cn = λ a → curryEl (B a) X (λ xs → cn (a , xs))
 
-uncurryEl : {I : Set} (D : Desc I) (X : ISet I)
+uncurryEl : ∀{ℓ} {I : Set ℓ} (D : Desc I) (X : ISet I)
   → CurriedEl D X → UncurriedEl D X
 uncurryEl (End i) X cn refl = cn
 uncurryEl (Rec i D) X cn (x , xs) = uncurryEl D X (cn x) xs
@@ -103,17 +103,17 @@ uncurryEl (Arg A B) X cn (a , xs) = uncurryEl (B a) X (cn a) xs
 
 ----------------------------------------------------------------------
 
-UncurriedHyps : {I : Set} (D : Desc I) (X : ISet I)
-  (P : (i : I) → X i → Set)
+UncurriedHyps : ∀{ℓ} {I : Set ℓ} (D : Desc I) (X : ISet I)
+  (P : (i : I) → X i → Set ℓ)
   (cn : UncurriedEl D X)
-  → Set
+  → Set ℓ
 UncurriedHyps D X P cn =
   ∀ i (xs : El D X i) (ihs : Hyps D X P i xs) → P i (cn xs)
 
-CurriedHyps : {I : Set} (D : Desc I) (X : ISet I)
-  (P : (i : I) → X i → Set)
+CurriedHyps : ∀{ℓ} {I : Set ℓ} (D : Desc I) (X : ISet I)
+  (P : (i : I) → X i → Set ℓ)
   (cn : UncurriedEl D X)
-  → Set
+  → Set ℓ
 CurriedHyps (End i) X P cn =
   P i (cn refl)
 CurriedHyps (Rec i D) X P cn =
@@ -121,35 +121,35 @@ CurriedHyps (Rec i D) X P cn =
 CurriedHyps (Arg A B) X P cn =
   (a : A) → CurriedHyps (B a) X P (λ xs → cn (a , xs))
 
-CurriedHyps' : {I : Set} (D : Desc I) (X : ISet I)
-  (P : (i : I) → X i → Set)
+CurriedHyps' : ∀{ℓ} {I : Set ℓ} (D : Desc I) (X : ISet I)
+  (P : (i : I) → X i → Set ℓ)
   (i : I)
   (cn : El D X i → X i)
-  → Set
+  → Set ℓ
 CurriedHyps' (End j) X P i cn = (q : j ≡ i) → P i (cn q)
 CurriedHyps' (Rec j D) X P i cn =
   (x : X j) → P j x → CurriedHyps' D X P i (λ xs → cn (x , xs))
 CurriedHyps' (Arg A B) X P i cn =
   (a : A) → CurriedHyps' (B a) X P i (λ xs → cn (a , xs))
 
-curryHyps : {I : Set} (D : Desc I) (X : ISet I)
-  (P : (i : I) → X i → Set)
+curryHyps : ∀{ℓ} {I : Set ℓ} (D : Desc I) (X : ISet I)
+  (P : (i : I) → X i → Set ℓ)
   (cn : UncurriedEl D X)
   → UncurriedHyps D X P cn
   → CurriedHyps D X P cn
 curryHyps (End i) X P cn pf =
-  pf i refl tt
+  pf i refl (lift tt)
 curryHyps (Rec i D) X P cn pf =
   λ x ih → curryHyps D X P (λ xs → cn (x , xs)) (λ i xs ihs → pf i (x , xs) (ih , ihs))
 curryHyps (Arg A B) X P cn pf =
   λ a → curryHyps (B a) X P (λ xs → cn (a , xs)) (λ i xs ihs → pf i (a , xs) ihs)
 
-uncurryHyps : {I : Set} (D : Desc I) (X : ISet I)
-  (P : (i : I) → X i → Set)
+uncurryHyps : ∀{ℓ} {I : Set ℓ} (D : Desc I) (X : ISet I)
+  (P : (i : I) → X i → Set ℓ)
   (cn : UncurriedEl D X)
   → CurriedHyps D X P cn
   → UncurriedHyps D X P cn
-uncurryHyps (End .i) X P cn pf i refl tt =
+uncurryHyps (End .i) X P cn pf i refl (lift tt) =
   pf
 uncurryHyps (Rec j D) X P cn pf i (x , xs) (ih , ihs) =
   uncurryHyps D X P (λ ys → cn (x , ys)) (pf x ih) i xs ihs
@@ -158,27 +158,27 @@ uncurryHyps (Arg A B) X P cn pf i (a , xs) ihs =
 
 ----------------------------------------------------------------------
 
-data μ {I : Set} (D : Desc I) : ISet I where
+data μ {ℓ} {I : Set ℓ} (D : Desc I) : ISet I where
   init : UncurriedEl D (μ D)
 
-inj : {I : Set} (D : Desc I) → CurriedEl D (μ D)
+inj : ∀{ℓ} {I : Set ℓ} (D : Desc I) → CurriedEl D (μ D)
 inj D = curryEl D (μ D) init
 
 ----------------------------------------------------------------------
 
-ind :
-  {I : Set}
+ind : ∀{ℓ}
+  {I : Set ℓ}
   (D : Desc I)
-  (P : (i : I) → μ D i → Set)
+  (P : (i : I) → μ D i → Set ℓ)
   (α : UncurriedHyps D (μ D) P init)
   (i : I)
   (x : μ D i)
   → P i x
 
-hyps :
-  {I : Set}
+hyps : ∀{ℓ}
+  {I : Set ℓ}
   (D₁ : Desc I)
-  (P : (i : I) → μ D₁ i → Set)
+  (P : (i : I) → μ D₁ i → Set ℓ)
   (α : UncurriedHyps D₁ (μ D₁) P init)
   (D₂ : Desc I)
   (i : I)
@@ -187,40 +187,40 @@ hyps :
 
 ind D P α i (init xs) = α i xs (hyps D P α D i xs)
 
-hyps D P α (End j) i q = tt
+hyps D P α (End j) i q = lift tt
 hyps D P α (Rec j A) i (x , xs) = ind D P α j x , hyps D P α A i xs
 hyps D P α (Arg A B) i (a , b) = hyps D P α (B a) i b
 
 ----------------------------------------------------------------------
 
-indCurried : {I : Set} (D : Desc I)
-  (P : (i : I) → μ D i → Set)
+indCurried : ∀{ℓ} {I : Set ℓ} (D : Desc I)
+  (P : (i : I) → μ D i → Set ℓ)
   (f : CurriedHyps D (μ D) P init)
   (i : I)
   (x : μ D i)
   → P i x
 indCurried D P f i x = ind D P (uncurryHyps D (μ D) P init f) i x
 
-Summer : {I : Set} (E : Enum) (C : Tag E → Desc I)
+Summer : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag E → Desc I)
   → let D = Arg (Tag E) C in
   (X  : ISet I) (cn : UncurriedEl D X)
-  (P : (i : I) → X i → Set)
-  → Tag E → Set
+  (P : (i : I) → X i → Set ℓ)
+  → Tag E → Set ℓ
 Summer E C X cn P t =
   let D = Arg (Tag E) C in
   CurriedHyps (C t) X P (λ xs → cn (t , xs))
 
-SumCurriedHyps : {I : Set} (E : Enum) (C : Tag E → Desc I)
+SumCurriedHyps : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag E → Desc I)
   → let D = Arg (Tag E) C in
-  (P : (i : I) → μ D i → Set)
-  → Tag E → Set
+  (P : (i : I) → μ D i → Set ℓ)
+  → Tag E → Set ℓ
 SumCurriedHyps E C P t =
   let D = Arg (Tag E) C in
   Summer E C (μ D) init P t
 
-elimUncurried : {I : Set} (E : Enum) (C : Tag E → Desc I)
+elimUncurried : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag E → Desc I)
   → let D = Arg (Tag E) C in
-  (P : (i : I) → μ D i → Set)
+  (P : (i : I) → μ D i → Set ℓ)
   → Branches E (SumCurriedHyps E C P)
   → (i : I) (x : μ D i) → P i x
 elimUncurried E C P cs i x =
@@ -229,9 +229,9 @@ elimUncurried E C P cs i x =
     (case (SumCurriedHyps E C P) cs)
     i x
 
-elim : {I : Set} (E : Enum) (C : Tag E → Desc I)
+elim : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag E → Desc I)
   → let D = Arg (Tag E) C in
-  (P : (i : I) → μ D i → Set)
+  (P : (i : I) → μ D i → Set ℓ)
   → CurriedBranches E
       (SumCurriedHyps E C P)
       ((i : I) (x : μ D i) → P i x)
@@ -239,51 +239,51 @@ elim E C P = curryBranches (elimUncurried E C P)
 
 ----------------------------------------------------------------------
 
-Soundness : Set₁
-Soundness = {I : Set} (E : Enum) (C : Tag E → Desc I)
+Soundness : (ℓ : Level) → Set (up ℓ)
+Soundness ℓ = {I : Set ℓ} (E : Enum) (C : Tag E → Desc I)
   → let D = Arg (Tag E) C in
-  (P : (i : I) → μ D i → Set)
+  (P : (i : I) → μ D i → Set ℓ)
   (cs : Branches E (SumCurriedHyps E C P))
   (i : I) (x : μ D i)
   → ∃ λ α
   → elimUncurried E C P cs i x ≡ ind D P α i x
 
-sound : Soundness
-sound E C P cs i x =
+sound : ∀ ℓ → Soundness ℓ
+sound ℓ E C P cs i x =
   let D = Arg (Tag E) C in
   (uncurryHyps D (μ D) P init (case (SumCurriedHyps E C P) cs)) , refl
 
-Completeness : Set₁
-Completeness = {I : Set} (E : Enum) (C : Tag E → Desc I)
+Completeness : (ℓ : Level) → Set (up ℓ)
+Completeness ℓ = {I : Set ℓ} (E : Enum) (C : Tag E → Desc I)
   → let D = Arg (Tag E) C in
-  (P : (i : I) → μ D i → Set)
+  (P : (i : I) → μ D i → Set ℓ)
   (α : UncurriedHyps D (μ D) P init)
   (i : I) (x : μ D i)
   → ∃ λ cs
   → ind D P α i x ≡ elimUncurried E C P cs i x
 
-uncurryHypsIdent : {I : Set} (D : Desc I) (X : ISet I)
-  (P : (i : I) → X i → Set)
+uncurryHypsIdent : ∀{ℓ} {I : Set ℓ} (D : Desc I) (X : ISet I)
+  (P : (i : I) → X i → Set ℓ)
   (cn : UncurriedEl D X)
   (α : UncurriedHyps D X P cn)
   (i : I) (xs : El D X i) (ihs : Hyps D X P i xs)
   → α i xs ihs ≡ uncurryHyps D X P cn (curryHyps D X P cn α) i xs ihs
-uncurryHypsIdent (End .i) X P cn α i refl tt = refl
+uncurryHypsIdent (End .i) X P cn α i refl (lift tt) = refl
 uncurryHypsIdent (Rec j D) X P cn α i (x , xs) (p , ps) =
   uncurryHypsIdent D X P (λ xs → cn (x , xs)) (λ k ys rs → α k (x , ys) (p , rs)) i xs ps
 uncurryHypsIdent (Arg A B) X P cn α i (a , xs) ps =
   uncurryHypsIdent (B a) X P (λ xs → cn (a , xs)) (λ j ys → α j (a , ys)) i xs ps
 
 postulate
-  ext3 : {A : Set} {B : A → Set} {C : (a : A) → B a → Set} {Z : (a : A) (b : B a) → C a b → Set}
+  ext3 : ∀{a b c z} {A : Set a} {B : A → Set b} {C : (a : A) → B a → Set c} {Z : (a : A) (b : B a) → C a b → Set z}
     (f g : (a : A) (b : B a) (c : C a b) → Z a b c)
     → ((a : A) (b : B a) (c : C a b) → f a b c ≡ g a b c)
     → f ≡ g
 
-toBranches : {I : Set} (E : Enum) (C : Tag E → Desc I)
+toBranches : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag E → Desc I)
   → let D = Arg (Tag E) C in
   (X  : ISet I) (cn : UncurriedEl D X)
-  (P : (i : I) → X i → Set)
+  (P : (i : I) → X i → Set ℓ)
   (α : UncurriedHyps D X P cn)
   → Branches E (Summer E C X cn P)
 toBranches [] C X cn P α = lift tt
@@ -293,10 +293,10 @@ toBranches (l ∷ E) C X cn P α =
      (λ xs → cn (there (proj₁ xs) , proj₂ xs))
      P (λ i xs ih → α i (there (proj₁ xs) , proj₂ xs) ih)
 
-ToBranches : {I : Set} {E : Enum} (C : Tag E → Desc I)
+ToBranches : ∀{ℓ} {I : Set ℓ} {E : Enum} (C : Tag E → Desc I)
   → let D = Arg (Tag E) C in
   (X  : ISet I) (cn : UncurriedEl D X)
-  (P : (i : I) → X i → Set)
+  (P : (i : I) → X i → Set ℓ)
   (α : UncurriedHyps D X P cn)
   (t : Tag E)
   → let β = toBranches E C X cn P α in
@@ -308,9 +308,9 @@ ToBranches C X cn P α (there t)
     P (λ i xs ih → α i (there (proj₁ xs) , proj₂ xs) ih) t
 ... | ih rewrite ih = refl
 
-completeα : {I : Set} (E : Enum) (C : Tag E → Desc I)
+completeα : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag E → Desc I)
   → let D = Arg (Tag E) C in
-  (P : (i : I) → μ D i → Set)
+  (P : (i : I) → μ D i → Set ℓ)
   (α : UncurriedHyps D (μ D) P init)
   (i : I) (xs : El D (μ D) i) (ihs : Hyps D (μ D) P i xs)
   → let β = toBranches E C (μ D) init P α in
@@ -319,9 +319,9 @@ completeα E C P α i (t , xs) ihs
   with ToBranches C (μ D) init P α t where D = Arg (Tag E) C
 ... | q rewrite q = uncurryHypsIdent D (μ D) P init α i (t , xs) ihs where D = Arg (Tag E) C
 
-complete' : {I : Set} (E : Enum) (C : Tag E → Desc I)
+complete' : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag E → Desc I)
   → let D = Arg (Tag E) C in
-  (P : (i : I) → μ D i → Set)
+  (P : (i : I) → μ D i → Set ℓ)
   (α : UncurriedHyps D (μ D) P init)
   (i : I) (x : μ D i)
   → let β = toBranches E C (μ D) init P α in
@@ -335,8 +335,8 @@ complete' E C P α i (init (t , xs)) = cong
   D = Arg (Tag E) C 
   β = toBranches E C (μ D) init P α
 
-complete : Completeness
-complete E C P α i x =
+complete : ∀ ℓ → Completeness ℓ
+complete ℓ E C P α i x =
   let D = Arg (Tag E) C in
     toBranches E C (μ D) init P α
   , complete' E C P α i x
