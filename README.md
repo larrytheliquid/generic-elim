@@ -51,7 +51,7 @@ Stratified version of code using universe levels
   * [Soundness](src/GenericElim/DescL.agda#L242-L254)
   * [Completeness](src/GenericElim/DescL.agda#L256-L342)
 
-Comparing Definition using `ind` vs `elim`
+Comparing `append` using `ind` vs `elim`
 ------------------------------------------
 
 In the paper we broke up the definition of `concat` using `ind` into
