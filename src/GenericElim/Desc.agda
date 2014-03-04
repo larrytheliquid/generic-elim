@@ -475,7 +475,7 @@ module Induction where
     tt
   
   append : (A : Set) (m : ℕ tt) (xs : Vec A m) (n : ℕ tt) (ys : Vec A n) → Vec A (add m n) 
-  append A = ind (VecD A) (λ m xs → (n : ℕ tt) (ys : Vec A n) → Vec A (add m n))
+  append A = ind (VecD A) _
     (λ m t,c → case
       (λ t → (c : El (VecC A t) (Vec A) m)
              (ih : Hyps (VecD A) (Vec A) (λ m xs → (n : ℕ tt) (ys : Vec A n) → Vec A (add m n)) m (t , c))

@@ -62,9 +62,11 @@ inlined. Here is the definition of a similar function, `append`, using
 * [append using ind](src/GenericElim/Desc.agda#L477-L497)
 * [append using elim](src/GenericElim/Desc.agda#L571-L574)
 
-As a bonus, whereas the motive of the case statement employing the
-convoy pattern in the ind-based definition must be specified, the
-motive in the elim-based version is just the goal and can be inferred.
+Notice that the motive of the induction rules `ind` and `elim` can be
+inferred, as they are the same as the goal type, but the motive of
+`case` in the ind-based definition must use the
+[convoy pattern](http://adam.chlipala.net/cpdt/html/MoreDep.html)
+and cannot be inferred.
 
 Notes
 -----
