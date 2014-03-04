@@ -475,7 +475,7 @@ module Induction where
     tt
   
   append : (A : Set) (m : ℕ tt) (xs : Vec A m) (n : ℕ tt) (ys : Vec A n) → Vec A (add m n) 
-  append A = ind (VecD A) _
+  append A = ind (VecD A) (λ m xs → (n : ℕ tt) (ys : Vec A n) → Vec A (add m n))
     (λ m t,c → case
       (λ t → (c : El (VecC A t) (Vec A) m)
              (ih : Hyps (VecD A) (Vec A) (λ m xs → (n : ℕ tt) (ys : Vec A n) → Vec A (add m n)) m (t , c))
@@ -569,7 +569,7 @@ module GenericElim where
     tt
 
   append : (A : Set) (m : ℕ tt) (xs : Vec A m) (n : ℕ tt) (ys : Vec A n) → Vec A (add m n)
-  append A = elim VecE (VecC A) _
+  append A = elim VecE (VecC A) (λ m xs → (n : ℕ tt) (ys : Vec A n) → Vec A (add m n))
     (λ n ys → ys)
     (λ m x xs ih n ys → cons A (add m n) x (ih n ys))
 
