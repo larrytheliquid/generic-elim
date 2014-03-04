@@ -51,6 +51,17 @@ Stratified version of code using universe levels
   * [Soundness](src/GenericElim/DescL.agda#L242-L254)
   * [Completeness](src/GenericElim/DescL.agda#L256-L342)
 
+Comparing Definition using `ind` vs `elim`
+------------------------------------------
+
+In the paper we broke up the definition of `concat` using `ind` into
+pieces because it was so big, and showed the definition using `elim`
+inlined. Here is the definition of a similar function, `append`, using
+`ind` and `elim` where both definitions are inlined:
+
+* [append using ind](src/GenericElim/Desc.agda#L477-L497)
+* [append using elim](src/GenericElim/Desc.agda#L571-L574)
+
 Notes
 -----
 
