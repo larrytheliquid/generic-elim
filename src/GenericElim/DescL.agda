@@ -4,7 +4,7 @@ open import Data.List hiding ( concat )
 open import Data.String
 open import Relation.Binary.PropositionalEquality
 open import Function
-open import Level hiding ( zero ) renaming ( suc to up )
+open import Level renaming ( zero to zed ; suc to up )
 module GenericElim.DescL where
 
 ----------------------------------------------------------------------
@@ -15,33 +15,33 @@ Label = String
 Enum : Set
 Enum = List Label
 
-data Tag : Enum → Set where
-  here : ∀{l E} → Tag (l ∷ E)
-  there : ∀{l E} → Tag E → Tag (l ∷ E)
+data Tag ℓ : Enum → Set ℓ where
+  here : ∀{l E} → Tag ℓ (l ∷ E)
+  there : ∀{l E} → Tag ℓ E → Tag ℓ (l ∷ E)
 
-Branches : ∀{ℓ} (E : Enum) (P : Tag E → Set ℓ) → Set ℓ
+Branches : ∀{a b} (E : Enum) (P : Tag a E → Set b) → Set (a ⊔ b)
 Branches [] P = Lift ⊤
 Branches (l ∷ E) P = P here × Branches E (λ t → P (there t))
 
-case : ∀{ℓ} {E : Enum} (P : Tag E → Set ℓ) (cs : Branches E P) (t : Tag E) → P t
+case : ∀{a b} {E : Enum} (P : Tag a E → Set b) (cs : Branches E P) (t : Tag a E) → P t
 case P (c , cs) here = c
 case P (c , cs) (there t) = case (λ t → P (there t)) cs t
 
-UncurriedBranches : ∀{ℓ} (E : Enum) (P : Tag E → Set ℓ) (X : Set ℓ)
-  → Set ℓ
+UncurriedBranches : ∀{a b} (E : Enum) (P : Tag a E → Set b) (X : Set (a ⊔ b))
+  → Set (a ⊔ b)
 UncurriedBranches E P X = Branches E P → X
 
-CurriedBranches : ∀{ℓ} (E : Enum) (P : Tag E → Set ℓ) (X : Set ℓ)
-  → Set ℓ
+CurriedBranches : ∀{a b} (E : Enum) (P : Tag a E → Set b) (X : Set (a ⊔ b))
+  → Set (a ⊔ b)
 CurriedBranches [] P X = X
 CurriedBranches (l ∷ E) P X = P here → CurriedBranches E (λ t → P (there t)) X
 
-curryBranches : ∀{ℓ} {E : Enum} {P : Tag E → Set ℓ} {X : Set ℓ}
+curryBranches : ∀{a b} {E : Enum} {P : Tag a E → Set b} {X : Set (a ⊔ b)}
   → UncurriedBranches E P X → CurriedBranches E P X
 curryBranches {E = []} f = f (lift tt)
 curryBranches {E = l ∷ E} f = λ c → curryBranches (λ cs → f (c , cs))
 
-uncurryBranches : ∀{ℓ} {E : Enum} {P : Tag E → Set ℓ} {X : Set ℓ}
+uncurryBranches : ∀{a b} {E : Enum} {P : Tag a E → Set b} {X : Set (a ⊔ b)}
   → CurriedBranches E P X → UncurriedBranches E P X
 uncurryBranches {E = []} x (lift tt) = x
 uncurryBranches {E = l ∷ E} f (c , cs) = uncurryBranches (f c) cs
@@ -51,7 +51,7 @@ uncurryBranches {E = l ∷ E} f (c , cs) = uncurryBranches (f c) cs
 data Desc {ℓ} (I : Set ℓ) : Set (up ℓ) where
   End : (i : I) → Desc I
   Rec : (i : I) (D : Desc I) → Desc I
-  Arg : (A : Set) (B : A → Desc I) → Desc I
+  Arg : (A : Set ℓ) (B : A → Desc I) → Desc I
 
 ISet : ∀{ℓ} → Set ℓ → Set (up ℓ)
 ISet {ℓ} I = I → Set ℓ
@@ -69,9 +69,9 @@ Hyps (Arg A B) X P i (a , b) = Hyps (B a) X P i b
 ----------------------------------------------------------------------
 
 BranchesD : ∀{ℓ} (I : Set ℓ) (E : Enum) → Set (up ℓ)
-BranchesD I E = Branches E (λ _ → Desc I)
+BranchesD {ℓ} I E = Branches {ℓ} {up ℓ} E (λ _ → Desc I)
 
-caseD : ∀{ℓ} {I : Set ℓ} {E : Enum} (cs : BranchesD I E) (t : Tag E) → Desc I
+caseD : ∀{ℓ} {I : Set ℓ} {E : Enum} (cs : BranchesD I E) (t : Tag ℓ E) → Desc I
 caseD = case (λ _ → Desc _)
 
 ----------------------------------------------------------------------
@@ -201,36 +201,36 @@ indCurried : ∀{ℓ} {I : Set ℓ} (D : Desc I)
   → P i x
 indCurried D P f i x = ind D P (uncurryHyps D (μ D) P init f) i x
 
-Summer : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag E → Desc I)
-  → let D = Arg (Tag E) C in
+Summer : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag ℓ E → Desc I)
+  → let D = Arg (Tag ℓ E) C in
   (X  : ISet I) (cn : UncurriedEl D X)
   (P : (i : I) → X i → Set ℓ)
-  → Tag E → Set ℓ
+  → Tag ℓ E → Set ℓ
 Summer E C X cn P t =
-  let D = Arg (Tag E) C in
+  let D = Arg (Tag _ E) C in
   CurriedHyps (C t) X P (λ xs → cn (t , xs))
 
-SumCurriedHyps : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag E → Desc I)
-  → let D = Arg (Tag E) C in
+SumCurriedHyps : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag ℓ E → Desc I)
+  → let D = Arg (Tag ℓ E) C in
   (P : (i : I) → μ D i → Set ℓ)
-  → Tag E → Set ℓ
+  → Tag ℓ E → Set ℓ
 SumCurriedHyps E C P t =
-  let D = Arg (Tag E) C in
+  let D = Arg (Tag _ E) C in
   Summer E C (μ D) init P t
 
-elimUncurried : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag E → Desc I)
-  → let D = Arg (Tag E) C in
+elimUncurried : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag ℓ E → Desc I)
+  → let D = Arg (Tag ℓ E) C in
   (P : (i : I) → μ D i → Set ℓ)
   → Branches E (SumCurriedHyps E C P)
   → (i : I) (x : μ D i) → P i x
 elimUncurried E C P cs i x =
-  let D = Arg (Tag E) C in
+  let D = Arg (Tag _ E) C in
   indCurried D P
     (case (SumCurriedHyps E C P) cs)
     i x
 
-elim : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag E → Desc I)
-  → let D = Arg (Tag E) C in
+elim : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag ℓ E → Desc I)
+  → let D = Arg (Tag ℓ E) C in
   (P : (i : I) → μ D i → Set ℓ)
   → CurriedBranches E
       (SumCurriedHyps E C P)
@@ -240,8 +240,8 @@ elim E C P = curryBranches (elimUncurried E C P)
 ----------------------------------------------------------------------
 
 Soundness : (ℓ : Level) → Set (up ℓ)
-Soundness ℓ = {I : Set ℓ} (E : Enum) (C : Tag E → Desc I)
-  → let D = Arg (Tag E) C in
+Soundness ℓ = {I : Set ℓ} (E : Enum) (C : Tag ℓ E → Desc I)
+  → let D = Arg (Tag ℓ E) C in
   (P : (i : I) → μ D i → Set ℓ)
   (cs : Branches E (SumCurriedHyps E C P))
   (i : I) (x : μ D i)
@@ -250,12 +250,12 @@ Soundness ℓ = {I : Set ℓ} (E : Enum) (C : Tag E → Desc I)
 
 sound : ∀ ℓ → Soundness ℓ
 sound ℓ E C P cs i x =
-  let D = Arg (Tag E) C in
+  let D = Arg (Tag ℓ E) C in
   (uncurryHyps D (μ D) P init (case (SumCurriedHyps E C P) cs)) , refl
 
 Completeness : (ℓ : Level) → Set (up ℓ)
-Completeness ℓ = {I : Set ℓ} (E : Enum) (C : Tag E → Desc I)
-  → let D = Arg (Tag E) C in
+Completeness ℓ = {I : Set ℓ} (E : Enum) (C : Tag ℓ E → Desc I)
+  → let D = Arg (Tag ℓ E) C in
   (P : (i : I) → μ D i → Set ℓ)
   (α : UncurriedHyps D (μ D) P init)
   (i : I) (x : μ D i)
@@ -280,8 +280,8 @@ postulate
     → ((a : A) (b : B a) (c : C a b) → f a b c ≡ g a b c)
     → f ≡ g
 
-toBranches : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag E → Desc I)
-  → let D = Arg (Tag E) C in
+toBranches : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag ℓ E → Desc I)
+  → let D = Arg (Tag ℓ E) C in
   (X  : ISet I) (cn : UncurriedEl D X)
   (P : (i : I) → X i → Set ℓ)
   (α : UncurriedHyps D X P cn)
@@ -293,12 +293,12 @@ toBranches (l ∷ E) C X cn P α =
      (λ xs → cn (there (proj₁ xs) , proj₂ xs))
      P (λ i xs ih → α i (there (proj₁ xs) , proj₂ xs) ih)
 
-ToBranches : ∀{ℓ} {I : Set ℓ} {E : Enum} (C : Tag E → Desc I)
-  → let D = Arg (Tag E) C in
+ToBranches : ∀{ℓ} {I : Set ℓ} {E : Enum} (C : Tag ℓ E → Desc I)
+  → let D = Arg (Tag ℓ E) C in
   (X  : ISet I) (cn : UncurriedEl D X)
   (P : (i : I) → X i → Set ℓ)
   (α : UncurriedHyps D X P cn)
-  (t : Tag E)
+  (t : Tag ℓ E)
   → let β = toBranches E C X cn P α in
   case (Summer E C X cn P) β t ≡ curryHyps D X P cn α t
 ToBranches C X cn P α here = refl
@@ -308,19 +308,19 @@ ToBranches C X cn P α (there t)
     P (λ i xs ih → α i (there (proj₁ xs) , proj₂ xs) ih) t
 ... | ih rewrite ih = refl
 
-completeα : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag E → Desc I)
-  → let D = Arg (Tag E) C in
+completeα : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag ℓ E → Desc I)
+  → let D = Arg (Tag ℓ E) C in
   (P : (i : I) → μ D i → Set ℓ)
   (α : UncurriedHyps D (μ D) P init)
   (i : I) (xs : El D (μ D) i) (ihs : Hyps D (μ D) P i xs)
   → let β = toBranches E C (μ D) init P α in
   α i xs ihs ≡ uncurryHyps D (μ D) P init (case (SumCurriedHyps E C P) β) i xs ihs
 completeα E C P α i (t , xs) ihs
-  with ToBranches C (μ D) init P α t where D = Arg (Tag E) C
-... | q rewrite q = uncurryHypsIdent D (μ D) P init α i (t , xs) ihs where D = Arg (Tag E) C
+  with ToBranches C (μ D) init P α t where D = Arg (Tag _ E) C
+... | q rewrite q = uncurryHypsIdent D (μ D) P init α i (t , xs) ihs where D = Arg (Tag _ E) C
 
-complete' : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag E → Desc I)
-  → let D = Arg (Tag E) C in
+complete' : ∀{ℓ} {I : Set ℓ} (E : Enum) (C : Tag ℓ E → Desc I)
+  → let D = Arg (Tag ℓ E) C in
   (P : (i : I) → μ D i → Set ℓ)
   (α : UncurriedHyps D (μ D) P init)
   (i : I) (x : μ D i)
@@ -332,12 +332,12 @@ complete' E C P α i (init (t , xs)) = cong
     (uncurryHyps D (μ D) P init (case (SumCurriedHyps E C P) β)) 
     (completeα E C P α))
   where
-  D = Arg (Tag E) C 
+  D = Arg (Tag _ E) C 
   β = toBranches E C (μ D) init P α
 
 complete : ∀ ℓ → Completeness ℓ
 complete ℓ E C P α i x =
-  let D = Arg (Tag E) C in
+  let D = Arg (Tag ℓ E) C in
     toBranches E C (μ D) init P α
   , complete' E C P α i x
 
@@ -350,10 +350,10 @@ VecE : Enum
 VecE = "nil" ∷ "cons" ∷ []
 
 ℕT : Set
-ℕT = Tag ℕE
+ℕT = Tag zed ℕE
 
 VecT : Set
-VecT = Tag VecE
+VecT = Tag zed VecE
 
 zeroT : ℕT
 zeroT = here
