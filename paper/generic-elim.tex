@@ -372,8 +372,8 @@ data VecT : Set where
 \end{verbatim}
 
 A datatype with multiple constructors is represented by an
-{\tt Arg} description whose first argument {\tt VecT} is a datatype of tags
--- one for each constructor -- and whose second argument {\tt VecC} is
+{\tt Arg} description whose first argument (e.g. {\tt VecT}) is a datatype of tags
+-- one for each constructor -- and whose second argument (e.g. {\tt VecC}) is
 a function that returns a description for each constructor tag. Note
 that whereas we used {\tt Arg} for arguments of constructors before,
 now we are using {\tt Arg} to represent the sum of all constructors.
@@ -497,8 +497,8 @@ introduce values of type {\tt Vec} using its initial algebra.
 \subsection{Fixpoint Type}
 
 A description is a first-class datatype declaration. To get back the
-type encoded by the description, you apply it to the fixpoint type
-constructor {\tt μ}. For example, below we define {\tt Vec} by
+type encoded by the description, you apply the fixpoint type
+constructor {\tt μ} to it. For example, below we define {\tt Vec} by
 applying {\tt μ} to its description {\tt VecD}.
 
 \begin{verbatim}
