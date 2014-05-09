@@ -63,7 +63,6 @@
 %% \preprintfooter{short description of paper}   % 'preprint' option specified.
 
 \title{Generic Constructors and Eliminators from Descriptions}
-\subtitle{Dependently Typed Programming without the Algebra}
 
 \authorinfo{Larry Diehl\and Tim Sheard}
            {Portland State University}
@@ -145,7 +144,7 @@ elimVec : (A : Set) (P : (n : ℕ) → Vec A n → Set)
 \end{verbatim}
 
 In contrast, declaring a datatype like {\tt Vec} in a closed type
-theory using descriptions does {\tt not} add constructors and an
+theory using descriptions does {\it not} add constructors and an
 eliminator as specialized axioms to the language. Instead, values of
 datatypes built from descriptions can be introduced with a single
 primitive, the initial algebra ({\tt init}), and can be eliminated with
@@ -257,8 +256,8 @@ are extensionally equivalent functions. For technical reasons, we actually prove
 
 \paragraph{}
 All code presented in this paper has been checked with {\sc Agda}.
-\footnote{The accompanying source code can be found at
-{\tt https://github.com/larrytheliquid/generic-elim}}
+\footnote{\raggedright{The accompanying source code can be found at
+{\tt https://github.com/larrytheliquid/generic-elim}}}
 To avoid clutter, in this paper we omit universe levels and assume
 {\tt Set : Set}. However, the accompanying source code contains a
 version of the code stratified by universe levels.
@@ -290,7 +289,7 @@ For simplicity, in this paper we use the encoding by
 The datatype {\tt Desc} of descriptions is used to represent
 user-defined definitions of strictly-positive indexed
 families of inductively defined types.
-{\tt Desc} is paramterized by 
+{\tt Desc} is parameterized by 
 a type {\tt I}, the index of the encoded type family.
 
 Throughout this paper it will be easier to first pretend like we
@@ -300,7 +299,7 @@ later definitions where vector contains both constructors.
 
 Imagine declaring a datatype with a single constructor.
 A constructor is a sequence of
-arguments that subsequent arguments may depend on, along with
+arguments that subsequent arguments may depend on (a {\it telescope}), along with
 recursive arguments at some type indices, and it ends with some type index.
 Respectively, {\tt Arg}, {\tt Rec}, and {\tt End} allow you to encode
 a dependent argument, a recursive argument at some index, and ending the
@@ -363,7 +362,7 @@ sums and dependent pairs whose domain is some finite enumeration.
 A ⊎ B ≅ Σ Bool (λ b → if b then A else B)
 \end{verbatim}
 
-This works fine for a dattype with two constructors (because {\tt Bool} is a two point domain),
+This works fine for a datatype with two constructors (because {\tt Bool} is a two point domain),
 in general we will define an $n$-point domain for a datatype with $n$ constructors. By
 convention we name such types and their constructors ending in the suffix {\tt T}, for tag.
 
@@ -581,7 +580,7 @@ VecEl A n ⇝ Σ VecT (case (λ _ → Set)
 \subsection{Definition of Constructors via the Initial Algebra}
 \label{sec:init:cons}
 
-We are now ready define the constructors {\tt nil} and
+We are now ready to define the constructors {\tt nil} and
 {\tt cons} using the initial algebra {\tt init}, which is the goal of
 this section.
 We have already seen
@@ -595,7 +594,7 @@ ends with a proof that the index has the correct value.
 nil : (A : Set) → Vec A zero
 nil A = init (nilT , refl)
 
-cons : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n)
+cons : (A : Set) (n : ℕ) (x : A) (xs : Vec A n)
   → Vec A (suc n)
 cons A n x xs = init (consT , n , x , xs , refl)
 \end{verbatim}
@@ -616,7 +615,7 @@ may be used to define {\tt nil} and {\tt cons} as follows.
 nil : (A : Set) → Vec A zero
 nil A = inj (VecD A) nilT
 
-cons : (A : Set) (n : ℕ tt) (x : A) (xs : Vec A n)
+cons : (A : Set) (n : ℕ) (x : A) (xs : Vec A n)
   → Vec A (suc n)
 cons A = inj (VecD A) consT
 \end{verbatim}
@@ -665,7 +664,7 @@ A_1 × ... × A_n × (j ≡ i) → Z
 
 \paragraph{Uncurried Algebra of a Single Constructor}
 
-For example, the applying {\tt UncurriedEl} to the description of the
+For example, applying {\tt UncurriedEl} to the description of the
 {\tt cons} constructor results in the following type.
 
 \begin{verbatim}
@@ -791,7 +790,7 @@ The algebra {\tt α} is the important argument, as it is the proof that
 that some property {\tt P} holds for any value of a
 described type.
 Whereas an eliminator
-has seperate branches for proofs about each constructor, {\tt ind}
+has separate branches for proofs about each constructor, {\tt ind}
 requires a single algebra argument that proves {\tt P} for any
 constructor.
 
@@ -1716,7 +1715,7 @@ eliminators with Dagand's work on generic datatype properties like
 injectivity of constructors, we now have all the ingredients necessary to
 elaborate dependent pattern matching to description-based eliminators.
 
-\citet{dagand2012transporting} decribe using ornaments
+\citet{dagand2012transporting} describe using ornaments
 to define new functions from old ones, such that the
 relationship between the two is freely captured.
 This work uses an alternative, more expressive, description
@@ -1733,7 +1732,7 @@ support sum types directly in descriptions and use those rather than
 their isomorphic dependent pair equivalents. Foveran~\citep{foveran} is
 an example of a language that encoded sum types directly. Our work
 could be extended to use descriptions that support primitive sum
-types. A function like {\tt elim} would still need to be paramterized
+types. A function like {\tt elim} would still need to be parameterized
 by an {\tt Enum}-like collection of all constructors, such that the
 primitive sum description could be computed from the {\tt Enum} in the
 same way that we use the enumeration to build an {\tt Arg}
