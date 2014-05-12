@@ -90,7 +90,7 @@ it is more convenient to {\it use} a generic function at some
 particular instance in a way that hides the low-level details, requiring
 a non-uniform (computational) type. For any generic function over
 uniform and low-level arguments, we can write a corresponding generic
-wrapper function whose type for an arbitrary value is some non-uniform
+wrapper function whose type for an arbitrary value contains some non-uniform
 stuck computation.
 However, applying the generic wrapper function to any
 particular value results in user-friendly and high-level type. As a
@@ -219,9 +219,9 @@ constructor names (as an enumeration of strings),
 and constructor arguments (as a description).
 The types of {\tt Form} and {\tt elim} applied to a {\tt Data} are
 exactly the types expected from the type formation and elimination
-axioms of an {\tt open} language. Similarly, the type of {\tt inj}
+axioms of an {\it open} language. Similarly, the type of {\tt inj}
 applied to a {\tt Data}, and a tag specifying a constructor, is exactly the
-expected type of the introduction axiom in an
+expected type of the introduction axiom of an
 {\it open} language.
 
 Recall that the closed type theory primitives ({\tt μ}, {\tt init},
@@ -259,8 +259,7 @@ primitive initial algebra {\tt init}.
 
 \item{\bf{\refsec{inj}}}
 {\it Contributes} the novel generic constructor {\tt inj} as a
-non-uniform wrapper function. To this
-end, we highlight each {\bf Part$_I$} involved in defining the
+non-uniform wrapper function. We highlight each {\bf Part$_I$} involved in defining the
 non-uniform constructor in terms of the uniform {\tt init}.
 
 \item{\bf{\refsec{ind}}}
@@ -270,8 +269,9 @@ the verbosity of {\tt ind}-based definitions, motivating why we would
 want a generic wrapper function for it.
 
 \item{\bf{\refsec{elim}}}
-{\it Contributes} the novel generic eliminator {\tt elim}. To this
-end, we highlight each {\bf Part$_E$} involved in defining the non-uniform
+{\it Contributes} the novel generic eliminator {\tt elim} as a
+non-uniform wrapper function. We
+highlight each {\bf Part$_E$} involved in defining the non-uniform
 eliminator in terms of the uniform {\tt ind}.
 
 \item{\bf{\refsec{related-work}}}
