@@ -12,7 +12,7 @@ module GenericElim.Background where
 
 ----------------------------------------------------------------------
 
-record DSF : Set where
+record Wrapper : Set where
   field
     U : Set
     El : U → Set
@@ -39,16 +39,16 @@ toBool (suc n) = true
 Bits : ℕ → Set
 Bits = Vec Bool
 
-base10 : (n : ℕ) → Vec Bool n → ℕ
-base10 zero [] = 0
-base10 (suc n) (false ∷ bs) = base10 n bs
-base10 (suc n) (true ∷ bs) = 2 ^ n + base10 n bs
+decimal : (n : ℕ) → Vec Bool n → ℕ
+decimal zero [] = 0
+decimal (suc n) (false ∷ bs) = decimal n bs
+decimal (suc n) (true ∷ bs) = 2 ^ n + decimal n bs
 
 internal-char : Bits 8 → ℕ
-internal-char = base10 8
+internal-char = decimal 8
 
-test-base10 : 42 ≡ internal-char (false ∷ false ∷ true ∷ false ∷ true ∷ false ∷ true ∷ false ∷ [])
-test-base10 = refl
+test-decimal : 42 ≡ internal-char (false ∷ false ∷ true ∷ false ∷ true ∷ false ∷ true ∷ false ∷ [])
+test-decimal = refl
 
 InternalBits : (n : ℕ) → Set → Set
 InternalBits n X = Bits n → X
@@ -66,7 +66,7 @@ internalBits zero X x [] = x
 internalBits (suc n) X f (b ∷ bs) = internalBits n X (f n) bs
 
 bits : (n : ℕ) → SurfaceBits n ℕ
-bits n = surfaceBits n ℕ (λ bs → base10 n bs)
+bits n = surfaceBits n ℕ (λ bs → decimal n bs)
 
 char : SurfaceBits 8 ℕ
 char = bits 8
