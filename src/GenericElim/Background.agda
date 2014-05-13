@@ -39,15 +39,15 @@ toBool (suc n) = true
 Bits : ℕ → Set
 Bits = Vec Bool
 
-decimal : (n : ℕ) → Vec Bool n → ℕ
+decimal : (n : ℕ) → Bits n → ℕ
 decimal zero [] = 0
 decimal (suc n) (false ∷ bs) = decimal n bs
 decimal (suc n) (true ∷ bs) = 2 ^ n + decimal n bs
 
-unwrap-char : Bits 8 → ℕ
-unwrap-char = decimal 8
+prim-byte : Bits 8 → ℕ
+prim-byte = decimal 8
 
-test-decimal : 42 ≡ unwrap-char (false ∷ false ∷ true ∷ false ∷ true ∷ false ∷ true ∷ false ∷ [])
+test-decimal : 42 ≡ prim-byte (false ∷ false ∷ true ∷ false ∷ true ∷ false ∷ true ∷ false ∷ [])
 test-decimal = refl
 
 UnwrappedBits : (n : ℕ) → Set → Set
@@ -68,10 +68,10 @@ unwrapBits (suc n) X f (b ∷ bs) = unwrapBits n X (f n) bs
 bits : (n : ℕ) → WrappedBits n ℕ
 bits n = wrapBits n ℕ (λ bs → decimal n bs)
 
-char : WrappedBits 8 ℕ
-char = bits 8
+byte : WrappedBits 8 ℕ
+byte = bits 8
 
-test-bits : 42 ≡ char 0 0 1 0 1 0 1 0
-test-bits = refl
+surf-byte : 42 ≡ byte 0 0 1 0 1 0 1 0
+surf-byte = refl
 
 ----------------------------------------------------------------------
