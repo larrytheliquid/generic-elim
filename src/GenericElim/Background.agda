@@ -16,14 +16,14 @@ record Wrapper : Set where
   field
     U : Set
     El : U → Set
-    Surface : (u : U) (X : El u → Set) → Set
+    Wrapped : (u : U) (X : El u → Set) → Set
 
-  Internal : (u : U) (X : El u → Set) → Set
-  Internal u X = (xs : El u) → X xs
+  Unwrapped : (u : U) (X : El u → Set) → Set
+  Unwrapped u X = (xs : El u) → X xs
 
   field
-    surface : (u : U) (X : El u → Set) → Internal u X → Surface u X
-    internal : (u : U) (X : El u → Set) → Surface u X → Internal u X
+    wrap : (u : U) (X : El u → Set) → Unwrapped u X → Wrapped u X
+    unwrap : (u : U) (X : El u → Set) → Wrapped u X → Unwrapped u X
 
 ----------------------------------------------------------------------
 
@@ -44,31 +44,31 @@ decimal zero [] = 0
 decimal (suc n) (false ∷ bs) = decimal n bs
 decimal (suc n) (true ∷ bs) = 2 ^ n + decimal n bs
 
-internal-char : Bits 8 → ℕ
-internal-char = decimal 8
+unwrap-char : Bits 8 → ℕ
+unwrap-char = decimal 8
 
-test-decimal : 42 ≡ internal-char (false ∷ false ∷ true ∷ false ∷ true ∷ false ∷ true ∷ false ∷ [])
+test-decimal : 42 ≡ unwrap-char (false ∷ false ∷ true ∷ false ∷ true ∷ false ∷ true ∷ false ∷ [])
 test-decimal = refl
 
-InternalBits : (n : ℕ) → Set → Set
-InternalBits n X = Bits n → X
+UnwrappedBits : (n : ℕ) → Set → Set
+UnwrappedBits n X = Bits n → X
 
-SurfaceBits : (n : ℕ) → Set → Set
-SurfaceBits zero X = X
-SurfaceBits (suc n) X = ℕ → SurfaceBits n X
+WrappedBits : (n : ℕ) → Set → Set
+WrappedBits zero X = X
+WrappedBits (suc n) X = ℕ → WrappedBits n X
 
-surfaceBits : (n : ℕ) (X : Set) → InternalBits n X → SurfaceBits n X
-surfaceBits zero X f = f []
-surfaceBits (suc n) X f b = surfaceBits n X (λ bs → f (toBool b ∷ bs))
+wrapBits : (n : ℕ) (X : Set) → UnwrappedBits n X → WrappedBits n X
+wrapBits zero X f = f []
+wrapBits (suc n) X f b = wrapBits n X (λ bs → f (toBool b ∷ bs))
 
-internalBits : (n : ℕ) (X : Set) → SurfaceBits n X → InternalBits n X
-internalBits zero X x [] = x
-internalBits (suc n) X f (b ∷ bs) = internalBits n X (f n) bs
+unwrapBits : (n : ℕ) (X : Set) → WrappedBits n X → UnwrappedBits n X
+unwrapBits zero X x [] = x
+unwrapBits (suc n) X f (b ∷ bs) = unwrapBits n X (f n) bs
 
-bits : (n : ℕ) → SurfaceBits n ℕ
-bits n = surfaceBits n ℕ (λ bs → decimal n bs)
+bits : (n : ℕ) → WrappedBits n ℕ
+bits n = wrapBits n ℕ (λ bs → decimal n bs)
 
-char : SurfaceBits 8 ℕ
+char : WrappedBits 8 ℕ
 char = bits 8
 
 test-bits : 42 ≡ char 0 0 1 0 1 0 1 0
