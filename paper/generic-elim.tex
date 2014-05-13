@@ -63,6 +63,7 @@
 %% \preprintfooter{short description of paper}   % 'preprint' option specified.
 
 \title{Generic Constructors and Eliminators from Descriptions}
+\subtitle{Type Theory as a Dependently Typed Internal DSL}
 
 \authorinfo{Larry Diehl\and Tim Sheard}
            {Portland State University}
@@ -76,21 +77,25 @@ introduce new datatypes using an axiomatic approach.
 Each new datatype introduces axioms for constructing values
 of the datatype, and an elimination axiom (which we call
 the {\it standard eliminator}) for consuming such values. In a ``closed''
-type theory a single introduction rule and a single
-elimination rule can be used for all datatypes, without adding axioms
-to the theory.
+type theory a single introduction rule primitive and a single
+elimination rule primitive can be used for all datatypes, without
+adding axioms to the theory.
 
-We review a closed type theory, specified as an Agda program, that
-uses descriptions for datatype construction.
-Descriptions make datatype definitions first class values, but, until now,
-have been less than satisfactory because of the complexity of writing
-programs that consume datatypes introduced by descriptions. In this
-work we derive constructors and standard eliminators, by defining functions
-parameterized by a description. This approach retains the benefits of
-a description based system -- generic programming -- but supports
-the ease of use of the standard eliminators of ``open'' type systems.
-We also gain the advantage that existing algorithms
-defined by translation to eliminators can be reused.
+We review a closed type theory, specified as an {\sc Agda} program, that
+uses descriptions for datatype construction. Descriptions make
+datatype definitions first class values, but writing programs using
+such datatypes requires low-level understanding of how the datatypes
+are encoded in terms of descriptions.
+In this
+work we derive constructors and standard eliminators, by defining
+generic functions
+parameterized by a description. Our generic type theory constructions
+are defined as generic wrappers around the closed type theory
+primitives, which are themselves generic functions in the {\sc Agda}
+model. Thus, we allow users to write programs in the model without
+understanding the details of the description-based encoding of
+datatypes, by using open type theory constructions as an
+internal domain-specific language (IDSL).
 
 \end{abstract}
 
@@ -188,35 +193,34 @@ Function definitions defined with {\tt ind} are particularly verbose,
 due to the low-level encoding, but the functions follow a common pattern.
 \end{enumerate}
 
-Rather than making users learn a new and cumbersome interface to
-program in a description-based language, the {\bf major contribution} of
+Rather than making users of the {\sc Agda} model learn the details of
+description-based encodings when writing programs using described
+datatypes,
+the {\bf major contribution} of
 this paper is a generic constructor ({\tt inj}) and a generic
-eliminator ({\tt elim}). The type of {\tt inj} applied to a
+eliminator ({\tt elim}), which both have an interface that hides the
+details of the description-based encoding.
+The type of {\tt inj} applied to a
 description of a datatype, and a tag specifying constructor, is exactly the
 expected type signature of a constructor defined axiomatically in an
 {\it open} language. Similarly, the type signature of {\tt elim} applied to
 a description of a type is exactly the expected type signature
 of an eliminator defined axiomatically in an {\it open} language.
-Moreover, {\tt inj} and {\tt elim} are themselves examples of generic
-programming, defined in terms of {\tt init} and {\tt ind} within a
-{\it closed} language.
+Moreover, {\tt inj} and {\tt elim} are examples of generic
+programming, defined as generic wrapper functions around the
+{\it closed} type theory primitives {\tt init}
+and {\tt ind}, which are themselves generic functions in the
+{\sc Agda} model.
 
 In a sense we derive the standard constructors and
 eliminators of type theory within a simple and sound system.
 We retain the generic programming ability afforded by description based languages,
-but also gain the ease of use supported by standard constructors and
-eliminators.
-
-Furthermore, we gain the advantage that existing algorithms, already defined in
-terms of eliminators, can now be reused.
-For example, \citet{gimenez1995codifying} translates
-{\sc Coq} {\tt Fix}-based definitions into eliminators,
-and \citet{Goguen06eliminatingdependent} and
-\citet{McBride:2000:EM:646540.759262}
-translate dependent pattern matching into
-eliminators. Rather than reinventing these algorithms to translate to
-{\tt ind}, we can instead directly reuse them with our derived {\tt elim},
-and our simple and sound system can now support high-level features.
+but also hide implementation details when defining functions over
+particular types by supplying the user with standard constructors and
+eliminators. Essentially, we use generic programming to define type
+theory constructions as an
+{\it internal domain-specific language}~\citep{landin1966next} within the
+{\sc Agda} model of closed type theory.
 
 \paragraph{}
 The remainder of this paper proceeds as follows:
@@ -1656,36 +1660,6 @@ By induction on the description argument.
 Our work focuses on internalizing the definition of constructors and
 eliminators in terms of existing primitives that use algebras. 
 
-\subsection{Translating to Eliminators}
-
-There is a lot of related work on defining things
-{\it in terms of eliminators} that can be reused now that we have
-derived a generic eliminator from primitives.
-Dependent pattern matching is a much more attractive interface to
-dependently typed programming than eliminators, just as eliminators
-are a more attractive interface than algebra-based primitives.
-Thankfully, \citet{Goguen06eliminatingdependent} and
-\citet{McBride:2000:EM:646540.759262} have already shown how to
-translate definitions given by dependent pattern matching to
-eliminators.
-Similarly, {\sc Coq} allows users to define recursive functions in a
-more attractive way using {\tt Fix}. To justify the termination of
-{\tt Fix}-based definitions, \citet{gimenez1995codifying} translates
-them into eliminators. 
-
-\subsection{Generating Specialized Eliminators}
-
-Although proof assistants like {\sc Coq} support a higher-level
-notation like {\tt Fix} for function definitions, the induction
-principle (the eliminator) is also a useful interface and is used in 
-many tactics. For this reason, {\sc Coq} generates the definition
-of the induction principle in terms of its primitive {\tt Fix}
-whenever a user declares a datatype. The difference between our work
-and what {\sc Coq} does,  is that {\sc Coq} generates
-specialized eliminator definitions at the level of the metatheory,
-while we define a single generic eliminator within the object
-language.
-
 \subsection{Generic Programming using Descriptions}
 
 There has been a lot of work on performing generic programming over
@@ -1706,14 +1680,19 @@ functions such as decidable equality over a class of datatypes that
 support such functions. \citet{dagand:phd} also generically defines
 constructions~\citep{mcbride2006few}, such as case
 analysis and injectivity of constructors, that are used when
-elaborating dependent pattern matching to eliminators. There
-case analysis is defined to be just like the primitive elimination
-rule {\tt ind}, but where the inductive hypotheses are not supplied
-(i.e. you still use an uncurried {\it algebra} that gets {\tt El} as
-an argument, but not {\tt Hyps}). By combining our work on generic
-eliminators with Dagand's work on generic datatype properties like
-injectivity of constructors, we now have all the ingredients necessary to
-elaborate dependent pattern matching to description-based eliminators.
+elaborating dependent pattern matching to eliminators. 
+
+\citet{Chapman:2010:GAL:1932681.1863547} introduced descriptions in a
+paper that also introduced the technique of {\it levitation}.
+Levitation is a technique to reduce the number of type theory
+primitives, hence the size of a core type theory, by defining certain
+datatypes that would normally be primitive in terms of descriptions
+(including descriptions themselves, hence the name ``levitation'').
+While both levitation and a closed type theory based on descriptions
+were introduced at the same time, the closed type theory can also be
+defined without levitation. Hence, our present work of generic type
+theory constructions is orthogonal to whether or not the closed type
+theory primitives have been levitated.
 
 \citet{dagand2012transporting} describe using ornaments
 to define new functions from old ones, such that the
@@ -1757,6 +1736,12 @@ conversion is {\it internalized}, as we define eliminators in terms of
 {\tt ind} within the existing type theory, rather than prove an
 equivalence to eliminators defined at the level of the metatheory.
 
+Besides defining {\tt elim} in terms of {\tt ind}, we also prove the
+extensional equivalence of both functions as a soundness and
+completeness theorem. We also expect these theorems to be similar in
+nature to the proof by \citet{dagand:phd} in terms of the work by
+\citet{gimenez1995codifying}.
+
 \subsection{Algebras Defined with Curry}
 
 Throughout this paper we have emphasized the verbosity of functions
@@ -1766,26 +1751,31 @@ tersely in terms of {\tt ind} by sprinkling in uses of the {\tt curry}
 function. We believe that while this makes functions easier to
 read, they are still difficult to write, even when defining them
 interactively due to pervasive definitional expansion of encoded
-constructions. Additionally, even if programmers define functions this
-way, we still cannot reuse algorithms defined by translation into
-eliminators.
+constructions.
 
-\section{Conclusion}
+\section{Conclusion \& Future Work}
 \label{sec:conclusion}
 
 Closed dependently typed languages that define datatypes from
 descriptions offer tremendous generic programming capabilities. 
-We feel that the verbosity and unfamiliarity involved with 
-introducing (using the {\tt init} primitive)
-and eliminating (using the {\tt ind} primitive)
-values of described datatypes has hindered the adoption of such
-potentially useful technology. We hope that our generic
-constructor ({\tt inj}) and generic eliminator ({\tt elim}) can
-alleviate this adoption problem by presenting more familiar and terse
-programming constructs. Even better, we hope that now description-based
-languages can be implemented to expose higher-level
-constructs, such as dependent dependent pattern matching, by
-translating into well-known type theoretic primitives.
+However, when programming over particular datatypes within the model
+of a closed language, it can be useful
+to not worry about the details of the encodings of description-based
+datatypes. Thanks to our our generic
+constructor ({\tt inj}) and generic eliminator ({\tt elim}), users can
+now optionally program in the IDSL of type theory, without needing to
+be aware of description-based encodings.
+
+Besides the generic constructors and eliminators we presented here, we
+have used the same techniques to generically implement type
+formers. This is made possible by representing datatype parameters and
+indices explicitly as telescopes. We have also modified the generic
+constructor and eliminator to be parameter and index aware. Additionally, we have added a
+distinct {\it implicit} argument constructor for telescopes and
+descriptions, allowing users of our IDSL to specify which type
+parameters, type indices, and constructor arguments should be rendered
+as implicit arguments. These extensions can be found in the
+accompanying source code, linked in the introduction.
 
 \acks
 
