@@ -163,8 +163,8 @@ fourty-two : ℕ
 fourty-two = char 0 0 1 0 1 0 1 0
 \end{verbatim}
 
-We demonstrate how to create high-level IDSL functions as
-generic {\it wrapper} functions on top of existing generic
+We demonstrate how to create high-level IDSL functions by using
+generic {\it wrapper} functions, which wrap existing generic
 universe-based functions. This technique is folklorish, and almost
 always involves some form of currying values in the universe. However,
 wrapper functions may also perform other kinds of transformations to
@@ -172,7 +172,7 @@ translate between low-level and high-level data (e.g. coercing numbers
 to booleans in the example above).
 
 {\bf Our contribution} is
-standardizing understanding of writing IDSL's as generic wrapper
+standardizing understanding of writing IDSL's via generic wrapper
 functions through a series of examples. After presenting the binary to decimal
 converter in more detail, we show how to internalize type formers,
 constructors, and eliminators of an open
@@ -237,12 +237,13 @@ version of the code stratified by universe levels.
 \section{Generic Binary to Decimal Converter}
 \label{sec:bits}
 
-The goal of this section is to learn how to define the generic wrapper
-function {\tt bits}. The generic wrapper function {\tt bits} is
-defined in terms of the low-level binary to decimal converter
-{\tt decimal}. The wrapper {\tt bits} is an IDSL for creating
+The goal of this section is to learn how to define generic wrapper
+functions, which may be used to define IDSL functions like
+{\tt bits}. The function {\tt bits} is an IDSL for creating
 user-friendly converters from a binary string of some length to a
-decimal value, such that we can write examples like the following.
+decimal value. It can be defined in terms of a generic wrapper over
+the low-level binary to decimal converter {\tt decimal}, and can be
+used as follows.
 
 \begin{verbatim}
 char = bits 8
