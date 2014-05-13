@@ -39,7 +39,7 @@ toBool (suc n) = true
 Bits : ℕ → Set
 Bits = Vec Bool
 
-base10 : (n : ℕ) → Bits n → ℕ
+base10 : (n : ℕ) → Vec Bool n → ℕ
 base10 zero [] = 0
 base10 (suc n) (false ∷ bs) = base10 n bs
 base10 (suc n) (true ∷ bs) = 2 ^ n + base10 n bs
@@ -47,7 +47,7 @@ base10 (suc n) (true ∷ bs) = 2 ^ n + base10 n bs
 internal-char : Bits 8 → ℕ
 internal-char = base10 8
 
-test-base10 : 9 ≡ internal-char (false ∷ false ∷ false ∷ false ∷ true ∷ false ∷ false ∷ true ∷ [])
+test-base10 : 42 ≡ internal-char (false ∷ false ∷ true ∷ false ∷ true ∷ false ∷ true ∷ false ∷ [])
 test-base10 = refl
 
 InternalBits : (n : ℕ) → Set → Set
@@ -71,7 +71,7 @@ bits n = surfaceBits n ℕ (λ bs → base10 n bs)
 char : SurfaceBits 8 ℕ
 char = bits 8
 
-test-bits : 9 ≡ char 0 0 0 0 1 0 0 1
+test-bits : 42 ≡ char 0 0 1 0 1 0 1 0
 test-bits = refl
 
 ----------------------------------------------------------------------
