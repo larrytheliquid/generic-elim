@@ -80,10 +80,10 @@ type theory a single type formation primitive, a single introduction
 primitive, and a single elimination primitive can be used for all
 datatypes, without adding axioms to the theory.
 
-We review a closed type theory, specified as an Agda program, that
+We review a closed type theory, specified as an {\sc Agda} program, that
 uses descriptions (first-class datatype definitions) for datatype
 construction. The primitives of the closed theory are themselves
-generic functions of the metalanguage Agda. They are a representative
+generic functions of the metalanguage {\sc Agda}. They are a representative
 example of generic functions, whose {\it implementation} is simplified
 by taking arguments in a uniform but low-level way. On the other hand,
 it is more convenient to {\it use} a generic function at some
@@ -107,151 +107,98 @@ Generic programming; dependent types; descriptions; eliminators.
 
 \section{Introduction}
 \label{sec:intro}
-Dependently typed languages such as
-{\sc Coq}~\citep{coq08},
-{\sc Agda}~\citep{norell2007towards}, and 
-{\sc Idris}~\citep{brady2011idris} 
-introduce datatypes axiomatically.
-These systems extend an {\it open} type theory with new axioms that
-describe how to legally manipulate values of a newly declared type.
 
-%% In \citet{martin1975intuitionistic} type theory, declaring datatypes
-%% results in axioms for
-%% type constructors, value constructors, and eliminators (induction
-%% principles as dependently typed folds).
-
-Recently, there has been quite a bit of work on defining datatypes
-within a {\it closed}
-theory (without axioms) using {\it descriptions}.
-Descriptions make datatype definitions first class values in a
-dependent type theory. This has several desirable consequences, such as the
-ability to perform generic programming~\citep{Chapman:2010:GAL:1932681.1863547,mcbride2010ornamental,dagand:phd}
-over described types, as well as decreasing the number of constructs in the
-metatheory via
-levitation~\citep{Chapman:2010:GAL:1932681.1863547,dagand:phd}. 
-
-For example, we might declare the type of vectors, length indexed
-lists, in an open dependently typed language based on
-\citet{martin1975intuitionistic} type theory.
-Declaring vectors adds one type former ({\tt Vec}),
-two constructors ({\tt nil} and {\tt cons}) and one
-eliminator ({\tt elimVec}) as axioms to the language.
+It is standard practice to write generic functions in a dependently
+typed language by using a \citet{martin1975intuitionistic} universe.
+A universe consists of codes representing types, and an interpretation
+function that translates a code into an actual type. It is possible to
+write a function that is generic for all encoded types by taking a
+universe code argument, followed by an argument whose dependent type
+is the interpretation of said code. For example, below is a function
+({\tt bits}) that computes the decimal value of a binary number, which
+is generic in the length of the binary number.
 
 \begin{verbatim}
-Vec : (A : Set) → Set
-
-nil : (A : Set) → Vec A zero
-cons : (A : Set) (n : ℕ) (a : A)
-  (xs : Vec A n) → Vec A (suc n)
-
-elimVec : (A : Set) (P : (n : ℕ) → Vec A n → Set)
-  (pnil : P zero nil)
-  (pcons : (n : ℕ) (a : A) (xs : Vec A n)
-    → P n xs → P (suc n) (cons n a xs))
-  (n : ℕ) (xs : Vec A n) → P n xs
+bits : (n : ℕ) → Vec Bool n → ℕ
+bits zero [] = 0
+bits (suc n) (false ∷ bs) = bits n bs
+bits (suc n) (true ∷ bs) = 2 ^ n + bits n bs
 \end{verbatim}
 
-In contrast, declaring a datatype like {\tt Vec} in a closed type
-theory using descriptions does {\it not} add a type former, constructors, and an
-eliminator as specialized axioms to the language. Instead, types of
-datatypes built from descriptions can be formed with a single
-primitive, the fixpoint of a pattern functor ({\tt μ}). Values of
-datatypes built from descriptions can be introduced with a single
-primitive, the initial algebra ({\tt init}), and can be eliminated with
-a single primitive, a dependently typed version of catamorphism
-({\tt ind}), which takes an algebra ({\tt α}) as its argument.
+The universe of codes for bit strings of some length is the
+type of natural numbers ({\tt ℕ}), and the interpretation function is
+a vector of booleans ({\tt Vec Bool}) of some length code.
+We can get an instance of this generic program by
+partially applying a natural number to {\tt bits}, resulting in a
+specialized function that translates bit strings of some constant length
+to a decimal value. For example, we specialize {\tt bits} below to
+{\tt 8}, giving us a binary to decimal converter for unsigned
+characters.
 
 \begin{verbatim}
-μ : {I : Set} (D : Desc I) (i : I) → Set
-
-init : {I : Set} {D : Desc I} {i : I}
-  → El D (μ D) i → μ D i
-
-ind : {I : Set} (D : Desc I)
-  (P : (i : I) → μ D i → Set)
-  (α : (i : I) (xs : El D (μ D) i)
-    (ihs : Hyps D (μ D) P i xs) → P i (init xs))
-  (i : I) (x : μ D i) → P i x
+char : Vec Bool 8 → ℕ
+char = bits 8
 \end{verbatim}
 
-Without trying to understand these type signatures at the moment,
-recognize that:
+Writing generic functions in this universe-based style is pleasant,
+but we may wish to expose a more user-friendly generic
+function in the form of an
+internal domain-specific language (IDSL)~\cite{TODO}. In some sense,
+the specialized type of {\tt char} reveals the low-level encoding of
+bits as a vector of booleans. Any user of {\tt char} needs to know
+the format of the encoding.
 
-\begin{itemize}
-\item{}
-All types are parameterized by a description, allowing them to be used with any
-datatype defined using a description.
-\item{}
-The descriptions ({\tt D : Desc I}) represent type families whose indices
-have some arbitrary type ({\tt I : Set}), and whose parameters are not
-explicitly mentioned.
-\item{}
-The latter two types refer to the type {\tt El D}, which interprets a
-description as a pattern functor and is used to define the datatypes with an
-initial algebra-style semantics.
-\end{itemize}
+\begin{verbatim}
+fourty-two : ℕ
+fourty-two = char
+  (false ∷ false ∷ true ∷ false ∷
+   true  ∷ false ∷ true ∷ false ∷ [])
+\end{verbatim}
 
-Unfortunate side effects of forming, introducing, and eliminating described
-datatypes include:
+When writing an IDSL, we may want to instead expose a version of
+{\tt char} that lets us write following high-level expression instead.
 
-\begin{itemize}
-\item{}
-Users need to represent parameterized datatypes in an ad hoc way (for
-example, as a function from parameters to descriptions).
-\item{}
-Users defining types with multiple indices need to manually represent
-them as a low-level product of indices.
-\item{}
-Users need to understand how {\tt El D} gets interpreted as a type in
-the language in order to program with values of said types, exposing
-the low-level encoding.
-\item{}
-Function definitions defined with {\tt ind} are particularly verbose,
-due to the low-level encoding, but the functions follow a common pattern.
-\end{itemize}
+\begin{verbatim}
+fourty-two : ℕ
+fourty-two = char 0 0 1 0 1 0 1 0
+\end{verbatim}
 
-We show how to implement the constructions of open type theory as
-generic functions: a function for type formation ({\tt Form}), value
-construction ({\tt inj}), and value elimination ({\tt elim}).
-We define a dependent record ({\tt Data}), whose fields include an explicit
-representation of a datatype's parameters and indices (as telescopes),
-constructor names (as an enumeration of strings),
-and constructor arguments (as a description).
-The types of {\tt Form} and {\tt elim} applied to a {\tt Data} are
-exactly the types expected from the type formation and elimination
-axioms of an {\it open} language. Similarly, the type of {\tt inj}
-applied to a {\tt Data}, and a tag specifying a constructor, is exactly the
-expected type of the introduction axiom of an
-{\it open} language.
+We demonstrate how to create high-level IDSL functions as
+generic {\it wrapper} functions on top of existing generic
+universe-based functions. This technique is folklorish, and almost
+always involves some form of currying values in the universe. However,
+wrapper functions may also perform other kinds of transformations to
+translate between low-level and high-level data (e.g. coercing numbers
+to booleans in the example above).
 
-Recall that the closed type theory primitives ({\tt μ}, {\tt init},
-and {\tt ind}) are themselves generic functions of the metalanguage.
-They have uniform but low-level arguments, making them easy to define
-but difficult to use (as mentioned above).
-{\bf Our major contribution} is showing how to write open type theory
-constructions ({\tt Form}, {\tt inj}, {\tt elim}) as generic
-user-friendly wrapper functions around the closed type theory generic
-functions. Writing such a wrapper function involves defining a
-non-uniform, computational type, for each wrapper function. Applying
-such a computational type to any particular {\tt Data} record allows
-the computation to unfold, resulting in a user-friendly instance of
-the generic function. Implementing the wrapper function involves
-converting between the uniform and non-uniform type representations,
-which mostly involves currying and uncurrying. However, we demonstrate
-that non-trivial conversions can also occur (i.e. implicit equality
-proof coercion in the definition of {\tt elim}). The technique of
-writing non-uniform, user-friendly, generic wrappers is applicable to
-many dependently typed generic functions. The technique
-itself is a bit of folklore, but we highlight a
-non-trivial use of it here to derive open type theory constructions
-from closed primitives.
+{\bf Our contribution} is
+standardizing understanding of this technique
+through a series of examples. After presenting the binary to decimal
+converter in more detail, we show how to internalize type formers,
+constructors, and eliminators of an open
+\citet{martin1975intuitionistic} type theory in terms of the
+description-based closed type theory primitives of
+\citet{Chapman:2010:GAL:1932681.1863547}. Each of these open type
+theory constructions can be defined as a generic wrapper function
+(making open type theory an IDSL) in
+terms of the existing generic functions modelling closed type
+theory primitives. Of these constructions, the generic eliminator is
+the most complex, requiring the definition of several helper wrapper
+generic functions and performing several data transformations besides
+currying.
 
 \paragraph{}
 The remainder of this paper proceeds as follows:
 
 \begin{itemize}
+\item{\bf{\refsec{bits}}}
+{\it Formalizes} the technique of writing generic wrapper functions.
+The binary to decimal converter is used as a motivating example.
+
 \item{\bf{\refsec{background}}}
-{\it Reviews} how to define datatypes using descriptions.
+{\it Reviews} how to define datatypes
+using descriptions within an {\sc Agda} model the closed type theory of
+\citet{Chapman:2010:GAL:1932681.1863547}.
 
 \item{\bf{\refsec{init}}}
 {\it Reviews} how to introduce values of described types using the
@@ -286,6 +233,152 @@ All code presented in this paper has been checked with {\sc Agda}.
 To avoid clutter, in this paper we omit universe levels and assume
 {\tt Set : Set}. However, the accompanying source code contains a
 version of the code stratified by universe levels.
+
+
+%% For example, a high-level generic wrapper
+%% function can be defined in terms of the low-level generic {\tt bits}
+%% function. The type of the wrapper will be a {\it function}, containing
+%% a stuck computation trying to case-analyze the universe code
+%% parameter. However, applying the wrapper function to any
+%% particular universe code results allows computation to unfold to some
+%% user-friendly type that hides the low-level encoding (defined by the
+%% universe's interpretation function).
+
+
+
+%% Dependently typed languages such as
+%% {\sc Coq}~\citep{coq08},
+%% {\sc Agda}~\citep{norell2007towards}, and 
+%% {\sc Idris}~\citep{brady2011idris} 
+%% introduce datatypes axiomatically.
+%% These systems extend an {\it open} type theory with new axioms that
+%% describe how to legally manipulate values of a newly declared type.
+
+%% Recently, there has been quite a bit of work on defining datatypes
+%% within a {\it closed}
+%% theory (without axioms) using {\it descriptions}.
+%% Descriptions make datatype definitions first class values in a
+%% dependent type theory. This has several desirable consequences, such as the
+%% ability to perform generic programming~\citep{Chapman:2010:GAL:1932681.1863547,mcbride2010ornamental,dagand:phd}
+%% over described types, as well as decreasing the number of constructs in the
+%% metatheory via
+%% levitation~\citep{Chapman:2010:GAL:1932681.1863547,dagand:phd}. 
+
+%% For example, we might declare the type of vectors, length indexed
+%% lists, in an open dependently typed language based on
+%% \citet{martin1975intuitionistic} type theory.
+%% Declaring vectors adds one type former ({\tt Vec}),
+%% two constructors ({\tt nil} and {\tt cons}) and one
+%% eliminator ({\tt elimVec}) as axioms to the language.
+
+%% \begin{verbatim}
+%% Vec : (A : Set) → Set
+
+%% nil : (A : Set) → Vec A zero
+%% cons : (A : Set) (n : ℕ) (a : A)
+%%   (xs : Vec A n) → Vec A (suc n)
+
+%% elimVec : (A : Set) (P : (n : ℕ) → Vec A n → Set)
+%%   (pnil : P zero nil)
+%%   (pcons : (n : ℕ) (a : A) (xs : Vec A n)
+%%     → P n xs → P (suc n) (cons n a xs))
+%%   (n : ℕ) (xs : Vec A n) → P n xs
+%% \end{verbatim}
+
+%% In contrast, declaring a datatype like {\tt Vec} in a closed type
+%% theory using descriptions does {\it not} add a type former, constructors, and an
+%% eliminator as specialized axioms to the language. Instead, types of
+%% datatypes built from descriptions can be formed with a single
+%% primitive, the fixpoint of a pattern functor ({\tt μ}). Values of
+%% datatypes built from descriptions can be introduced with a single
+%% primitive, the initial algebra ({\tt init}), and can be eliminated with
+%% a single primitive, a dependently typed version of catamorphism
+%% ({\tt ind}), which takes an algebra ({\tt α}) as its argument.
+
+%% \begin{verbatim}
+%% μ : {I : Set} (D : Desc I) (i : I) → Set
+
+%% init : {I : Set} {D : Desc I} {i : I}
+%%   → El D (μ D) i → μ D i
+
+%% ind : {I : Set} (D : Desc I)
+%%   (P : (i : I) → μ D i → Set)
+%%   (α : (i : I) (xs : El D (μ D) i)
+%%     (ihs : Hyps D (μ D) P i xs) → P i (init xs))
+%%   (i : I) (x : μ D i) → P i x
+%% \end{verbatim}
+
+%% Without trying to understand these type signatures at the moment,
+%% recognize that:
+
+%% \begin{itemize}
+%% \item{}
+%% All types are parameterized by a description, allowing them to be used with any
+%% datatype defined using a description.
+%% \item{}
+%% The descriptions ({\tt D : Desc I}) represent type families whose indices
+%% have some arbitrary type ({\tt I : Set}), and whose parameters are not
+%% explicitly mentioned.
+%% \item{}
+%% The latter two types refer to the type {\tt El D}, which interprets a
+%% description as a pattern functor and is used to define the datatypes with an
+%% initial algebra-style semantics.
+%% \end{itemize}
+
+%% Unfortunate side effects of forming, introducing, and eliminating described
+%% datatypes include:
+
+%% \begin{itemize}
+%% \item{}
+%% Users need to represent parameterized datatypes in an ad hoc way (for
+%% example, as a function from parameters to descriptions).
+%% \item{}
+%% Users defining types with multiple indices need to manually represent
+%% them as a low-level product of indices.
+%% \item{}
+%% Users need to understand how {\tt El D} gets interpreted as a type in
+%% the language in order to program with values of said types, exposing
+%% the low-level encoding.
+%% \item{}
+%% Function definitions defined with {\tt ind} are particularly verbose,
+%% due to the low-level encoding, but the functions follow a common pattern.
+%% \end{itemize}
+
+%% We show how to implement the constructions of open type theory as
+%% generic functions: a function for type formation ({\tt Form}), value
+%% construction ({\tt inj}), and value elimination ({\tt elim}).
+%% We define a dependent record ({\tt Data}), whose fields include an explicit
+%% representation of a datatype's parameters and indices (as telescopes),
+%% constructor names (as an enumeration of strings),
+%% and constructor arguments (as a description).
+%% The types of {\tt Form} and {\tt elim} applied to a {\tt Data} are
+%% exactly the types expected from the type formation and elimination
+%% axioms of an {\it open} language. Similarly, the type of {\tt inj}
+%% applied to a {\tt Data}, and a tag specifying a constructor, is exactly the
+%% expected type of the introduction axiom of an
+%% {\it open} language.
+
+%% Recall that the closed type theory primitives ({\tt μ}, {\tt init},
+%% and {\tt ind}) are themselves generic functions of the metalanguage.
+%% They have uniform but low-level arguments, making them easy to define
+%% but difficult to use (as mentioned above).
+%% {\bf Our major contribution} is showing how to write open type theory
+%% constructions ({\tt Form}, {\tt inj}, {\tt elim}) as generic
+%% user-friendly wrapper functions around the closed type theory generic
+%% functions. Writing such a wrapper function involves defining a
+%% non-uniform, computational type, for each wrapper function. Applying
+%% such a computational type to any particular {\tt Data} record allows
+%% the computation to unfold, resulting in a user-friendly instance of
+%% the generic function. Implementing the wrapper function involves
+%% converting between the uniform and non-uniform type representations,
+%% which mostly involves currying and uncurrying. However, we demonstrate
+%% that non-trivial conversions can also occur (i.e. implicit equality
+%% proof coercion in the definition of {\tt elim}). The technique of
+%% writing non-uniform, user-friendly, generic wrappers is applicable to
+%% many dependently typed generic functions. The technique
+%% itself is a bit of folklore, but we highlight a
+%% non-trivial use of it here to derive open type theory constructions
+%% from closed primitives.
 
 \section{Declaring Datatypes}
 \label{sec:background}
