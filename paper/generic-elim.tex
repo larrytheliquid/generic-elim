@@ -1,4 +1,4 @@
-\documentclass[preprint,nonatbib]{sigplanconf}
+\documentclass[nonatbib]{sigplanconf}
 \usepackage[authoryear,square]{natbib}
 
 \usepackage{todonotes}
@@ -54,6 +54,11 @@
 \newcommand{\refparti}[1]{Part$_I$ \ref{parti:#1}}
 
 \begin{document}
+
+\conferenceinfo{WGP~'13}{September 28, 2013, Boston, MA, USA} 
+\copyrightyear{2013} 
+\copyrightdata{978-1-4503-2389-5/13/09} 
+\doi{2633628.2633630} 
 
 \special{papersize=8.5in,11in}
 \setlength{\pdfpageheight}{\paperheight}
@@ -1600,6 +1605,28 @@ as a theorem, omitting all but the key function arguments for legibility.
 \end{proof}
 \end{figure*}
 
+\begin{figure*}
+\caption{Completeness of {\tt elim}}
+\label{fig:completeness}
+\begin{mythm}
+\begin{align*}
+\forall \alpha. ~ \exists \beta.
+~ \textrm{ind} ~ \alpha = \textrm{elimUncurried} ~ \beta
+\end{align*}
+\end{mythm}
+
+\begin{proof}
+\begin{align*}
+\textrm{ind} ~ \alpha &= \textrm{elimUncurried} ~ \beta& && \\
+\textrm{ind} ~ \alpha &=\textrm{indCurried} ~ ( \textrm{case} ~ \beta ) && \text{(by def {\tt elimUncurried})} \notag\\
+\textrm{ind} ~ \alpha &= \textrm{ind} ~ ( \textrm{uncurryHyps} ~ ( \textrm{case} ~ \beta ) ) && \text{(by def {\tt indCurried})} \notag\\
+\textrm{ind} ~ \alpha &= \textrm{ind} ~ ( \textrm{uncurryHyps} ~ ( \textrm{case} ~ ( \textrm{toBranches} ~ \alpha ) ) ) && (\text{solve} ~ \beta := \textrm{toBranches} ~ \alpha) \\
+\textrm{ind} ~ \alpha &= \textrm{ind} ~ ( \textrm{uncurryHyps} ~ ( \textrm{curryHyps} ~ \alpha ) ) && \text{(by lemma {\it ToBranches})} \\
+\textrm{ind} ~ \alpha &= \textrm{ind} ~ \alpha && \text{(by lemma {\it CurryHypsIdent})}
+\end{align*}
+\end{proof}
+\end{figure*}
+
 \subsection{Completeness}
 
 Formally, the type of completeness of {\tt elimUncurried} with respect to
@@ -1624,28 +1651,6 @@ expressed by {\tt elimUncurried} applied to a tuple of constructor branches
 ({\tt β}). In \reffig{completeness} we
 state and prove completeness informally
 as a theorem, once again omitting all but the key function arguments.
-
-\begin{figure*}
-\caption{Completeness of {\tt elim}}
-\label{fig:completeness}
-\begin{mythm}
-\begin{align*}
-\forall \alpha. ~ \exists \beta.
-~ \textrm{ind} ~ \alpha = \textrm{elimUncurried} ~ \beta
-\end{align*}
-\end{mythm}
-
-\begin{proof}
-\begin{align*}
-\textrm{ind} ~ \alpha &= \textrm{elimUncurried} ~ \beta& && \\
-\textrm{ind} ~ \alpha &=\textrm{indCurried} ~ ( \textrm{case} ~ \beta ) && \text{(by def {\tt elimUncurried})} \notag\\
-\textrm{ind} ~ \alpha &= \textrm{ind} ~ ( \textrm{uncurryHyps} ~ ( \textrm{case} ~ \beta ) ) && \text{(by def {\tt indCurried})} \notag\\
-\textrm{ind} ~ \alpha &= \textrm{ind} ~ ( \textrm{uncurryHyps} ~ ( \textrm{case} ~ ( \textrm{toBranches} ~ \alpha ) ) ) && (\text{solve} ~ \beta := \textrm{toBranches} ~ \alpha) \\
-\textrm{ind} ~ \alpha &= \textrm{ind} ~ ( \textrm{uncurryHyps} ~ ( \textrm{curryHyps} ~ \alpha ) ) && \text{(by lemma {\it ToBranches})} \\
-\textrm{ind} ~ \alpha &= \textrm{ind} ~ \alpha && \text{(by lemma {\it CurryHypsIdent})}
-\end{align*}
-\end{proof}
-\end{figure*}
 
 The proof of completeness in \reffig{completeness} uses the following
 two lemmas. It also uses the definition of the function
