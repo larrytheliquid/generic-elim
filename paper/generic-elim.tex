@@ -299,11 +299,11 @@ a type {\tt I}, the index of the encoded type family.
 Throughout this paper it will be easier to first pretend like we
 defined {\tt Vec} with a single constructor, either
 {\tt nil} or {\tt cons}. This makes it easier to understand
-later definitions where vector contains both constructors.
+later definitions where {\tt Vec} contains both constructors.
 
 Imagine declaring a datatype with a single constructor.
 A constructor is a sequence of
-arguments that subsequent arguments may depend on (a {\it telescope}), along with
+arguments that subsequent arguments may depend on (i.e., a {\it telescope}), along with
 recursive arguments at some type indices, and it ends with some type index.
 Respectively, {\tt Arg}, {\tt Rec}, and {\tt End} allow you to encode
 a dependent argument, a recursive argument at some index, and ending the
@@ -382,7 +382,7 @@ a function that returns a description for each constructor tag. Note
 that whereas we used {\tt Arg} for arguments of constructors before,
 now we are using {\tt Arg} to represent the sum of all constructors.
 By convention we use the suffix {\tt C} for the sum of constructors of
-a description, and a the suffix {\tt D} for descriptions.
+a description, and the suffix {\tt D} for descriptions.
 
 \begin{verbatim}
 VecC : (A : Set) → VecT → Desc ℕ
@@ -443,7 +443,8 @@ consT = there here
 
 A tag can be eliminated with a {\tt case} construct (this is referred to
 as {\tt switch} by \citet{Chapman:2010:GAL:1932681.1863547,dagand:phd}),
-producing a value of the motive type {\tt P} indexed by the tag.
+producing a value of the motive~\citep{McBride:2000:EM:646540.759262} 
+type {\tt P} indexed by the tag.
 In addition to the tag being eliminated, the case construct is given a
 list of branches, one of which the tag will select.
 
@@ -456,7 +457,9 @@ case P (c , cs) (there t) =
 \end{verbatim}
 
 Think of the cases being a right-nested tuple. The type of this tuple
-is computed by the {\tt Set} returning function {\tt Branches}.
+is computed by the {\tt Set} returning function {\tt Branches}
+(\citet{Chapman:2010:GAL:1932681.1863547,dagand:phd} refer to 
+{\tt Branches} as {\tt π}).
 There is a branch for each label in the enumeration, and the type of
 each branch depends on the tag representing the position of the label
 in the enumeration.
@@ -545,6 +548,11 @@ El (Arg A B) X i = Σ A (λ a → El (B a) X i)
 The {\tt nil} constructor of vectors has no arguments. Thus,
 {\tt El} for {\tt nilD} will only require a proof that the index in
 the type is equal to the vector length zero.
+
+For the remainder of the
+paper, we will use a curved arrow ({\tt ⇝}) to denote that the
+expression to the left of the arrow definitionally reduces to the term
+on the right.
 
 \begin{verbatim}
 NilEl : (A : Set) (n : ℕ) → Set
