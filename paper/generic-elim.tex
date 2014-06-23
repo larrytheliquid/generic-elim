@@ -190,7 +190,8 @@ the language in order to program with values of said types, exposing
 the low-level encoding.
 \item{}
 Function definitions defined with {\tt ind} are particularly verbose,
-due to the low-level encoding, but the functions follow a common pattern.
+due to the low-level encoding, but the functions follow a common
+pattern.
 \end{enumerate}
 
 Rather than making users of the {\sc Agda} model learn the details of
@@ -550,7 +551,7 @@ The {\tt nil} constructor of vectors has no arguments. Thus,
 the type is equal to the vector length zero.
 
 For the remainder of the
-paper, we will use a curved arrow ({\tt ⇝}) to denote that the
+paper, we use a curved arrow ({\tt ⇝}) to denote that the
 expression to the left of the arrow definitionally reduces to the term
 on the right.
 
@@ -1224,7 +1225,8 @@ must be supplied as the explicit parameter {\tt q}.
 
 \paragraph{Curried Algebra of a Single Constructor}
 
-Below we apply {\tt CurriedHyps} to the description of the
+Below we apply \\
+{\tt CurriedHyps} to the description of the
 {\tt cons} constructor. This returns the type of the {\tt cons} branch
 in our eliminator-based definiton of {\tt concat} at the
 beginning of this section.
@@ -1499,6 +1501,17 @@ if not more, to define the generic eliminator {\tt elim}. However,
 this need only be done once and now defining any concrete function
 like {\tt concat} can be done very tersely using {\tt elim}, just as
 the example at the beginning of this section demonstrates.
+
+For pedagogical reasons, we presented the definiton of {\tt concat} in
+terms of {\tt ind} by combining several smaller definitions. This
+somewhat hides the verbosity of an {\tt ind}-based definition, so we
+have provided an additional example that illustrates the difference
+between definitions using {\tt ind} versus {\tt elim}. You can
+find a definition of vector {\tt append} (adding two vectors) using
+{\tt elim} in \reffig{append-elim}. Now you can appreciate {\tt elim}
+by comparing \reffig{append-elim} with the
+much more verbose definition of
+{\tt append} using {\tt ind} in \reffig{append-ind}.
 
 \section{Correctness}
 \label{sec:correctness}
@@ -1784,6 +1797,47 @@ descriptions, allowing users of our IDSL to specify which type
 parameters, type indices, and constructor arguments should be rendered
 as implicit arguments. These extensions can be found in the
 accompanying source code, linked in the introduction.
+
+\appendix
+
+\begin{figure*}
+\caption{Definition of vector {\tt append} using our generic {\tt elim}}
+\label{fig:append-elim}
+\begin{verbatim}
+  append : (A : Set) (m : ℕ) (xs : Vec A m) (n : ℕ) (ys : Vec A n) → Vec A (add m n)
+  append A = elim VecE (VecC A) (λ m xs → (n : ℕ) (ys : Vec A n) → Vec A (add m n))
+    (λ n ys → ys)
+    (λ m x xs ih n ys → cons A (add m n) x (ih n ys))
+\end{verbatim}
+\end{figure*}
+
+\begin{figure*}
+\caption{Definition of vector {\tt append} using the primitive {\tt ind}}
+\label{fig:append-ind}
+\begin{verbatim}
+  append : (A : Set) (m : ℕ) (xs : Vec A m) (n : ℕ) (ys : Vec A n) → Vec A (add m n) 
+  append A = ind (VecD A) (λ m xs → (n : ℕ) (ys : Vec A n) → Vec A (add m n))
+    (λ m t-c → case
+      (λ t → (c : El (VecC A t) (Vec A) m)
+             (ih : Hyps (VecD A) (Vec A) (λ m xs → (n : ℕ) (ys : Vec A n) → Vec A (add m n)) m (t , c))
+             (n : ℕ) (ys : Vec A n) → Vec A (add m n)
+      )
+      ( (λ q ih n ys → subst (λ m → Vec A (add m n)) q ys)
+      , (λ m2-x-xs-q ih-tt n ys →
+          let m2 = proj₁ m2-x-xs-q
+              x = proj₁ (proj₂ m2-x-xs-q)
+              q = proj₂ (proj₂ (proj₂ m2-x-xs-q))
+              ih = proj₁ ih-tt
+          in
+          subst (λ m → Vec A (add m n)) q (cons A (add m2 n) x (ih n ys))
+        )
+      , tt
+      )
+      (proj₁ t-c)
+      (proj₂ t-c)
+    )
+\end{verbatim}
+\end{figure*}
 
 \acks
 
