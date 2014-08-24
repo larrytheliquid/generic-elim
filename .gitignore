@@ -16,3 +16,5 @@ Default
 *.bbl
 *.blg
 _TZ_*
+*.dvi
+*.ps

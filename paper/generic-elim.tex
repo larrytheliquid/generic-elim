@@ -55,9 +55,9 @@
 
 \begin{document}
 
-\conferenceinfo{WGP~'13}{September 28, 2013, Boston, MA, USA} 
-\copyrightyear{2013} 
-\copyrightdata{978-1-4503-2389-5/13/09} 
+\conferenceinfo{WGP~'14}{ August 31 2014, Gothenburg, Sweden} 
+\copyrightyear{2014} 
+\copyrightdata{978-1-4503-3042-8/14/08} 
 \doi{2633628.2633630} 
 
 \special{papersize=8.5in,11in}
@@ -1828,11 +1828,11 @@ accompanying source code, linked in the introduction.
              (n : ℕ) (ys : Vec A n) → Vec A (add m n)
       )
       ( (λ q ih n ys → subst (λ m → Vec A (add m n)) q ys)
-      , (λ m2-x-xs-q ih-tt n ys →
+      , (λ m2-x-xs-q ih-u n ys →
           let m2 = proj₁ m2-x-xs-q
               x = proj₁ (proj₂ m2-x-xs-q)
               q = proj₂ (proj₂ (proj₂ m2-x-xs-q))
-              ih = proj₁ ih-tt
+              ih = proj₁ ih-u
           in
           subst (λ m → Vec A (add m n)) q (cons A (add m2 n) x (ih n ys))
         )
