@@ -1,11 +1,15 @@
 {-# OPTIONS --type-in-type #-}
+open import Data.Empty
 open import Data.Unit
+open import Data.Bool
 open import Data.Product hiding ( curry ; uncurry )
 open import Data.Nat
 open import Data.String
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality using ( refl ; _≢_ ; _≡_ )
 open import Function
 module ClosedTheory where
+
+noteq = _≢_
 
 ----------------------------------------------------------------------
 
@@ -51,8 +55,8 @@ uncurryEl (Arg A B) X cn (a , xs) = uncurryEl (B a) X (cn a) xs
 
 ----------------------------------------------------------------------
 
-data μ {I : Set} (D : Desc I) : ISet I where
-  init : UncurriedEl D (μ D)
+data μ {I : Set} (D : Desc I) (i : I) : Set where
+  init : El D (μ D) i → μ D i
 
 Inj : {I : Set} (D : Desc I) → Set
 Inj D = CurriedEl D (μ D)
@@ -69,17 +73,20 @@ VecC : (A : Set) → VecT → Desc ℕ
 VecC A nilT = End zero
 VecC A consT = Arg ℕ (λ n → Arg A λ _ → Rec n (End (suc n)))
 
-nilD : (A : Set) → Desc ℕ
-nilD A = End zero
-
-consD : (A : Set) → Desc ℕ
-consD A = Arg ℕ (λ n → Arg A (λ _ → Rec n (End (suc n))))
-
 VecD : (A : Set) → Desc ℕ
 VecD A = Arg VecT (VecC A)
 
 Vec : (A : Set) → ℕ → Set
 Vec A = μ (VecD A)
+
+InjConsT : Set → ℕ → Set
+InjConsT A m = El (VecC A consT) (Vec A) m → Vec A m
+
+InjConsT' : Set → ℕ → Set
+InjConsT' A m = Σ ℕ (λ n → A × Vec A n × suc n ≡ m) → Vec A m
+
+test-InjConsT : (A : Set) (n : ℕ) → InjConsT A n ≡ InjConsT' A n
+test-InjConsT A n = refl
 
 nil : (A : Set) → Vec A zero
 nil A = init (nilT , refl)
@@ -92,5 +99,11 @@ nil2 A = inj (VecD A) nilT
 
 cons2 : (A : Set) (n : ℕ) (x : A) (xs : Vec A n) → Vec A (suc n)
 cons2 A = inj (VecD A) consT
+
+bit : Vec Bool (suc zero)
+bit = cons Bool zero true (nil Bool)
+
+bit2 : Vec Bool (suc zero)
+bit2 = init (consT , zero , true , init (nilT , refl) , refl)
 
 ----------------------------------------------------------------------
