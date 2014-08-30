@@ -192,3 +192,42 @@ leaf₁ : {A B : Set} → A → Tree A B (suc zero) zero
 leaf₁ = inj TreeR leaf₁T
 
 ----------------------------------------------------------------------
+
+data MemberT : Set where
+  hereT thereT : MemberT
+
+MemberR : Data
+MemberR = record {
+    E = MemberT
+  ; P = IExt Set λ _ → Emp
+  ; I = λ { (A , tt)
+      → Ext A λ _
+      → IExt ℕ λ n
+      → Ext (Vec A n) λ _
+      → Emp }
+  ; C = λ { (A , tt) → λ
+    { hereT
+      → IArg ℕ λ n
+      → IArg A λ x
+      → IArg (Vec A n) λ xs
+      → End (x , suc n , x ∷ xs , tt)
+    ; thereT
+      → IArg ℕ λ n
+      → IArg A λ x
+      → IArg A λ y
+      → IArg (Vec A n) λ xs
+      → Rec (x , n , xs , tt)
+      $ End (x , suc n , y ∷ xs , tt)
+    } }
+  }
+
+_∈_ : {A : Set} → A → {n : ℕ} → Vec A n → Set
+_∈_ = Form MemberR
+
+here : {A : Set} {n : ℕ} {x : A} {xs : Vec A n} → x ∈ (x ∷ xs)
+here = inj MemberR hereT
+
+there : {A : Set} {n : ℕ} {x y : A} {xs : Vec A n} (p : x ∈ xs) → x ∈ (y ∷ xs)
+there = inj MemberR thereT
+
+----------------------------------------------------------------------
