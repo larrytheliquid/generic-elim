@@ -7,7 +7,7 @@ open import Data.Nat
 open import Data.String
 open import Relation.Binary.PropositionalEquality using ( refl ; _≢_ ; _≡_ )
 open import Function
-module ClosedTheory2 where
+module ClosedTheory3 where
 
 ----------------------------------------------------------------------
 
@@ -31,6 +31,14 @@ CurriedScope (Ext A B) X = (a : A) → CurriedScope (B a) (λ b → X (a , b))
 curryScope : (T : Tel) (X : Scope T → Set) → UncurriedScope T X → CurriedScope T X
 curryScope Emp X f = f tt
 curryScope (Ext A B) X f a = curryScope (B a) (λ b → X (a , b)) (λ b → f (a , b))
+
+ICurriedScope : (T : Tel) (X : Scope T → Set) → Set
+ICurriedScope Emp X = X tt
+ICurriedScope (Ext A B) X = {a : A} → ICurriedScope (B a) (λ b → X (a , b))
+
+icurryScope : (T : Tel) (X : Scope T → Set) → UncurriedScope T X → ICurriedScope T X
+icurryScope Emp X f = f tt
+icurryScope (Ext A B) X f = λ {a} → icurryScope (B a) (λ b → X (a , b)) (λ b → f (a , b))
 
 ----------------------------------------------------------------------
 
@@ -106,10 +114,10 @@ record Data : Set₁ where
     (λ xs → init (t , xs))
 
   Inj : E → Set
-  Inj t = CurriedScope P λ p → CurriedEl (C p t) (FormUncurried p)
+  Inj t = ICurriedScope P λ p → CurriedEl (C p t) (FormUncurried p)
 
   inj : (t : E) → Inj t
-  inj t = curryScope P
+  inj t = icurryScope P
     (λ p → CurriedEl (C p t) (FormUncurried p))
     (injUncurried t)
 
@@ -138,10 +146,10 @@ VecR = record {
 Vec : (A : Set) → ℕ → Set
 Vec = Form VecR
 
-nil : (A : Set) → Vec A zero
+nil : {A : Set} → Vec A zero
 nil = inj VecR nilT
 
-cons : (A : Set) (n : ℕ) (x : A) (xs : Vec A n) → Vec A (suc n)
+cons : {A : Set} (n : ℕ) (x : A) (xs : Vec A n) → Vec A (suc n)
 cons = inj VecR consT
 
 ----------------------------------------------------------------------
@@ -168,7 +176,7 @@ TreeR = record {
 Tree : (A B : Set) (m n : ℕ) → Set
 Tree = Form TreeR
 
-leaf₁ : (A B : Set) → A → Tree A B (suc zero) zero
+leaf₁ : {A B : Set} → A → Tree A B (suc zero) zero
 leaf₁ = inj TreeR leaf₁T
 
 ----------------------------------------------------------------------

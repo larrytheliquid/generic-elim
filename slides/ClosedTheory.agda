@@ -107,3 +107,28 @@ bit2 : Vec Bool (suc zero)
 bit2 = init (consT , zero , true , init (nilT , refl) , refl)
 
 ----------------------------------------------------------------------
+
+data TreeT : Set where
+  leaf₁T leaf₂T branchT : TreeT
+
+TreeC : (A B : Set) → TreeT → Desc (ℕ × ℕ)
+TreeC A B leaf₁T = Arg A λ _ → End (suc zero , zero)
+TreeC A B leaf₂T = Arg B λ _ → End (zero , suc zero)
+TreeC A B branchT = Arg ℕ λ m → Arg ℕ λ n
+                  → Arg ℕ λ x → Arg ℕ λ y
+                  → Rec (m , n) $ Rec (x , y)
+                  $ End (m + x , n + y)
+
+TreeD : (A B : Set) → Desc (ℕ × ℕ)
+TreeD A B = Arg TreeT (TreeC A B)
+
+Tree : (A B : Set) (m n : ℕ) → Set
+Tree A B m n = μ (TreeD A B) (m , n)
+
+leaf₁ : (A B : Set) → A → Tree A B (suc zero) zero
+leaf₁ A B a = init (leaf₁T , a , refl)
+
+leaf₁2 : (A B : Set) → A → Tree A B (suc zero) zero
+leaf₁2 A B = inj (TreeD A B) leaf₁T
+
+----------------------------------------------------------------------
