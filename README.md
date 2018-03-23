@@ -1,9 +1,10 @@
 Generic Constructors and Eliminators from Descriptions
 ======================================================
 
-Agda code for draft paper by Larry Diehl and Tim Sheard (submitted for consideration to WGP 2014):
+Agda code for the paper by Larry Diehl and Tim Sheard (WGP 2014):
 
-[Generic Constructors and Eliminators from Descriptions - Dependently Typed Programming without the Algebra](http://bit.ly/1cxA0QF)
+* [Paper draft](http://www.larrytheliquid.com/drafts/generic-elim.pdf)
+* [Published paper](https://dl.acm.org/citation.cfm?id=2633630)
 
 Code from the paper
 -------------------
